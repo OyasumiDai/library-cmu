@@ -1,0 +1,44 @@
+<!--page {"shell":"app","title":"Profile","description":"Your details, photo, password and reading activity.","entry":"profile","access":"member"} -->
+<div class="container" data-page-root>
+  <div class="page-title"><div><h1>My profile</h1><p class="page-title__sub">Your username is also your name in the game.</p></div></div>
+  <div class="profile">
+    <aside class="card px profile__me" id="meCard" data-reveal></aside>
+    <div class="profile__main">
+      <div class="tabs" role="tablist" id="profileTabs">
+        <button class="tab" role="tab" type="button" data-action="tab" data-tab="details">My details</button>
+        <button class="tab" role="tab" type="button" data-action="tab" data-tab="activity">My activity</button>
+        <button class="tab" role="tab" type="button" data-action="tab" data-tab="password">Password</button>
+      </div>
+      <section id="tab-details" class="card px" data-panel="details">
+        <div id="completeness"></div>
+        <form class="form" id="detailsForm" novalidate></form>
+      </section>
+      <section id="tab-activity" class="stack" data-panel="activity" hidden>
+        <div class="stats-band" id="activityStats"></div>
+        <div class="card px">
+          <div class="tabs" role="tablist" id="bookTabs">
+            <button class="tab" role="tab" type="button" data-action="books" data-books="borrowed">Borrowed</button>
+            <button class="tab" role="tab" type="button" data-action="books" data-books="returned">Returned</button>
+            <button class="tab" role="tab" type="button" data-action="books" data-books="read">Books read</button>
+          </div>
+          <div id="bookList"></div>
+        </div>
+        <div class="card px"><h2>Timeline</h2><div id="activity"></div></div>
+      </section>
+      <section id="tab-password" class="card px" data-panel="password" hidden>
+        <h2>Change password</h2>
+        <form class="form" id="passwordForm" novalidate>
+          <div class="field" data-field="current"><label class="field__label" for="f-cur">Current password</label><input class="input" id="f-cur" name="current" type="password" autocomplete="current-password"><span class="field__error"></span></div>
+          <div class="form__row">
+            <div class="field" data-field="password"><label class="field__label" for="f-pw">New password</label><input class="input" id="f-pw" name="password" type="password" autocomplete="new-password" minlength="8">
+              <div class="meter-row"><div class="meter" id="pwMeter" data-level="0" aria-hidden="true"><i></i><i></i><i></i><i></i></div><span class="meter__label" id="pwMeterLabel" aria-live="polite"></span></div>
+              <span class="field__error"></span></div>
+            <div class="field" data-field="confirm"><label class="field__label" for="f-pw2">Repeat it</label><input class="input" id="f-pw2" name="confirm" type="password" autocomplete="new-password"><span class="field__error"></span></div>
+          </div>
+          <p class="field__hint">You can try your current password 5 times every 15 minutes.</p>
+          <div class="form__actions"><button class="btn btn--secondary" type="submit">Update password</button></div>
+        </form>
+      </section>
+    </div>
+  </div>
+</div>

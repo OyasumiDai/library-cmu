@@ -1,0 +1,165 @@
+[
+  {
+    "label": "Manage",
+    "visible": "staff",
+    "items": [
+      {
+        "label": "Dashboard",
+        "href": "/panel?tab=dashboard",
+        "page": "panel",
+        "tab": "dashboard",
+        "icon": "dashboard"
+      },
+      {
+        "label": "Analytics",
+        "href": "/panel?tab=analytics",
+        "page": "panel",
+        "tab": "analytics",
+        "icon": "chart"
+      },
+      {
+        "label": "Scan pickup",
+        "href": "/pickup",
+        "page": "pickup",
+        "icon": "qr"
+      },
+      {
+        "label": "Circulation",
+        "href": "/panel?tab=circulation",
+        "page": "panel",
+        "tab": "circulation",
+        "icon": "shelf"
+      },
+      {
+        "label": "Books",
+        "href": "/panel?tab=books",
+        "page": "panel",
+        "tab": "books",
+        "icon": "book"
+      },
+      {
+        "label": "Announcements",
+        "href": "/panel?tab=announcements",
+        "page": "panel",
+        "tab": "announcements",
+        "icon": "news"
+      },
+      {
+        "label": "Students",
+        "href": "/panel?tab=students",
+        "page": "panel",
+        "tab": "students",
+        "icon": "users",
+        "need": "students"
+      },
+      {
+        "label": "Staff",
+        "href": "/panel?tab=staff",
+        "page": "panel",
+        "tab": "staff",
+        "icon": "user",
+        "visible": "admin"
+      },
+      {
+        "label": "Reports",
+        "href": "/panel?tab=reports",
+        "page": "panel",
+        "tab": "reports",
+        "icon": "download",
+        "need": "reports"
+      },
+      {
+        "label": "Game",
+        "href": "/panel?tab=game",
+        "page": "panel",
+        "tab": "game",
+        "icon": "game",
+        "need": "game"
+      },
+      {
+        "label": "Settings",
+        "href": "/panel?tab=settings",
+        "page": "panel",
+        "tab": "settings",
+        "icon": "settings",
+        "need": "system"
+      },
+      {
+        "label": "Team page",
+        "href": "/panel?tab=team",
+        "page": "panel",
+        "tab": "team",
+        "icon": "paw",
+        "visible": "admin"
+      },
+      {
+        "label": "Audit trail",
+        "href": "/panel?tab=audit",
+        "page": "panel",
+        "tab": "audit",
+        "icon": "archive",
+        "need": "audit"
+      }
+    ]
+  },
+  {
+    "label": "Library",
+    "visible": "member",
+    "items": [
+      {
+        "label": "Discover",
+        "href": "/catalog",
+        "page": "catalog",
+        "icon": "search"
+      },
+      {
+        "label": "My books",
+        "href": "/borrowing",
+        "page": "borrowing",
+        "icon": "shelf"
+      },
+      {
+        "label": "Updates",
+        "href": "/announcements",
+        "page": "announcements",
+        "icon": "news"
+      },
+      {
+        "label": "Game",
+        "href": "/arcade",
+        "page": "arcade",
+        "icon": "game"
+      }
+    ]
+  },
+  {
+    "label": "Account",
+    "visible": "member",
+    "items": [
+      {
+        "label": "Help",
+        "href": "/help",
+        "page": "help",
+        "icon": "help"
+      },
+      {
+        "label": "Notifications",
+        "href": "/notifications",
+        "page": "notifications",
+        "icon": "bell"
+      },
+      {
+        "label": "Profile",
+        "href": "/profile",
+        "page": "profile",
+        "icon": "user"
+      },
+      {
+        "label": "Settings",
+        "href": "/settings",
+        "page": "settings",
+        "icon": "sparkle"
+      }
+    ]
+  }
+]
