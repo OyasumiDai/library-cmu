@@ -1,0 +1,21 @@
+<!--page {"shell":"auth","title":"Sign in","description":"Sign in to the library.","entry":"login","access":"guest"} -->
+<div class="container auth" data-page-root>
+  <div class="auth__card card px pop-in">
+    <div class="auth__head">
+      <img class="auth__crest" src="/assets/brand/cmu-library-crest.png" alt="">
+      <h1>Welcome back</h1>
+      <p class="text-soft">Sign in with your library account. The game uses it too.</p>
+    </div>
+    <div id="loginNotice" aria-live="polite"></div>
+    <form class="form" id="loginForm" novalidate>
+      <div class="field" data-field="email"><label class="field__label" for="f-email">Email</label><input class="input" id="f-email" name="email" type="email" autocomplete="email" required><span class="field__error"></span></div>
+      <div class="field" data-field="password"><label class="field__label" for="f-password">Password</label>
+        <div class="input-reveal"><input class="input" id="f-password" name="password" type="password" autocomplete="current-password" required>
+          <button class="input-reveal__btn" type="button" id="showPassword" aria-label="Show password"><svg class="icon"><use href="/assets/icons/icons.svg#eye"/></svg></button></div>
+        <span class="field__error"></span></div>
+      <label class="check"><input class="check__box" type="checkbox" id="remember"><span>Remember my email on this device</span></label>
+      <button class="btn btn--block" type="submit">Sign in</button>
+    </form>
+    <p class="auth__foot"><a href="/reset">Forgot your password?</a><br>New here? <a href="/register">Create an account</a></p>
+  </div>
+</div>
