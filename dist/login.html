@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en" data-theme="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in | CMU Library</title>
+  <meta name="description" content="Sign in to the library.">
+  <meta name="theme-color" content="#0b1f5c">
+  <link rel="icon" type="image/png" href="/assets/brand/cmu-library-favicon.png">
+  <link rel="preload" href="/assets/fonts/PixelifySans.ttf" as="font" type="font/ttf" crossorigin>
+  <script src="/assets/theme-init.js"></script>
+  <link rel="stylesheet" href="/assets/css/site.css?v=mvpv1m64">
+  <script src="/config.js"></script>
+</head>
+<body data-page="login" data-access="guest" class="auth-page ">
+  <a class="skip-link" href="#main">Skip to the content</a>
+  <a class="auth-back" href="/" aria-label="Back to the home page"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-left"/></svg> Back</a>
+  <main id="main" class="site-main" tabindex="-1">
+<div class="container auth" data-page-root>
+  <div class="auth__card card px pop-in">
+    <div class="auth__head">
+      <img class="auth__crest" src="/assets/brand/cmu-library-crest.png" alt="">
+      <h1>Welcome back</h1>
+      <p class="text-soft">Sign in with your library account. The game uses it too.</p>
+    </div>
+    <div id="loginNotice" aria-live="polite"></div>
+    <form method="post" class="form" id="loginForm" novalidate>
+      <div class="field" data-field="email"><label class="field__label" for="f-email">Email</label><input class="input" id="f-email" name="email" type="email" autocomplete="email" required><span class="field__error"></span></div>
+      <div class="field" data-field="password"><label class="field__label" for="f-password">Password</label>
+        <div class="input-reveal"><input class="input" id="f-password" name="password" type="password" autocomplete="current-password" required>
+          <button class="input-reveal__btn" type="button" id="showPassword" aria-label="Show password"><svg class="icon"><use href="/assets/icons/icons.svg#eye"/></svg></button></div>
+        <span class="field__error"></span></div>
+      <label class="check"><input class="check__box" type="checkbox" id="remember"><span>Remember my email on this device</span></label>
+      <button class="btn btn--block" type="submit">Sign in</button>
+    </form>
+    <p class="auth__foot"><a href="/reset">Forgot your password?</a><br>New here? <a href="/register">Create an account</a></p>
+  </div>
+</div>
+
+  </main>
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/js/login.js?v=mvpv1m64"></script>
+</body>
+</html>

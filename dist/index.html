@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en" data-theme="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Welcome | CMU Library</title>
+  <meta name="description" content="Read, borrow and explore the City of Malabon University library, online and in the library game.">
+  <meta name="theme-color" content="#0b1f5c">
+  <link rel="icon" type="image/png" href="/assets/brand/cmu-library-favicon.png">
+  <link rel="preload" href="/assets/fonts/PixelifySans.ttf" as="font" type="font/ttf" crossorigin>
+  <script src="/assets/theme-init.js"></script>
+  <link rel="stylesheet" href="/assets/css/site.css?v=mvpv1m64">
+  <script src="/config.js"></script>
+</head>
+<body data-page="index" data-access="guest" class="landing ">
+  <a class="skip-link" href="#main">Skip to the content</a>
+    <header class="landing-header">
+    <div class="container landing-header__bar">
+      <a class="brand" href="/" aria-label="CMU Library home">
+        <img class="brand__mark" src="/assets/brand/cmu-library-crest.png" alt="" width="42" height="42">
+        <span class="brand__text"><span class="brand__title">CMU Library</span><span class="brand__sub">Read. Borrow. Explore.</span></span>
+      </a>
+      <nav class="landing-nav" aria-label="Main">
+        <a href="/#how">How it works</a>
+        <a href="/#books">Books</a>
+        <a href="/game">Game</a>
+        <a href="/about">About</a>
+      </nav>
+      <div class="landing-header__cta">
+        <a class="btn btn--sm btn--quiet" href="/login" data-visible="guest">Sign in</a>
+        <a class="btn btn--sm" href="/register" data-visible="guest">Join</a>
+        <a class="btn btn--sm" href="/catalog" data-visible="member">Open the library</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="site-main" tabindex="-1">
+<section class="hero">
+  <div class="hero__photo" aria-hidden="true"></div>
+  <div class="container hero__content">
+    <p class="eyebrow hero__kicker">City of Malabon University</p>
+    <h1 class="hero__title">Your library, always open</h1>
+    <p class="hero__lead" id="heroTagline" data-text="Find a book, borrow it in a tap, then wander the shelves in our library game."></p>
+    <div class="hero__actions">
+      <a class="btn btn--lg btn--accent" href="/register"><svg class="icon"><use href="/assets/icons/icons.svg#sparkle"/></svg> Create an account</a>
+      <a class="btn btn--lg hero__ghost" href="/login">Sign in</a>
+    </div>
+    <div class="hero-stats" id="heroStats" aria-live="polite"></div>
+    <form method="post" class="quick-search" id="quickSearch" role="search">
+      <label class="visually-hidden" for="qsFilter">Search by</label>
+      <select class="select" id="qsFilter" name="filter"><option value="all">All</option><option value="genre">By genre</option><option value="category">By category</option><option value="available">Available now</option></select>
+      <label class="visually-hidden" for="qsText">Search the catalog</label>
+      <input class="input" id="qsText" name="q" type="search" placeholder="Search the catalog (sign in to see results)" autocomplete="off">
+      <button class="btn" type="submit"><svg class="icon"><use href="/assets/icons/icons.svg#search"/></svg> Search</button>
+    </form>
+  </div>
+</section>
+
+<div data-page-root>
+  <section class="section" id="how">
+    <div class="container">
+      <div class="section__head"><div><span class="eyebrow">How it works</span><h2>Four steps to your next read</h2></div></div>
+      <div class="steps">
+        <article class="step card px" data-reveal><span class="step__icon"><svg class="icon"><use href="/assets/icons/icons.svg#search"/></svg></span><h3>Discover</h3><p class="text-soft">Search by title, author or subject and see at once which copies are free.</p></article>
+        <article class="step card px" data-reveal><span class="step__icon"><svg class="icon"><use href="/assets/icons/icons.svg#news"/></svg></span><h3>Signal</h3><p class="text-soft">Library updates and closures land on your notice board and in your bell.</p></article>
+        <article class="step card px" data-reveal><span class="step__icon"><svg class="icon"><use href="/assets/icons/icons.svg#shelf"/></svg></span><h3>Request</h3><p class="text-soft">Ask to borrow from your phone. Staff confirm it and the book is yours until the due date.</p></article>
+        <article class="step card px" data-reveal><span class="step__icon"><svg class="icon"><use href="/assets/icons/icons.svg#game"/></svg></span><h3>Building</h3><p class="text-soft">The library game world grows with the same account. Walk in, chat and play chess.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="about-preview">
+    <div class="container">
+      <div class="about-preview card px" data-reveal>
+        <div><span class="eyebrow">About</span><h2>A library built by students, for students</h2>
+          <p class="text-soft">What began as one idea for sharing capstone projects grew into a full library system and a game world. Read the story and meet the team.</p>
+          <a class="btn btn--quiet" href="/about">Read our story</a></div>
+        <img src="/assets/brand/cmu-library-crest.png" alt="" width="120" height="120">
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="books">
+    <div class="container">
+      <div class="section__head"><div><span class="eyebrow">On the shelves</span><h2>Fresh arrivals</h2></div><a class="btn btn--sm btn--quiet" href="/login">Sign in to borrow</a></div>
+      <div class="grid grid--4" id="homeBooks"></div>
+      <div class="stats-band" id="homeStats"></div>
+    </div>
+  </section>
+
+  <section class="section" id="news">
+    <div class="container">
+      <div class="section__head"><div><span class="eyebrow">Notice board</span><h2>Library news</h2></div></div>
+      <div class="news-board" id="homeNews"></div>
+    </div>
+  </section>
+
+  <section class="section" id="team" hidden>
+    <div class="container">
+      <div class="section__head"><div><span class="eyebrow">The people</span><h2>Library staff and development team</h2></div></div>
+      <div class="team-grid" id="teamGrid"></div>
+    </div>
+  </section>
+
+  <section class="section" id="game">
+    <div class="container">
+      <div class="game-teaser" data-reveal>
+        <div>
+          <span class="eyebrow">Game arcade</span>
+          <h2>Walk into the library</h2>
+          <p>The same account takes you into a 3D version of our library. Chat with friends and play chess at the computers. Your username is already your name.</p>
+          <div class="cluster"><a class="btn btn--accent" href="/register">Join and play</a><a class="btn btn--quiet game-teaser__more" href="/game">About the game</a></div>
+        </div>
+        <img class="game-teaser__art" src="/assets/brand/cmu-library-crest.png" alt="" width="140" height="140">
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band">
+    <h2>Ready to start reading?</h2>
+    <p class="text-soft">It takes a minute and it is free for CMU students.</p>
+    <div class="cluster"><a class="btn btn--lg" href="/register">Create an account</a><a class="btn btn--lg btn--quiet" href="/login">I already have one</a></div>
+  </section>
+</div>
+
+  </main>
+    <footer class="site-footer">
+    <div class="container site-footer__info" id="footerInfo" aria-label="Library hours and contact"></div>
+    <div class="container site-footer__bar">
+      <p class="site-footer__note">City of Malabon University Library</p>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/about" data-visible="all">About</a>
+        <a href="/help" data-visible="member">Help</a>
+        <a href="/terms" data-visible="all">Terms</a>
+        <a href="/privacy" data-visible="all">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/js/home.js?v=mvpv1m64"></script>
+</body>
+</html>

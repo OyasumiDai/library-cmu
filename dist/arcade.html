@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game | CMU Library</title>
+  <meta name="description" content="Walk into the library game with your library account.">
+  <meta name="theme-color" content="#0b1f5c">
+  <link rel="icon" type="image/png" href="/assets/brand/cmu-library-favicon.png">
+  <link rel="preload" href="/assets/fonts/PixelifySans.ttf" as="font" type="font/ttf" crossorigin>
+  <script src="/assets/theme-init.js"></script>
+  <link rel="stylesheet" href="/assets/css/site.css?v=mvpv1m64">
+  <script src="/config.js"></script>
+</head>
+<body data-page="arcade" data-access="member" class="auth-page arcade-page">
+  <a class="skip-link" href="#main">Skip to the content</a>
+  <a class="auth-back" href="/" aria-label="Back to the home page"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-left"/></svg> Back</a>
+  <main id="main" class="site-main" tabindex="-1">
+<div class="arcade" data-page-root>
+  <div class="arcade__head">
+    <div><h1 id="gameTitle">CMU Virtual Library</h1><p class="page-title__sub" id="gameText">Your library account is already your name in the game.</p></div>
+    <p class="stage__state"><span class="status-dot" id="gameDot" data-state="maintenance"></span><strong id="gameState">Checking...</strong></p>
+  </div>
+
+  <section class="stage px" id="stage" aria-label="The library game">
+    <div class="stage__bar">
+      <span class="stage__who" id="stageWho"></span>
+      <div class="cluster">
+        <button class="btn btn--sm btn--quiet" type="button" id="fullscreen" hidden><svg class="icon"><use href="/assets/icons/icons.svg#eye"/></svg> Full screen</button>
+        <a class="btn btn--sm btn--quiet" id="newTab" href="/play/" target="_blank" rel="noopener" hidden><svg class="icon"><use href="/assets/icons/icons.svg#upload"/></svg> New tab</a>
+      </div>
+    </div>
+    <div class="stage__screen" id="stageScreen">
+      <div class="stage__poster" id="poster">
+        <div class="stage__card">
+          <img src="/assets/brand/cmu-library-crest.png" alt="" width="96" height="96">
+          <h2 id="posterTitle">Enter the library</h2>
+          <p id="posterText">Walk around, chat with other readers and play chess. Keyboard and mouse on a computer, touch on a phone.</p>
+          <button class="btn btn--lg btn--accent" type="button" id="enter" disabled><svg class="icon"><use href="/assets/icons/icons.svg#game"/></svg> Enter the game</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+  </main>
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/js/arcade.js?v=mvpv1m64"></script>
+</body>
+</html>

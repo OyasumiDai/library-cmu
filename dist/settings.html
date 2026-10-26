@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en" data-theme="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Settings | CMU Library</title>
+  <meta name="description" content="Appearance and account settings.">
+  <meta name="theme-color" content="#0b1f5c">
+  <link rel="icon" type="image/png" href="/assets/brand/cmu-library-favicon.png">
+  <link rel="preload" href="/assets/fonts/PixelifySans.ttf" as="font" type="font/ttf" crossorigin>
+  <script src="/assets/theme-init.js"></script>
+  <link rel="stylesheet" href="/assets/css/site.css?v=mvpv1m64">
+  <script src="/config.js"></script>
+</head>
+<body data-page="settings" data-access="member" class="app ">
+  <a class="skip-link" href="#main">Skip to the content</a>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Menu">
+      <a class="brand" href="/catalog" aria-label="CMU Library">
+        <img class="brand__mark" src="/assets/brand/cmu-library-crest.png" alt="" width="42" height="42">
+        <span class="brand__text"><span class="brand__title">CMU Library</span><span class="brand__sub">Read. Borrow. Explore.</span></span>
+      </a>
+      <nav class="sidebar__nav" aria-label="Main">
+        <div class="nav-group" data-visible="staff"><span class="nav-group__label">Manage</span><a class="nav-link" href="/panel?tab=dashboard" data-visible="staff" data-tab="dashboard"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#dashboard"/></svg><span>Dashboard</span></a><a class="nav-link" href="/panel?tab=analytics" data-visible="staff" data-tab="analytics"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#chart"/></svg><span>Analytics</span></a><a class="nav-link" href="/pickup" data-visible="staff"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#qr"/></svg><span>Scan pickup</span></a><a class="nav-link" href="/panel?tab=circulation" data-visible="staff" data-tab="circulation"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#shelf"/></svg><span>Circulation</span></a><a class="nav-link" href="/panel?tab=books" data-visible="staff" data-tab="books"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#book"/></svg><span>Books</span></a><a class="nav-link" href="/panel?tab=announcements" data-visible="staff" data-tab="announcements"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#news"/></svg><span>Announcements</span></a><a class="nav-link" href="/panel?tab=students" data-visible="staff" data-tab="students" data-need="students"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#users"/></svg><span>Students</span></a><a class="nav-link" href="/panel?tab=staff" data-visible="admin" data-tab="staff"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#user"/></svg><span>Staff</span></a><a class="nav-link" href="/panel?tab=reports" data-visible="staff" data-tab="reports" data-need="reports"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#download"/></svg><span>Reports</span></a><a class="nav-link" href="/panel?tab=game" data-visible="staff" data-tab="game" data-need="game"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#game"/></svg><span>Game</span></a><a class="nav-link" href="/panel?tab=settings" data-visible="staff" data-tab="settings" data-need="system"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#settings"/></svg><span>Settings</span></a><a class="nav-link" href="/panel?tab=team" data-visible="admin" data-tab="team"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#paw"/></svg><span>Team page</span></a><a class="nav-link" href="/panel?tab=audit" data-visible="staff" data-tab="audit" data-need="audit"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#archive"/></svg><span>Audit trail</span></a></div>
+        <div class="nav-group" data-visible="member"><span class="nav-group__label">Library</span><a class="nav-link" href="/catalog" data-visible="member"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#search"/></svg><span>Discover</span></a><a class="nav-link" href="/borrowing" data-visible="member"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#shelf"/></svg><span>My books</span></a><a class="nav-link" href="/announcements" data-visible="member"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#news"/></svg><span>Updates</span></a><a class="nav-link" href="/arcade" data-visible="member"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#game"/></svg><span>Game</span></a></div>
+        <div class="nav-group" data-visible="member"><span class="nav-group__label">Account</span><a class="nav-link" href="/help" data-visible="member"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#help"/></svg><span>Help</span></a><a class="nav-link" href="/notifications" data-visible="member"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#bell"/></svg><span>Notifications</span></a><a class="nav-link" href="/profile" data-visible="member"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#user"/></svg><span>Profile</span></a><a class="nav-link is-active" href="/settings" data-visible="member" aria-current="page"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#sparkle"/></svg><span>Settings</span></a></div>
+      </nav>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+    <div class="shell__main">
+      <header class="topbar">
+        <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="sidebar" aria-label="Open the menu">
+          <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons/icons.svg#menu"/></svg>
+        </button>
+        <span class="topbar__crumb">Settings</span>
+        <div class="topbar__tools"><div class="user-widget" id="userWidget" data-state="loading"></div></div>
+      </header>
+      <main id="main" class="site-main" tabindex="-1">
+<div class="container container--narrow stack" data-page-root>
+  <div class="page-title"><div><h1>Settings</h1><p class="page-title__sub">Make the library look and feel the way you like.</p></div></div>
+  <section class="card px stack" data-reveal>
+    <div><h2>Appearance</h2><p class="text-soft">Pick a theme. It is remembered on this device.</p></div>
+    <div class="theme-cards"><button class="theme-card" type="button" data-theme-choice="blue" aria-pressed="false"><span class="theme-card__preview" aria-hidden="true"><span class="theme-card__side"></span><span class="theme-card__body"><span class="theme-card__line"></span><span class="theme-card__line theme-card__line--accent"></span><span class="theme-card__line"></span></span></span><span class="theme-card__name">Library Blue</span><span class="text-soft">Crisp blue and gold, like the crest.</span></button><button class="theme-card" type="button" data-theme-choice="cozy" aria-pressed="false"><span class="theme-card__preview" aria-hidden="true"><span class="theme-card__side"></span><span class="theme-card__body"><span class="theme-card__line"></span><span class="theme-card__line theme-card__line--accent"></span><span class="theme-card__line"></span></span></span><span class="theme-card__name">Cozy Cream</span><span class="text-soft">Warm paper and plum, for slow afternoons.</span></button><button class="theme-card" type="button" data-theme-choice="night" aria-pressed="false"><span class="theme-card__preview" aria-hidden="true"><span class="theme-card__side"></span><span class="theme-card__body"><span class="theme-card__line"></span><span class="theme-card__line theme-card__line--accent"></span><span class="theme-card__line"></span></span></span><span class="theme-card__name">Night Reading</span><span class="text-soft">Dark and easy on the eyes.</span></button></div>
+  </section>
+  <section class="card px" data-reveal id="prefs">
+    <h2>Comfort</h2>
+    <div class="setting-row">
+      <div class="setting-row__text"><strong>Reduce motion</strong><span>Calms the moving clouds, sprites and page animations.</span></div>
+      <label class="switch"><input class="switch__input" type="checkbox" id="reduceMotion" aria-label="Reduce motion"></label>
+    </div>
+  </section>
+  <section class="card px" data-reveal>
+    <h2>Account</h2>
+    <div class="setting-row">
+      <div class="setting-row__text"><strong id="whoName">Your account</strong><span id="whoMail"></span></div>
+      <a class="btn btn--quiet" href="/profile">Edit profile and password</a>
+    </div>
+    <div class="setting-row">
+      <div class="setting-row__text"><strong>Sign out</strong><span>Leave this device. Your books and history stay safe.</span></div>
+      <button class="btn btn--danger" type="button" id="signOut">Sign out</button>
+    </div>
+  </section>
+</div>
+
+      </main>
+    </div>
+  </div>
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/js/settings.js?v=mvpv1m64"></script>
+</body>
+</html>

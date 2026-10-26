@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en" data-theme="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Not found | CMU Library</title>
+  <meta name="description" content="That page could not be found.">
+  <meta name="theme-color" content="#0b1f5c">
+  <link rel="icon" type="image/png" href="/assets/brand/cmu-library-favicon.png">
+  <link rel="preload" href="/assets/fonts/PixelifySans.ttf" as="font" type="font/ttf" crossorigin>
+  <script src="/assets/theme-init.js"></script>
+  <link rel="stylesheet" href="/assets/css/site.css?v=mvpv1m64">
+  <script src="/config.js"></script>
+</head>
+<body data-page="404" data-access="all" class="landing ">
+  <a class="skip-link" href="#main">Skip to the content</a>
+    <header class="landing-header">
+    <div class="container landing-header__bar">
+      <a class="brand" href="/" aria-label="CMU Library home">
+        <img class="brand__mark" src="/assets/brand/cmu-library-crest.png" alt="" width="42" height="42">
+        <span class="brand__text"><span class="brand__title">CMU Library</span><span class="brand__sub">Read. Borrow. Explore.</span></span>
+      </a>
+      <nav class="landing-nav" aria-label="Main">
+        <a href="/#how">How it works</a>
+        <a href="/#books">Books</a>
+        <a href="/game">Game</a>
+        <a href="/about">About</a>
+      </nav>
+      <div class="landing-header__cta">
+        <a class="btn btn--sm btn--quiet" href="/login" data-visible="guest">Sign in</a>
+        <a class="btn btn--sm" href="/register" data-visible="guest">Join</a>
+        <a class="btn btn--sm" href="/catalog" data-visible="member">Open the library</a>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="site-main" tabindex="-1">
+<div class="container container--narrow text-center" data-page-root>
+  <div class="empty card px pop-in">
+    <div class="empty__art"><svg class="icon icon--xl" aria-hidden="true"><use href="/assets/icons/icons.svg#book"/></svg></div>
+    <h1>This shelf is empty</h1>
+    <p>The page you wanted is not here. It may have moved.</p>
+    <a class="btn" href="/">Back to the front desk</a>
+  </div>
+</div>
+
+  </main>
+    <footer class="site-footer">
+    <div class="container site-footer__info" id="footerInfo" aria-label="Library hours and contact"></div>
+    <div class="container site-footer__bar">
+      <p class="site-footer__note">City of Malabon University Library</p>
+      <nav class="footer-links" aria-label="Footer">
+        <a href="/about" data-visible="all">About</a>
+        <a href="/help" data-visible="member">Help</a>
+        <a href="/terms" data-visible="all">Terms</a>
+        <a href="/privacy" data-visible="all">Privacy</a>
+      </nav>
+    </div>
+  </footer>
+
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/js/notfound.js?v=mvpv1m64"></script>
+</body>
+</html>
