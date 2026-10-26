@@ -1,0 +1,20 @@
+<!--page {"shell":"app","title":"Catalog","description":"Search the library catalog.","entry":"catalog","access":"member"} -->
+<div class="container" data-page-root>
+  <section class="welcome" id="welcome" hidden></section>
+  <form class="toolbar card px" id="filters" role="search">
+    <div class="field search"><label class="field__label" for="q">Search</label>
+      <svg class="icon"><use href="/assets/icons/icons.svg#search"/></svg>
+      <input class="input" id="q" name="q" type="search" placeholder="Title, author or genre" autocomplete="off"></div>
+    <div class="field"><label class="field__label" for="category">Subject</label><select class="select" id="category" name="category"><option value="">All subjects</option></select></div>
+    <div class="field"><label class="field__label" for="availability">Availability</label>
+      <select class="select" id="availability" name="availability">
+        <option value="all">All books</option><option value="available">Free now</option><option value="unavailable">All out</option>
+      </select></div>
+    <div class="field"><label class="field__label" for="size">Per page</label>
+      <select class="select" id="size" name="size"><option>12</option><option>24</option><option>48</option></select></div>
+    <button class="btn btn--quiet px" type="button" id="clearFilters"><svg class="icon"><use href="/assets/icons/icons.svg#refresh"/></svg> Reset</button>
+  </form>
+  <p class="result-count" id="resultCount" aria-live="polite"></p>
+  <div class="grid grid--auto grid--wide" id="results"></div>
+  <div id="pager"></div>
+</div>

@@ -1,0 +1,180 @@
+import { allBooks, archiveBook, deleteBook, saveBook, setCopies, uploadPicture, type BookInput } from "../api/staff";
+import { loansByStatus } from "../api/loans";
+import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
+import { friendly } from "../core/errors";
+import { isAdmin } from "../core/session";
+import { confirmBox, openModal } from "../core/modal";
+import { fail, ok } from "../core/toast";
+import { cover, empty, field, loading } from "../ui/components";
+import type { Book } from "../types";
+import type { PanelTab } from "./tab";
+
+const MAX_ROWS = 60;
+type Sort = "title" | "category" | "copies" | "newest";
+
+export const books: PanelTab = {
+  id: "books",
+  label: "Books",
+  icon: "book",
+  async render(root, query = "") {
+    let all: Book[] = [];
+    let onLoan = new Map<string, number>();
+    let term = query;
+    let category = "";
+    let sort: Sort = "title";
+    let viewMode: "table" | "covers" = "table";
+
+    const inUse = (b: Book) => onLoan.get(b.id) ?? 0;
+    const bar = (b: Book) => html`<span class="copies" title="${b.copies - inUse(b)} on the shelf, ${inUse(b)} on loan"><span class="copies__bar"><i style="--w:${b.copies ? Math.round((inUse(b) / b.copies) * 100) : 0}%"></i></span><small>${b.copies - inUse(b)} / ${b.copies}</small></span>`;
+
+    const draw = () => {
+      const active = all.filter((b) => !b.archived);
+      const tiles = root.querySelector<HTMLElement>("#bookTiles")!;
+      mount(tiles, html`
+        <div class="tile"><span class="tile__label">Titles</span><span class="tile__value">${active.length}</span></div>
+        <div class="tile"><span class="tile__label">On the shelf</span><span class="tile__value">${active.reduce((s, b) => s + Math.max(b.copies - inUse(b), 0), 0)}</span></div>
+        <div class="tile"><span class="tile__label">Fully borrowed</span><span class="tile__value">${active.filter((b) => b.copies > 0 && inUse(b) >= b.copies).length}</span></div>
+        <div class="tile"><span class="tile__label">Missing cover</span><span class="tile__value">${active.filter((b) => !b.cover_url).length}</span></div>`);
+      const needle = term.toLowerCase();
+      let rows = all.filter((b) => (!needle || `${b.title} ${b.author} ${b.id} ${b.category}`.toLowerCase().includes(needle)) && (!category || b.category === category));
+      rows = [...rows].sort((a, b) => sort === "title" ? a.title.localeCompare(b.title) : sort === "category" ? a.category.localeCompare(b.category) || a.title.localeCompare(b.title) : sort === "copies" ? b.copies - a.copies : String((b as Book & { created_at?: string }).created_at ?? "").localeCompare(String((a as Book & { created_at?: string }).created_at ?? "")));
+      const body = root.querySelector<HTMLElement>("[data-body]")!;
+      if (!rows.length) { mount(body, empty("No books", "Add the first one or change the search.", "book")); return; }
+      const shown = rows.slice(0, MAX_ROWS);
+      mount(body, viewMode === "table"
+        ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Book</th><th>Subject</th><th>Copies</th><th></th></tr></thead><tbody>
+          ${shown.map((b) => html`<tr>
+            <td><span class="table__title">${b.title}</span> ${b.archived ? html`<span class="badge">archived</span>` : ""}<br><span class="table__sub">${b.id} · ${b.author}</span></td>
+            <td>${b.category}</td><td>${bar(b)}</td>
+            <td><div class="table__actions">
+              <button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")} Edit</button>
+              <button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")} ${b.archived ? "Restore" : "Archive"}</button>
+              ${isAdmin() ? html`<button class="btn btn--sm btn--danger" data-action="delete" data-id="${b.id}" aria-label="Delete">${icon("trash")}</button>` : ""}</div></td></tr>`)}</tbody></table></div>`
+        : html`<div class="cover-grid">${shown.map((b) => html`<article class="cover-tile">${cover(b)}<strong>${b.title}</strong><small>${b.author}</small>${bar(b)}
+            <div class="cluster"><button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")}</button><button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")}</button></div></article>`)}</div>`);
+      if (rows.length > MAX_ROWS) body.append(Object.assign(document.createElement("p"), { className: "result-count", textContent: `Showing ${MAX_ROWS} of ${rows.length}. Search to narrow it down.` }));
+    };
+
+    const reload = async () => {
+      const [list, loans] = await Promise.all([allBooks(), loansByStatus(["borrowed"], 5000)]);
+      all = list;
+      onLoan = new Map();
+      for (const l of loans) onLoan.set(l.book_id, (onLoan.get(l.book_id) ?? 0) + 1);
+      const cats = [...new Set(all.map((b) => b.category).filter(Boolean))].sort();
+      const select = root.querySelector<HTMLSelectElement>("#bookCategory")!;
+      select.replaceChildren(new Option("All subjects", ""), ...cats.map((c) => new Option(c, c)));
+      select.value = category;
+      draw();
+    };
+    const attempt = async (work: () => Promise<void>, done: string) => {
+      try { await work(); ok(done); await reload(); } catch (error) { fail(friendly(error)); }
+    };
+
+    // ---- add / edit: suggestions from what already exists, a duplicate warning, a copies counter that cannot go below what is on loan
+    const editor = (book: Book | null) => {
+      const unique = (pick: (b: Book) => string) => [...new Set(all.map(pick).filter(Boolean))].sort();
+      const modal = openModal(book ? "Edit book" : "Add a book", html`<form class="form" id="bookForm" novalidate>
+        ${field("id", "Book ID", { value: book?.id ?? "", required: true, hint: book ? "The ID cannot change." : "Short and unique, for example bk-101.", attrs: book ? "readonly" : "" })}
+        ${field("title", "Title", { value: book?.title ?? "", required: true })}
+        <div class="alert alert--warning px px--warning" id="dupWarning" hidden>${icon("info")}<span>A book with this title and author already exists.</span></div>
+        <div class="form__row">
+          <div class="field" data-field="author"><label class="field__label" for="f-author">Author</label><input class="input" id="f-author" name="author" list="authorList" value="${book?.author ?? ""}"><datalist id="authorList">${unique((b) => b.author).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
+          <div class="field" data-field="category"><label class="field__label" for="f-category">Subject</label><input class="input" id="f-category" name="category" list="categoryList" value="${book?.category ?? ""}"><datalist id="categoryList">${unique((b) => b.category).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
+        </div>
+        <div class="form__row">${field("genre", "Genre", { value: book?.genre ?? "" })}${field("publisher", "Publisher", { value: book?.publisher ?? "" })}</div>
+        <div class="form__row">${field("published", "First published", { value: book?.published ?? "" })}${field("language", "Language", { value: book?.language ?? "English" })}</div>
+        <div class="form__row">
+          <div class="field" data-field="shelf"><label class="field__label" for="f-shelf">Shelf</label><input class="input" id="f-shelf" name="shelf" list="shelfList" value="${book?.shelf ?? "Main Library"}"><datalist id="shelfList">${unique((b) => b.shelf).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
+          <div class="field" data-field="copies"><label class="field__label" for="f-copies">Copies</label>
+            <div class="stepper"><button class="btn btn--sm btn--quiet" type="button" data-step="-1" aria-label="One fewer">-</button><input class="input" id="f-copies" name="copies" type="number" min="${book ? inUse(book) : 0}" value="${book?.copies ?? 3}"><button class="btn btn--sm btn--quiet" type="button" data-step="1" aria-label="One more">+</button></div>
+            <span class="field__hint">${book ? `${inUse(book)} on loan right now, so it cannot go below that.` : ""}</span></div>
+        </div>
+        <div class="field" id="reasonField" hidden><label class="field__label" for="f-reason">Why are the copies changing?</label><input class="input" id="f-reason" name="reason" placeholder="For example: 2 new copies donated"></div>
+        <div class="field"><label class="field__label" for="f-synopsis">Summary</label><textarea class="textarea" id="f-synopsis" name="synopsis">${book?.synopsis ?? ""}</textarea></div>
+        <div class="field"><span class="field__label">Cover picture</span>
+          <label class="file-drop" id="coverDrop" for="coverFile">${icon("image", "icon--lg")}<span id="coverName">Drag a picture here or click to choose (JPG, PNG or WEBP)</span></label>
+          <input class="visually-hidden" type="file" id="coverFile" accept="image/png,image/jpeg,image/webp">
+          <input class="input" id="f-cover" name="cover_url" value="${book?.cover_url ?? ""}" placeholder="...or paste a picture link"></div>
+      </form>`, {
+        wide: true,
+        footer: html`<button class="btn btn--quiet" type="button" data-close>Cancel</button>${book ? "" : html`<button class="btn btn--secondary" type="button" data-save="again">Save and add another</button>`}<button class="btn" type="button" data-save="close">Save</button>`,
+      });
+      const formEl = modal.root.querySelector<HTMLFormElement>("#bookForm")!;
+      const $ = <T extends HTMLElement>(sel: string) => formEl.querySelector<T>(sel)!;
+      const copies = $<HTMLInputElement>("#f-copies");
+      const dup = () => {
+        const t = ($<HTMLInputElement>("[name=title]").value).trim().toLowerCase();
+        const a = $<HTMLInputElement>("[name=author]").value.trim().toLowerCase();
+        $("#dupWarning").hidden = !(t && all.some((b) => b.id !== book?.id && b.title.toLowerCase() === t && b.author.toLowerCase() === a));
+      };
+      formEl.addEventListener("input", dup);
+      const reason = () => { $("#reasonField").hidden = !book || Number(copies.value) === book.copies; };
+      copies.addEventListener("input", reason);
+      formEl.querySelectorAll<HTMLElement>("[data-step]").forEach((b) => b.addEventListener("click", () => {
+        copies.value = String(Math.max(Number(copies.min) || 0, (Number(copies.value) || 0) + Number(b.dataset.step)));
+        reason();
+      }));
+      const fileInput = $<HTMLInputElement>("#coverFile");
+      const drop = $("#coverDrop");
+      const pick = (file: File | undefined) => {
+        if (!file) return;
+        if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return fail("Please choose a JPG, PNG or WEBP picture.");
+        const transfer = new DataTransfer(); transfer.items.add(file); fileInput.files = transfer.files;
+        $("#coverName").textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+      };
+      fileInput.addEventListener("change", () => pick(fileInput.files?.[0]));
+      for (const ev of ["dragenter", "dragover"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("is-over"); });
+      for (const ev of ["dragleave", "drop"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("is-over"); });
+      drop.addEventListener("drop", (e) => pick((e as DragEvent).dataTransfer?.files?.[0]));
+
+      modal.root.querySelectorAll<HTMLElement>("[data-save]").forEach((button) => button.addEventListener("click", async () => {
+        const d = formData(formEl);
+        if (!d.id || !d.title) return fail("A book needs an ID and a title.");
+        if (!book && all.some((b) => b.id === d.id)) return fail("That book ID is already used.");
+        const wanted = Number(d.copies) || 0;
+        if (book && wanted < inUse(book)) return fail(`Copies cannot be lower than the ${inUse(book)} on loan.`);
+        if (book && wanted !== book.copies && !d.reason) return fail("Please say why the copies are changing.");
+        try {
+          const file = fileInput.files?.[0];
+          const cover_url = file ? await uploadPicture("covers", file) : d.cover_url || null;
+          const input: BookInput = {
+            id: d.id, title: d.title, author: d.author ?? "", category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
+            publication_label: book?.publication_label ?? "FIRST PUBLISHED", publisher: d.publisher ?? "", language: d.language || "English",
+            synopsis: d.synopsis ?? "", copies: wanted, shelf: d.shelf || "Main Library", cover_url,
+          };
+          if (book && wanted !== book.copies) {
+            await saveBook({ ...input, copies: book.copies }, false);
+            await setCopies(book.id, wanted, d.reason);
+          } else await saveBook(input, !book);
+          ok("Saved.");
+          modal.close();
+          await reload();
+          if (button.dataset.save === "again") editor(null);
+        } catch (error) { fail(friendly(error)); }
+      }));
+    };
+
+    mount(root, html`<div class="panel__tab">
+      <div class="panel__heading"><h2>Books</h2><button class="btn" data-action="add">${icon("plus")} Add a book</button></div>
+      <div class="tile-grid" id="bookTiles"></div>
+      <div class="toolbar toolbar--wide px px--soft">
+        <div class="field search"><label class="visually-hidden" for="bookSearch">Search books</label>${icon("search")}<input class="input" id="bookSearch" type="search" placeholder="Title, author, ID or subject" value="${term}"></div>
+        <div class="field"><label class="field__label" for="bookCategory">Subject</label><select class="select" id="bookCategory"></select></div>
+        <div class="field"><label class="field__label" for="bookSort">Sort by</label><select class="select" id="bookSort"><option value="title">Title</option><option value="category">Subject</option><option value="copies">Most copies</option><option value="newest">Newest</option></select></div>
+        <div class="seg" role="group" aria-label="View as"><button class="seg__btn" type="button" data-action="mode" data-mode="table" aria-pressed="true">Table</button><button class="seg__btn" type="button" data-action="mode" data-mode="covers" aria-pressed="false">Covers</button></div>
+      </div>
+      <div class="card px card--flush" data-body>${loading("Loading books")}</div></div>`);
+    root.querySelector("#bookSearch")!.addEventListener("input", debounce((e) => { term = (e.target as HTMLInputElement).value.trim(); draw(); }, 200));
+    root.querySelector("#bookCategory")!.addEventListener("change", (e) => { category = (e.target as HTMLSelectElement).value; draw(); });
+    root.querySelector("#bookSort")!.addEventListener("change", (e) => { sort = (e.target as HTMLSelectElement).value as Sort; draw(); });
+    actions(root, {
+      add: () => editor(null),
+      edit: (el) => editor(all.find((b) => b.id === el.dataset.id) ?? null),
+      mode: (el) => { viewMode = el.dataset.mode as typeof viewMode; root.querySelectorAll<HTMLElement>("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); draw(); },
+      archive: (el) => { const b = all.find((x) => x.id === el.dataset.id)!; return attempt(() => archiveBook(b.id, !b.archived), b.archived ? "Restored." : "Archived. Its history is kept."); },
+      delete: async (el) => { const b = all.find((x) => x.id === el.dataset.id)!; if (await confirmBox("Delete this book?", `"${b.title}" and its loan history will be removed for good.`, "Delete", true)) await attempt(() => deleteBook(b.id), "Deleted."); },
+    });
+    void raw;
+    await reload();
+  },
+};

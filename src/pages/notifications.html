@@ -1,0 +1,12 @@
+<!--page {"shell":"app","title":"Notifications","description":"Everything the library told you.","entry":"notifications","access":"member"} -->
+<div class="container container--narrow" data-page-root>
+  <div class="page-title">
+    <div><h1>Notifications</h1><p class="page-title__sub" id="noticeSummary"></p></div>
+    <button class="btn btn--secondary" type="button" id="markAll">Mark all as read</button>
+  </div>
+  <div class="tabs" role="tablist" id="noticeTabs">
+    <button class="tab" role="tab" type="button" data-action="filter" data-filter="all">All</button>
+    <button class="tab" role="tab" type="button" data-action="filter" data-filter="unread">Unread <span class="tab__count" id="unreadCount">0</span></button>
+  </div>
+  <div id="noticeList"></div>
+</div>
