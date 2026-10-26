@@ -1,0 +1,6 @@
+[
+  { "label": "About", "href": "/about" },
+  { "label": "Help", "href": "/help", "visible": "member" },
+  { "label": "Terms", "href": "/terms" },
+  { "label": "Privacy", "href": "/privacy" }
+]
