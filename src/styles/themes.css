@@ -1,0 +1,194 @@
+/* Colour themes. Components only use the semantic names below, so a new theme is one block here.
+   Library Blue (default) takes its colours from the crest: deep blue and gold. */
+:root,
+:root[data-theme="blue"] {
+  color-scheme: light;
+  --page: #eef3fb;
+  --surface: #ffffff;
+  --surface-2: #f5f8fd;
+  --surface-3: #e6edf8;
+  --line: #d3dcec;
+  --line-strong: #a7b7d6;
+  --text: #1d2b4a;
+  --text-soft: #5a6a8a;
+  --ink: #0f1f4d;
+  --shadow: rgba(15, 31, 77, 0.14);
+  --overlay: rgba(9, 18, 46, 0.62);
+
+  --primary: #0a2e9c;
+  --primary-hover: #0b3ab8;
+  --primary-edge: #061c63;
+  --on-primary: #ffffff;
+  --accent: #f5a800;
+  --accent-soft: #fff1cc;
+  --on-accent: #3a2800;
+  --tint: #dfe8fb;
+
+  --sidebar-bg: #0b1f5c;
+  --sidebar-hi: #17338a;
+  --sidebar-text: #c9d7fb;
+  --sidebar-strong: #ffffff;
+  --link: #0a2e9c;
+  --focus: #f5a800;
+  --selection: #ffe3a1;
+
+  --success: #17734f;
+  --success-bg: #daf2e6;
+  --danger: #b3314a;
+  --danger-bg: #fbe0e5;
+  --warning: #8a5a00;
+  --warning-bg: #fdeab9;
+  --info: #0a2e9c;
+  --info-bg: #dfe8fb;
+
+  --field-bg: #ffffff;
+  --field-edge: #b4c2de;
+  --placeholder: #8393b3;
+  --disabled-bg: #e9eef7;
+  --disabled-text: #8a98b5;
+
+  --scene-sky-1: #2f66b8;
+  --scene-sky-2: #5f95d8;
+  --scene-sky-3: #a4c8f0;
+  --scene-sky-4: #e3effc;
+  --scene-sun: #ffe9a6;
+  --scene-sun-halo: #fff3cf;
+  --scene-cloud: #ffffff;
+  --scene-cloud-shade: #c3d6f0;
+  --scene-hill-1: #7fa6d6;
+  --scene-hill-2: #6d9fc0;
+  --scene-hill-3: #5f9a8a;
+  --scene-hill-4: #4c8470;
+  --scene-house: #e8eef8;
+  --scene-roof: #0a2e9c;
+  --scene-window: #f5a800;
+  --scene-star: #ffffff;
+}
+
+:root[data-theme="cozy"] {
+  color-scheme: light;
+  --page: #f6efe2;
+  --surface: #fffaf0;
+  --surface-2: #faf2e1;
+  --surface-3: #efe3cb;
+  --line: #e3d6ba;
+  --line-strong: #c6b48f;
+  --text: #4b3e50;
+  --text-soft: #7a6a7e;
+  --ink: #33283a;
+  --shadow: rgba(51, 40, 58, 0.16);
+  --overlay: rgba(43, 35, 51, 0.62);
+
+  --primary: #6a5170;
+  --primary-hover: #7b6082;
+  --primary-edge: #493650;
+  --on-primary: #fff7e8;
+  --accent: #e0a54a;
+  --accent-soft: #fbecc8;
+  --on-accent: #3b2a0c;
+  --tint: #ece3ef;
+
+  --sidebar-bg: #4a3752;
+  --sidebar-hi: #614a6b;
+  --sidebar-text: #e6d7ea;
+  --sidebar-strong: #fff7e8;
+  --link: #6a5170;
+  --focus: #e0a54a;
+  --selection: #d5e2c6;
+
+  --success: #55774f;
+  --success-bg: #e4eed6;
+  --danger: #a0525f;
+  --danger-bg: #f6dcd8;
+  --warning: #8a6420;
+  --warning-bg: #fbecc4;
+  --info: #5d5b8a;
+  --info-bg: #e4e2f2;
+
+  --field-bg: #fffdf6;
+  --field-edge: #d3c3a2;
+  --placeholder: #9b8a96;
+  --disabled-bg: #ece5d8;
+  --disabled-text: #a99aa8;
+
+  --scene-sky-1: #9fb7d6;
+  --scene-sky-2: #cfd2e3;
+  --scene-sky-3: #f2d9c8;
+  --scene-sky-4: #fbe7bf;
+  --scene-sun: #fff1cf;
+  --scene-sun-halo: #fbe0c0;
+  --scene-cloud: #fffaf0;
+  --scene-cloud-shade: #e6d9e0;
+  --scene-hill-1: #a9c1b4;
+  --scene-hill-2: #94b387;
+  --scene-hill-3: #7ea375;
+  --scene-hill-4: #6d9168;
+  --scene-house: #c9b0a4;
+  --scene-roof: #8e6a66;
+  --scene-window: #f7d27a;
+  --scene-star: #fff3cf;
+}
+
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --page: #151019;
+  --surface: #211a2b;
+  --surface-2: #2a2136;
+  --surface-3: #342a42;
+  --line: #3b3049;
+  --line-strong: #5a4a70;
+  --text: #f1e6d4;
+  --text-soft: #b9a9c0;
+  --ink: #fbf1df;
+  --shadow: rgba(0, 0, 0, 0.45);
+  --overlay: rgba(6, 4, 10, 0.75);
+
+  --primary: #e0b060;
+  --primary-hover: #efc176;
+  --primary-edge: #a97a2e;
+  --on-primary: #2a1e0a;
+  --accent: #9b78c8;
+  --accent-soft: #3a2d52;
+  --on-accent: #ffffff;
+  --tint: #3a2f4c;
+
+  --sidebar-bg: #0d0911;
+  --sidebar-hi: #251c31;
+  --sidebar-text: #bfb0c6;
+  --sidebar-strong: #f1e6d4;
+  --link: #f0c47a;
+  --focus: #f0c47a;
+  --selection: #5d5483;
+
+  --success: #8fd0a8;
+  --success-bg: #20382a;
+  --danger: #f0a0ac;
+  --danger-bg: #432430;
+  --warning: #f4cf8a;
+  --warning-bg: #45361a;
+  --info: #b8b0ee;
+  --info-bg: #2c2750;
+
+  --field-bg: #1a1422;
+  --field-edge: #55456a;
+  --placeholder: #8f7f9a;
+  --disabled-bg: #2a2133;
+  --disabled-text: #7b6b85;
+
+  --scene-sky-1: #1a1433;
+  --scene-sky-2: #2e2452;
+  --scene-sky-3: #5b3c6e;
+  --scene-sky-4: #a96a7e;
+  --scene-sun: #f6e6b8;
+  --scene-sun-halo: #c98a8a;
+  --scene-cloud: #5d5483;
+  --scene-cloud-shade: #403863;
+  --scene-hill-1: #3a3060;
+  --scene-hill-2: #2f2850;
+  --scene-hill-3: #262040;
+  --scene-hill-4: #1d1833;
+  --scene-house: #8c7a8c;
+  --scene-roof: #5b3c4e;
+  --scene-window: #f6d27a;
+  --scene-star: #fff3cf;
+}
