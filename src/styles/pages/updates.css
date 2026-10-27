@@ -1,0 +1,50 @@
+/* Library updates: a pinned latest note, then a month-by-month timeline of date-stamped cards. */
+.updates { max-width: 62rem; }
+.updates-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-4); margin-bottom: var(--space-6); }
+.updates-head h1 { margin: 0; }
+.updates-search { position: relative; display: block; width: min(100%, 18rem); }
+.updates-search .icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--text-soft); pointer-events: none; }
+.updates-search .input { padding-left: 2.5rem; }
+
+/* the pinned latest update */
+.update-hero { display: grid; grid-template-columns: auto 1fr; gap: var(--space-6); align-items: start; padding: var(--space-6); margin-bottom: var(--space-7); background: linear-gradient(135deg, var(--tint), var(--surface) 55%); }
+.update-hero__body { display: grid; gap: var(--space-3); min-width: 0; }
+.update-hero h2 { margin: 0; font-size: clamp(1.4rem, 3.2vw, 2rem); line-height: 1.25; text-wrap: balance; }
+.update-hero p { margin: 0; line-height: 1.75; white-space: pre-line; }
+.update-hero .date-stamp { width: 6rem; }
+.update-hero .date-stamp__day { font-size: 2.6rem; }
+.update-tags { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.update-tag { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0.2rem 0.7rem; border-radius: 999px; background: var(--surface); color: var(--primary); border: 1px solid var(--line); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.update-tag--new { background: var(--accent); color: var(--on-accent); border-color: transparent; }
+.update-meta { display: inline-flex; align-items: center; gap: var(--space-1); color: var(--text-soft); font-size: var(--fs-sm); }
+
+/* the timeline */
+.update-month { margin-bottom: var(--space-7); }
+.update-month__title { display: flex; align-items: center; gap: var(--space-3); margin: 0 0 var(--space-5); font-size: var(--fs-md, 1.1rem); color: var(--ink); }
+.update-month__title::after { content: ""; flex: 1; border-top: 3px dotted color-mix(in srgb, var(--primary) 30%, transparent); }
+.update-list { position: relative; display: grid; gap: var(--space-5); margin: 0; padding: 0; list-style: none; }
+.update-list::before { content: ""; position: absolute; top: 1rem; bottom: 1rem; left: 2rem; border-left: 3px dotted color-mix(in srgb, var(--primary) 28%, transparent); }
+.update { position: relative; display: grid; grid-template-columns: 4.4rem 1fr; gap: var(--space-5); align-items: start; }
+.update .date-stamp--sm { position: relative; z-index: 1; width: 4.4rem; transform: rotate(-3deg); }
+.date-stamp--sm .date-stamp__day { font-size: 1.5rem; }
+.update__card { display: grid; gap: var(--space-2); padding: var(--space-5); transition: transform var(--dur-2) var(--ease-soft), box-shadow var(--dur-2) var(--ease-soft), border-color var(--dur-2) var(--ease-soft); }
+.update__top { display: flex; align-items: start; justify-content: space-between; gap: var(--space-3); }
+.update__top h3 { margin: 0; font-size: 1.15rem; line-height: 1.3; text-wrap: balance; }
+.update__text { margin: 0; line-height: 1.7; white-space: pre-line; overflow-wrap: anywhere; }
+.update__text.is-clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.update__foot { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-top: var(--space-1); }
+@media (hover: hover) {
+  .update:hover .update__card { transform: translateY(-3px); border-color: var(--accent); box-shadow: 0 14px 26px -16px var(--shadow); }
+  .update:hover .date-stamp--sm { transform: rotate(0deg); transition: transform var(--dur-3) var(--ease-bounce); }
+}
+
+/* phones: the stamp sits above each card and the dotted line goes away */
+@media (max-width: 40rem) {
+  .update-hero { grid-template-columns: 1fr; gap: var(--space-4); padding: var(--space-5); }
+  .update-hero .date-stamp { width: 5rem; }
+  .update-hero .date-stamp__day { font-size: 2.1rem; }
+  .update-list::before { display: none; }
+  .update { grid-template-columns: 1fr; gap: var(--space-3); }
+  .update .date-stamp--sm { width: 4.4rem; }
+  .update__card { padding: var(--space-4); }
+}

@@ -1,0 +1,93 @@
+<!--page {"title":"About the game","description":"A tour of the CMU library game: what you can do inside, the controls and how it connects to your library account.","entry":"game","access":"all"} -->
+<div class="container game-about" data-page-root>
+  <header class="game-about__intro" data-reveal>
+    <span class="eyebrow">The game</span>
+    <h1>Walk into the library</h1>
+    <p class="game-about__lead">A 3D version of our library that you explore with the same account you use here. Wander the shelves, chat with friends, play chess at the computers and borrow books without leaving the room.</p>
+    <div class="cluster">
+      <a class="btn btn--lg btn--accent" href="/register" data-visible="guest">Join and play</a>
+      <a class="btn btn--lg btn--quiet" href="/login" data-visible="guest">Sign in</a>
+      <a class="btn btn--lg btn--accent" href="/arcade" data-visible="member"><svg class="icon"><use href="/assets/icons/icons.svg#game"/></svg> Enter the game</a>
+    </div>
+  </header>
+
+  <!-- The small slots show an empty frame for now: to put a real picture in one, replace its frame image with your own file from public/assets/game. -->
+  <figure class="shot shot--photo" data-reveal data-slot="game-main-screenshot">
+    <div class="shot__frame"><img src="/assets/game/hero.webp" width="1500" height="1000" alt="Scenes from the CMU Library Explorer game: the music player, the librarian asking if you are looking for a good book, and the computer room." decoding="async"></div>
+  </figure>
+
+  <section class="section" aria-labelledby="doTitle">
+    <div class="section__head"><div><span class="eyebrow">Inside the game</span><h2 id="doTitle">What you can do</h2></div></div>
+    <div class="feature-grid">
+      <article class="feature card px" data-reveal data-slot="game-explore">
+        <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
+        <h3>Walk and explore</h3><p class="text-soft">Roam the reading rooms and shelves in first person. Climb, jump and look around at your own pace.</p>
+      </article>
+      <article class="feature card px" data-reveal data-slot="game-chat">
+        <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
+        <h3>Chat with others</h3><p class="text-soft">Talk to the people in the library. Every name floats above their head with a label: Student, Staff or Admin.</p>
+      </article>
+      <article class="feature card px" data-reveal data-slot="game-chess">
+        <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
+        <h3>Play chess</h3><p class="text-soft">Sit at a computer and play the computer, or open an online room and share its code with a friend.</p>
+      </article>
+      <article class="feature card px" data-reveal data-slot="game-borrow">
+        <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
+        <h3>Borrow books</h3><p class="text-soft">Pick a book from a shelf. The request is reserved on the website too, and a QR code is emailed to you for pickup.</p>
+      </article>
+      <article class="feature card px" data-reveal data-slot="game-cat">
+        <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
+        <h3>Meet the cat</h3><p class="text-soft">Somebody has to guard the books. Say hello and give the library cat a pet.</p>
+      </article>
+      <article class="feature card px" data-reveal data-slot="game-more">
+        <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
+        <h3>More on the way</h3><p class="text-soft">New rooms, activities and events are added over time. Watch the library news for updates.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="keysTitle">
+    <div class="section__head"><div><span class="eyebrow">Controls</span><h2 id="keysTitle">How to play</h2></div></div>
+    <div class="controls-grid">
+      <div class="card px controls" data-reveal>
+        <h3>On a computer</h3>
+        <dl class="keys">
+          <dt><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></dt><dd>Walk</dd>
+          <dt>Mouse</dt><dd>Look around</dd>
+          <dt><kbd>Shift</kbd></dt><dd>Run</dd>
+          <dt><kbd>Space</kbd></dt><dd>Jump</dd>
+          <dt><kbd>E</kbd></dt><dd>Use things (books, computers, the cat)</dd>
+          <dt><kbd>T</kbd> or <kbd>Enter</kbd></dt><dd>Chat</dd>
+          <dt><kbd>P</kbd> or <kbd>Tab</kbd></dt><dd>Phone and book bag</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Free the mouse</dd>
+        </dl>
+      </div>
+      <div class="card px controls" data-reveal data-slot="game-phone">
+        <h3>On a phone</h3>
+        <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
+        <p class="text-soft">Use the on-screen joystick to walk and drag anywhere else to look around.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="linkedTitle">
+    <div class="section__head"><div><span class="eyebrow">One library</span><h2 id="linkedTitle">Connected to your account</h2></div></div>
+    <div class="steps">
+      <article class="step card px" data-reveal><span class="step__icon"><svg class="icon"><use href="/assets/icons/icons.svg#user"/></svg></span><h3>One sign-in</h3><p class="text-soft">No second account. Your username is already your player name.</p></article>
+      <article class="step card px" data-reveal><span class="step__icon"><svg class="icon"><use href="/assets/icons/icons.svg#book"/></svg></span><h3>Shared books</h3><p class="text-soft">A book reserved in the game shows as reserved on the website, and the other way round, live.</p></article>
+      <article class="step card px" data-reveal><span class="step__icon"><svg class="icon"><use href="/assets/icons/icons.svg#qr"/></svg></span><h3>QR pickup</h3><p class="text-soft">Borrow in the game, then show your one QR code at the library desk to collect everything.</p></article>
+    </div>
+  </section>
+
+  <section class="game-teaser" data-reveal>
+    <div>
+      <h2>Ready to look around?</h2>
+      <p>Create your library account in a minute and step inside.</p>
+      <div class="cluster">
+        <a class="btn btn--accent" href="/register" data-visible="guest">Join and play</a>
+        <a class="btn btn--accent" href="/arcade" data-visible="member">Enter the game</a>
+      </div>
+    </div>
+    <img class="game-teaser__art" src="/assets/brand/cmu-library-crest.png" alt="" width="140" height="140">
+  </section>
+</div>

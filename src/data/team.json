@@ -1,0 +1,33 @@
+{
+  "_note": "The people behind the library. This list is part of the website itself: it is not stored in the database and no admin can change it from the staff panel. To change it, edit this file and redeploy. Photos are in public/assets/team, the pixel characters shown on hover in public/assets/team/chars.",
+  "people": [
+    {
+      "name": "Dave Joseph Cabilangan",
+      "position": "Founder & Lead Developer",
+      "bio": "AHHFUGEE SIGMA!",
+      "photo": "/assets/team/48c518bec35154eaa0bf42775037057e.png",
+      "character": "/assets/team/chars/dave.gif"
+    },
+    {
+      "name": "Shan Asha Trinidad",
+      "position": "Co-founder",
+      "bio": "Crock-Pot thinker, amateur game developer and artist.",
+      "photo": "/assets/team/134fd8d7ac9cdf70df835ab334735627.png",
+      "character": "/assets/team/chars/shan.gif"
+    },
+    {
+      "name": "Mark Rowin Chester Ong",
+      "position": "Researcher / Data Analysis",
+      "bio": "AHHFUGEE",
+      "photo": "/assets/team/5575e55620c0ed2368f115f15c4951be.png",
+      "character": "/assets/team/chars/mark.gif"
+    },
+    {
+      "name": "Rhylam Castillo",
+      "position": "Researcher",
+      "bio": "AHHFUGEE!",
+      "photo": null,
+      "character": "/assets/team/chars/rhylam.gif"
+    }
+  ]
+}
