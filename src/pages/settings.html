@@ -1,0 +1,26 @@
+<!--page {"shell":"app","title":"Settings","description":"Appearance and account settings.","entry":"settings","access":"member"} -->
+<div class="container container--narrow stack" data-page-root>
+  <div class="page-title"><div><h1>Settings</h1><p class="page-title__sub">Make the library look and feel the way you like.</p></div></div>
+  <section class="card px stack" data-reveal>
+    <div><h2>Appearance</h2><p class="text-soft">Pick a theme. It is remembered on this device.</p></div>
+    <div class="theme-cards">{{themeCards}}</div>
+  </section>
+  <section class="card px" data-reveal id="prefs">
+    <h2>Comfort</h2>
+    <div class="setting-row">
+      <div class="setting-row__text"><strong>Reduce motion</strong><span>Calms the moving clouds, sprites and page animations.</span></div>
+      <label class="switch"><input class="switch__input" type="checkbox" id="reduceMotion" aria-label="Reduce motion"></label>
+    </div>
+  </section>
+  <section class="card px" data-reveal>
+    <h2>Account</h2>
+    <div class="setting-row">
+      <div class="setting-row__text"><strong id="whoName">Your account</strong><span id="whoMail"></span></div>
+      <a class="btn btn--quiet" href="/profile">Edit profile and password</a>
+    </div>
+    <div class="setting-row">
+      <div class="setting-row__text"><strong>Sign out</strong><span>Leave this device. Your books and history stay safe.</span></div>
+      <button class="btn btn--danger" type="button" id="signOut">Sign out</button>
+    </div>
+  </section>
+</div>
