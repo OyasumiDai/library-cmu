@@ -1,4 +1,10 @@
 /* the staff panel: toolbars, search, book covers, people cards, the notice letter */
+/* the landing page's campus backdrop, fixed behind the panel (staff and admin share this page) and washed with the page colour so the cards stay readable */
+body[data-page="panel"] .shell__main { position: relative; isolation: isolate; }
+body[data-page="panel"] .shell__main::before { content: ""; position: fixed; inset: 0 0 0 var(--sidebar-w); z-index: -2; background: url("/assets/brand/campus.webp") center 20% / cover no-repeat; animation: slow-zoom 28s ease-in-out infinite alternate; }
+body[data-page="panel"] .shell__main::after { content: ""; position: fixed; inset: 0 0 0 var(--sidebar-w); z-index: -1; background: color-mix(in srgb, var(--page) 82%, transparent); }
+@media (max-width: 62rem) { body[data-page="panel"] .shell__main::before, body[data-page="panel"] .shell__main::after { inset: 0; } }
+@media (prefers-reduced-motion: reduce) { body[data-page="panel"] .shell__main::before { animation: none; } }
 .text-danger { color: var(--danger); font-weight: 700; }
 .toolbar--wide { grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); align-items: end; margin-bottom: 0; }
 .toolbar--wide .search { grid-column: span 2; }
