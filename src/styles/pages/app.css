@@ -122,8 +122,8 @@ body.auth-page .auth { min-height: 0; }
 .auth-back:hover { background: var(--surface-3); color: var(--ink); transform: translateX(-2px); }
 
 /* a soft pattern of tiny book icons behind sign in, join and the whole landing site; it takes the theme colour and barely shows */
-body.auth-page::before, body.landing::before { content: ""; position: fixed; inset: -26rem; z-index: -1; pointer-events: none; background: var(--primary); opacity: 0.06; -webkit-mask: url("/assets/brand/pattern-books.png") 0 0 / 26rem 26rem repeat; mask: url("/assets/brand/pattern-books.png") 0 0 / 26rem 26rem repeat; animation: pattern-drift 120s linear infinite; will-change: transform; }
-:root[data-theme="night"] body.auth-page::before, :root[data-theme="night"] body.landing::before { opacity: 0.09; }
+body.auth-page::before, body.landing::before, body[data-page="panel"]::before { content: ""; position: fixed; inset: -26rem; z-index: -1; pointer-events: none; background: var(--primary); opacity: 0.06; -webkit-mask: url("/assets/brand/pattern-books.png") 0 0 / 26rem 26rem repeat; mask: url("/assets/brand/pattern-books.png") 0 0 / 26rem 26rem repeat; animation: pattern-drift 120s linear infinite; will-change: transform; }
+:root[data-theme="night"] body.auth-page::before, :root[data-theme="night"] body.landing::before, :root[data-theme="night"] body[data-page="panel"]::before { opacity: 0.09; }
 @keyframes pattern-drift { to { transform: translate(26rem, 26rem); } }
 .auth__card { position: relative; box-shadow: 0 1px 2px var(--shadow), 0 24px 50px -28px var(--shadow); }
 
