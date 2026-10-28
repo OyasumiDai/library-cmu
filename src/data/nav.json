@@ -153,6 +153,12 @@
     "visible": "member",
     "items": [
       {
+        "label": "Landing page",
+        "href": "/",
+        "page": "index",
+        "icon": "home"
+      },
+      {
         "label": "Help",
         "href": "/help",
         "page": "help",

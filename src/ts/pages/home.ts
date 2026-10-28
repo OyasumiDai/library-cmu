@@ -4,6 +4,7 @@ import { boot } from "../core/boot";
 import { html, icon, mount, qs } from "../core/dom";
 import { formatDate } from "../core/format";
 import { typewriter } from "../core/motion";
+import { current, homeFor, isMember } from "../core/session";
 import { isConfigured } from "../core/supabase";
 import { cover, empty, statCard } from "../ui/components";
 import { fillFooter } from "../ui/footer";
@@ -24,6 +25,19 @@ function person(member: TeamMember) {
     </figure>`;
 }
 
+// someone already signed in (back here from the sidebar): the sign-in and join buttons take them to their own library instead
+function welcomeBack(): void {
+  const home = homeFor(current().profile);
+  const label = home.startsWith("/panel") ? "Open the panel" : "Open the library";
+  document.querySelectorAll<HTMLAnchorElement>('a[href="/register"], a[href="/login"], .landing-header__cta a[href="/catalog"]').forEach((link) => {
+    // a pair like "Create an account / Sign in" would become two identical buttons: keep the first
+    const twin = [...(link.parentElement?.children ?? [])].find((el) => el !== link && el instanceof HTMLAnchorElement && el.href === new URL(home, location.href).href);
+    link.href = home;
+    if (twin) link.hidden = true;
+    else if (!link.closest(".landing-header__cta") || link.dataset.visible === "member") link.replaceChildren(label);
+  });
+}
+
 boot(async () => {
   const tagline = qs("#heroTagline");
   typewriter(tagline, tagline.dataset.text ?? "");
@@ -36,8 +50,9 @@ boot(async () => {
     const text = (form.elements.namedItem("q") as HTMLInputElement).value.trim();
     const kind = (form.elements.namedItem("filter") as HTMLSelectElement).value;
     const target = `/catalog?${new URLSearchParams({ ...(text ? { q: text } : {}), ...(kind === "available" ? { availability: "available" } : {}) })}`;
-    location.href = `/login?next=${encodeURIComponent(target)}`;
+    location.href = isMember() ? target : `/login?next=${encodeURIComponent(target)}`;
   });
+  if (isMember()) welcomeBack();
 
   const [books, cats, news, stats, people, settings] = await Promise.all([featuredBooks(4), categories(), announcements(3), publicStats(), team(), publicSettings()]);
   fillFooter(settings);
@@ -53,7 +68,7 @@ boot(async () => {
 
   mount(qs("#homeBooks"), books.length
     ? html`${books.map((b) => html`
-        <a class="book-card card px card--lift" href="/login" data-reveal>
+        <a class="book-card card px card--lift" href="${isMember() ? homeFor(current().profile) : "/login"}" data-reveal>
           ${cover(b)}<h3 class="book-card__title">${b.title}</h3><p class="book-card__author">${b.author}</p>
         </a>`)}`
     : empty("No books yet", "The shelves are being stocked."));
