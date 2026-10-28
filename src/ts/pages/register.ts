@@ -1,4 +1,4 @@
-import { confirmSignupCode, register, resendSignupCode, usernameAvailable } from "../api/auth";
+import { confirmSignupCode, EmailTakenError, register, resendSignupCode, usernameAvailable } from "../api/auth";
 import { courses, publicSettings, registrationInfo, settingText } from "../api/content";
 import { boot } from "../core/boot";
 import { busy, debounce, formData, html, icon, mount, qs } from "../core/dom";
@@ -144,27 +144,36 @@ boot(async () => {
     const strength = checkPassword(pw, data.username ?? "", (data.email ?? "").split("@")[0]);
     if (strength.problems.length) problems.push(["password", strength.problems[0]]);
     if (pw !== confirm.value) problems.push(["confirm", "The passwords do not match."]);
-    if (!data.full_name) problems.push(["full_name", "Enter your full name."]);
-    if (!data.student_id) problems.push(["student_id", "Enter your student ID."]);
+    // every field must be filled in (spaces alone do not count); major only when the chosen course has majors
+    if (!pw) problems.push(["password", "Choose a password."]);
+    if (!confirm.value) problems.push(["confirm", "Type your password again."]);
+    if (!data.full_name?.trim()) problems.push(["full_name", "Enter your full name."]);
+    if (!data.student_id?.trim()) problems.push(["student_id", "Enter your student ID."]);
     if (!data.gender) problems.push(["gender", "Choose one."]);
     const phone = (data.phone ?? "").replace(/[\s-]/g, "");
-    if (phone && !PH_MOBILE.test(phone)) problems.push(["phone", "Use a Philippine mobile number, like 09171234567."]);
+    if (!phone) problems.push(["phone", "Enter your mobile number."]);
+    else if (!PH_MOBILE.test(phone)) problems.push(["phone", "Use a Philippine mobile number, like 09171234567."]);
+    const picked = catalog.find((c) => c.code === data.course);
+    if (!picked) problems.push(["course", "Choose your course."]);
+    else if (picked.majors.length && !data.major) problems.push(["major", "Choose your major."]);
+    if (!data.year_level) problems.push(["year_level", "Choose your year level."]);
     if (!(form.elements.namedItem("terms") as HTMLInputElement).checked) problems.push(["terms", "Please accept the terms to continue."]);
     problems.forEach(([name, message]) => setFieldError(form, name, message));
     if (problems.length) { form.querySelector<HTMLElement>(".is-invalid input, .is-invalid select")?.focus(); return; }
 
-    const chosen = catalog.find((c) => c.code === data.course);
+    const chosen = picked;
     await busy(form.querySelector("button[type=submit]"), async () => {
       try {
-        const ready = await register({
-          email: data.email, password: pw, username: data.username, full_name: data.full_name, student_id: data.student_id,
+        await register({
+          email: data.email.trim().toLowerCase(), password: pw, username: data.username, full_name: data.full_name.trim(), student_id: data.student_id.trim(),
           gender: data.gender, course: chosen?.program ?? "", major: data.major ?? "", college: chosen?.college ?? "",
           year_level: data.year_level ?? "", phone, terms_version: info.terms_version || settingText(settings, "terms_version", "1.0"),
         });
-        if (ready) { location.href = "/catalog"; return; }
         form.hidden = true;
-        showConfirm(data.email);
+        showConfirm(data.email.trim().toLowerCase());
       } catch (error) {
+        // a taken email belongs on the email field, where the person can fix it
+        if (error instanceof EmailTakenError) { setFieldError(form, "email", error.message); qs<HTMLInputElement>("#f-email").focus(); return; }
         fail(friendly(error));
       }
     });

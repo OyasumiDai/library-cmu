@@ -29,20 +29,21 @@
         </div>
         <div class="form__row">
           <div class="field" data-field="gender"><label class="field__label" for="f-gender">Gender *</label><select class="select" id="f-gender" name="gender" required><option value="">Choose...</option><option>Female</option><option>Male</option></select><span class="field__error"></span></div>
-          <div class="field" data-field="phone"><label class="field__label" for="f-phone">Phone</label><input class="input" id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="09XX XXX XXXX"><span class="field__error"></span></div>
+          <div class="field" data-field="phone"><label class="field__label" for="f-phone">Phone *</label><input class="input" id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="09XX XXX XXXX" required><span class="field__error"></span></div>
         </div>
         <div class="form__row">
-          <div class="field" data-field="course"><label class="field__label" for="f-course">Course</label><select class="select" id="f-course" name="course"><option value="">Choose...</option></select><span class="field__error"></span></div>
-          <div class="field" data-field="major"><label class="field__label" for="f-major">Major</label><select class="select" id="f-major" name="major"><option value="">Choose a course first</option></select><span class="field__error"></span></div>
+          <div class="field" data-field="course"><label class="field__label" for="f-course">Course *</label><select class="select" id="f-course" name="course" required><option value="">Choose...</option></select><span class="field__error"></span></div>
+          <div class="field" data-field="major"><label class="field__label" for="f-major">Major *</label><select class="select" id="f-major" name="major"><option value="">Choose a course first</option></select><span class="field__error"></span></div>
         </div>
         <div class="form__row">
-          <div class="field" data-field="year_level"><label class="field__label" for="f-year_level">Year level</label><select class="select" id="f-year_level" name="year_level"><option value="">Choose...</option></select><span class="field__error"></span></div>
+          <div class="field" data-field="year_level"><label class="field__label" for="f-year_level">Year level *</label><select class="select" id="f-year_level" name="year_level" required><option value="">Choose...</option></select><span class="field__error"></span></div>
         </div>
       </fieldset>
       <div class="field" data-field="terms">
         <label class="check"><input class="check__box" type="checkbox" name="terms" required><span>I have read and accept the <a href="/terms" target="_blank" rel="noopener">Terms and Agreement</a> and <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
         <span class="field__error"></span>
       </div>
+      <p class="field__hint">Fields marked * are required. We email you a code, and your account is only ready once you type it in.</p>
       <button class="btn btn--block" type="submit">Create my account</button>
     </form>
     <p class="auth__foot">Already have one? <a href="/login">Sign in</a></p>

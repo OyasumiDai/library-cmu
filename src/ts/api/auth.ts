@@ -38,16 +38,30 @@ export async function usernameAvailable(username: string): Promise<boolean> {
   return data === true;
 }
 
-// returns true when the account is ready at once, false when the email must be confirmed first
-export async function register(input: Registration): Promise<boolean> {
+export class EmailTakenError extends Error {
+  constructor() { super("That email already has an account. Sign in instead, or use Forgot password."); }
+}
+
+// creates the sign-up and emails the code; the account cannot be used until the code is typed in (confirmSignupCode)
+export async function register(input: Registration): Promise<void> {
   const { password, email, ...meta } = input;
   const { data, error } = await db().auth.signUp({
     email,
     password,
     options: { data: meta, emailRedirectTo: `${location.origin}/login` },
   });
-  if (error) throw error;
-  return data.session !== null;
+  if (error) {
+    if (/already registered|already been registered|already exists/i.test(error.message)) throw new EmailTakenError();
+    throw error;
+  }
+  // Supabase hides a confirmed email that is already in use: it answers "ok" but the user has no identities and no code is sent
+  if (data.user && (data.user.identities?.length ?? 0) === 0) throw new EmailTakenError();
+  // a session here means "Confirm email" is off in Supabase: never let an unconfirmed account in
+  if (data.session) {
+    await db().auth.signOut();
+    console.error("Supabase > Authentication > Sign In / Providers > Email: turn on 'Confirm email' so new accounts need the emailed code.");
+    throw new Error("Sign-up is not available right now. Please tell the library.");
+  }
 }
 
 // confirming a new account: the 6-digit code from the email (a link would be used up by mail scanners before the person clicks it)
