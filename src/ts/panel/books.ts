@@ -1,4 +1,4 @@
-import { allBooks, archiveBook, deleteBook, saveBook, setCopies, uploadPicture, type BookInput } from "../api/staff";
+import { allBooks, archiveBook, bookCopies, deleteBook, findIsbns, saveBook, setCopies, setIsbn, uploadPicture, type BookInput } from "../api/staff";
 import { loansByStatus } from "../api/loans";
 import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
@@ -94,6 +94,7 @@ export const books: PanelTab = {
             <div class="stepper"><button class="btn btn--sm btn--quiet" type="button" data-step="-1" aria-label="One fewer">-</button><input class="input" id="f-copies" name="copies" type="number" min="${book ? inUse(book) : 0}" value="${book?.copies ?? 3}"><button class="btn btn--sm btn--quiet" type="button" data-step="1" aria-label="One more">+</button></div>
             <span class="field__hint">${book ? `${inUse(book)} on loan right now, so it cannot go below that.` : ""}</span></div>
         </div>
+        ${book?.isbn ? html`<div class="field"><span class="field__label">Copy codes</span><div class="cluster" id="copyCodes"><span class="table__sub">Loading...</span></div><span class="field__hint">Each copy's own code. Write it inside the book or on its barcode label.</span></div>` : ""}
         <div class="field" id="reasonField" hidden><label class="field__label" for="f-reason">Why are the copies changing?</label><input class="input" id="f-reason" name="reason" placeholder="For example: 2 new copies donated"></div>
         <div class="field"><label class="field__label" for="f-synopsis">Summary</label><textarea class="textarea" id="f-synopsis" name="synopsis">${book?.synopsis ?? ""}</textarea></div>
         <div class="field"><span class="field__label">Cover picture</span>
@@ -107,6 +108,10 @@ export const books: PanelTab = {
       const formEl = modal.root.querySelector<HTMLFormElement>("#bookForm")!;
       const $ = <T extends HTMLElement>(sel: string) => formEl.querySelector<T>(sel)!;
       const copies = $<HTMLInputElement>("#f-copies");
+      const codes = formEl.querySelector<HTMLElement>("#copyCodes");
+      if (book && codes) void bookCopies(book.id)
+        .then((list) => mount(codes, list.length ? html`${list.map((c) => html`<span class="badge">${c.code}</span>`)}` : html`<span class="table__sub">No copies yet.</span>`))
+        .catch(() => mount(codes, html`<span class="table__sub">Run tools/add-isbn.sql to give copies their codes.</span>`));
       const dup = () => {
         const t = ($<HTMLInputElement>("[name=title]").value).trim().toLowerCase();
         const a = $<HTMLInputElement>("[name=author]").value.trim().toLowerCase();
@@ -165,11 +170,63 @@ export const books: PanelTab = {
       }));
     };
 
+    // ---- books without an ISBN: look each up in Open Library, staff check the suggestions, then save them in one go
+    const finder = async () => {
+      const missing = all.filter((b) => !b.isbn);
+      if (!missing.length) return ok("Every book already has an ISBN.");
+      const modal = openModal("Find missing ISBNs", html`<p>Suggestions come from Open Library by title and author. Check each one against the book in your hands (back cover or copyright page) before saving. Leave a row on "Skip" or type the right number yourself.</p>
+        <p class="result-count" id="isbnProgress">Looking up 0 of ${missing.length}...</p>
+        <div class="table-wrap"><table class="table"><thead><tr><th>Book</th><th>ISBN</th></tr></thead><tbody>
+        ${missing.map((b) => html`<tr data-row="${b.id}"><td><span class="table__title">${b.title}</span><br><span class="table__sub">${b.author}</span></td>
+          <td><select class="select" data-pick="${b.id}"><option value="">Looking up...</option></select>
+          <input class="input" data-own="${b.id}" placeholder="or type it" maxlength="17" autocomplete="off"></td></tr>`)}
+        </tbody></table></div>`, {
+        wide: true,
+        footer: html`<button class="btn btn--quiet" type="button" data-close>Cancel</button><button class="btn" type="button" data-save-isbns>Save checked ISBNs</button>`,
+      });
+      const progress = modal.root.querySelector<HTMLElement>("#isbnProgress")!;
+      let done = 0;
+      const queue = [...missing];
+      const worker = async () => {
+        for (let b = queue.shift(); b; b = queue.shift()) {
+          const select = modal.root.querySelector<HTMLSelectElement>(`[data-pick="${b.id}"]`)!;
+          const taken = new Set(all.map((x) => x.isbn).filter(Boolean));
+          const found = await findIsbns(b.title, b.author).catch(() => [] as string[]);
+          const free = found.filter((i) => !taken.has(i));
+          select.replaceChildren(new Option(free.length ? "Skip" : "Nothing found, skip", ""), ...free.map((i) => new Option(formatIsbn(i), i)));
+          if (free.length) select.value = free[0];
+          progress.textContent = ++done === missing.length ? `Done. ${missing.length} looked up.` : `Looking up ${done} of ${missing.length}...`;
+        }
+      };
+      await Promise.all([worker(), worker(), worker(), worker()]);
+      modal.root.querySelector<HTMLElement>("[data-save-isbns]")!.addEventListener("click", async () => {
+        const chosen = new Map<string, string>();
+        for (const b of missing) {
+          const own = normalizeIsbn(modal.root.querySelector<HTMLInputElement>(`[data-own="${b.id}"]`)!.value);
+          const isbn = own || modal.root.querySelector<HTMLSelectElement>(`[data-pick="${b.id}"]`)!.value;
+          if (!isbn) continue;
+          if (!isValidIsbn(isbn)) return fail(`The ISBN typed for "${b.title}" is not valid.`);
+          chosen.set(b.id, isbn);
+        }
+        const values = [...chosen.values()];
+        const clash = values.find((i, n) => values.indexOf(i) !== n || all.some((x) => x.isbn === i));
+        if (clash) return fail(`${formatIsbn(clash)} is picked for more than one book.`);
+        if (!chosen.size) return fail("Nothing to save. Pick or type at least one ISBN.");
+        let saved = 0;
+        try {
+          for (const [id, isbn] of chosen) { await setIsbn(id, isbn); saved++; }
+          ok(`Saved ${saved} ISBN${saved === 1 ? "" : "s"}. Their copies now have their own codes.`);
+          modal.close();
+        } catch (error) { fail(`${saved} saved, then: ${friendly(error)}`); }
+        await reload();
+      });
+    };
+
     mount(root, html`<div class="panel__tab">
-      <div class="panel__heading"><h2>Books</h2><button class="btn" data-action="add">${icon("plus")} Add a book</button></div>
+      <div class="panel__heading"><h2>Books</h2><div class="cluster"><button class="btn btn--secondary" data-action="find-isbns">${icon("search")} Find missing ISBNs</button><button class="btn" data-action="add">${icon("plus")} Add a book</button></div></div>
       <div class="tile-grid" id="bookTiles"></div>
       <div class="toolbar toolbar--wide px px--soft">
-        <div class="field search"><label class="visually-hidden" for="bookSearch">Search books</label>${icon("search")}<input class="input" id="bookSearch" type="search" placeholder="Title, author, ID or subject" value="${term}"></div>
+        <div class="field search"><label class="visually-hidden" for="bookSearch">Search books</label>${icon("search")}<input class="input" id="bookSearch" type="search" placeholder="Title, author, ISBN or subject" value="${term}"></div>
         <div class="field"><label class="field__label" for="bookCategory">Subject</label><select class="select" id="bookCategory"></select></div>
         <div class="field"><label class="field__label" for="bookSort">Sort by</label><select class="select" id="bookSort"><option value="title">Title</option><option value="category">Subject</option><option value="copies">Most copies</option><option value="newest">Newest</option></select></div>
         <div class="seg" role="group" aria-label="View as"><button class="seg__btn" type="button" data-action="mode" data-mode="table" aria-pressed="true">Table</button><button class="seg__btn" type="button" data-action="mode" data-mode="covers" aria-pressed="false">Covers</button></div>
@@ -180,6 +237,7 @@ export const books: PanelTab = {
     root.querySelector("#bookSort")!.addEventListener("change", (e) => { sort = (e.target as HTMLSelectElement).value as Sort; draw(); });
     actions(root, {
       add: () => editor(null),
+      "find-isbns": () => finder(),
       edit: (el) => editor(all.find((b) => b.id === el.dataset.id) ?? null),
       mode: (el) => { viewMode = el.dataset.mode as typeof viewMode; root.querySelectorAll<HTMLElement>("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); draw(); },
       archive: (el) => { const b = all.find((x) => x.id === el.dataset.id)!; return attempt(() => archiveBook(b.id, !b.archived), b.archived ? "Restored." : "Archived. Its history is kept."); },

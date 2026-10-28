@@ -1,5 +1,6 @@
 // Everything only staff or admins can do. The database refuses these for anyone else (row level security),
 // so hiding the buttons is a courtesy, not the lock.
+import { isValidIsbn, normalizeIsbn } from "../core/isbn";
 import { db } from "../core/supabase";
 import type { Announcement, Book, ContentPage, Course, DashboardStats, Profile, Role } from "../types";
 
@@ -27,6 +28,30 @@ export async function saveBook(book: BookInput, isNew: boolean): Promise<void> {
   if (error && /isbn/i.test(error.message) && /column|schema cache/i.test(error.message)) throw new Error("The database has no ISBN column yet. An admin needs to run tools/add-isbn.sql in the Supabase SQL Editor.");
   if (error && /books_isbn_unique|duplicate key/i.test(error.message)) throw new Error("Another book already has that ISBN.");
   fail(error);
+}
+
+export async function setIsbn(id: string, isbn: string): Promise<void> {
+  const { error } = await db().from("books").update({ isbn }).eq("id", id);
+  if (error && /books_isbn_unique|duplicate key/i.test(error.message)) throw new Error("Another book already has that ISBN.");
+  fail(error);
+}
+
+// the code of each physical copy (ISBN-01, ISBN-02...), kept in step with the copies count by the database
+export async function bookCopies(bookId: string): Promise<{ code: string; copy_no: number }[]> {
+  const { data, error } = await db().from("book_copies").select("code,copy_no").eq("book_id", bookId).order("copy_no");
+  fail(error);
+  return (data ?? []) as { code: string; copy_no: number }[];
+}
+
+// Open Library's catalogue, searched by title and author; returns the editions' ISBN-13s that pass the check digit
+export async function findIsbns(title: string, author: string): Promise<string[]> {
+  const params = new URLSearchParams({ title, fields: "isbn", limit: "3" });
+  if (author) params.set("author", author);
+  const reply = await fetch(`https://openlibrary.org/search.json?${params}`);
+  if (!reply.ok) throw new Error("The ISBN lookup is not answering right now. Try again later.");
+  const { docs = [] } = (await reply.json()) as { docs?: { isbn?: string[] }[] };
+  const found = docs.flatMap((d) => d.isbn ?? []).map(normalizeIsbn).filter((i) => i.length === 13 && isValidIsbn(i));
+  return [...new Set(found)];
 }
 
 export async function setCopies(id: string, copies: number, remarks: string): Promise<void> {
