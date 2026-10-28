@@ -7,7 +7,7 @@
 //
 // Environment variables: GMAIL_USER, GMAIL_APP_PASSWORD (required), SITE_URL (optional, e.g. https://library.example.com),
 // SUPABASE_URL, SUPABASE_ANON_KEY (already set for the site)
-import { explainMailError, gmailTransport } from "./_transport.mjs";
+import { explainMailError, gmailTransport, siteUrlFor } from "./_transport.mjs";
 import { buildLoanEmail } from "./_mail.mjs";
 
 const EVENTS = ["requested", "borrowed", "returned", "rejected", "cancelled"];
@@ -46,7 +46,7 @@ export function createHandler({ transport } = {}) {
     if (!claimed.length) return res.status(200).json({ ok: true, skipped: "already_sent_or_no_email" });
     if (new Set(claimed.map((c) => c.student.email)).size > 1) { await unclaim(claimed); return res.status(400).json({ error: "one_student_per_email" }); }
 
-    const siteUrl = (process.env.SITE_URL || `${String(req.headers["x-forwarded-proto"] ?? "https").split(",")[0]}://${req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost"}`).replace(/\/$/, "");
+    const siteUrl = siteUrlFor(req);
     const first = claimed[0];
     try {
       const mail = await buildLoanEmail(claimed, siteUrl);

@@ -160,9 +160,20 @@ export async function sendNotice(input: { kind: "overdue" | "due_soon" | "genera
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` },
     body: JSON.stringify(input),
   });
-  if (reply.status === 503) throw new Error("Email is not set up yet. Add the Gmail settings in Vercel (see the README).");
-  if (reply.status === 403) throw new Error("You do not have permission to send that notice.");
-  if (!reply.ok) throw new Error("The email could not be sent. Please try again.");
+  if (reply.ok) return;
+  // say why: the server names the problem (and, for Gmail failures, a safe reason)
+  const { error, reason } = (await reply.json().catch(() => ({}))) as { error?: string; reason?: string };
+  const why: Record<string, string> = {
+    not_configured: "Email is not set up yet. Add the Gmail settings in Vercel (see the README).",
+    sign_in_required: "Your session ended. Sign in again, then send it.",
+    staff_only: "Only active staff can send notices.",
+    permission_needed: "Sending a notice to a student needs the Student Profiles permission.",
+    student_not_found: "That account could not be found. It may have been removed.",
+    no_email: "That account has no email address saved.",
+    slow_down: "Too many emails in the last minute. Wait a moment and try again.",
+    send_failed: reason ?? "Gmail did not accept the email.",
+  };
+  throw new Error((error && why[error]) || `The email could not be sent (${reply.status}). Please try again.`);
 }
 
 // ---------------------------------------------------------------- pictures

@@ -7,7 +7,7 @@
 //   GMAIL_APP_PASSWORD    a Google "App password" (Google account > Security > 2-Step Verification > App passwords)
 //   LIBRARY_FROM_NAME     optional, default "CMU Library"
 //   SUPABASE_URL, SUPABASE_ANON_KEY   already set for the site
-import { explainMailError, gmailTransport } from "./_transport.mjs";
+import { explainMailError, gmailTransport, siteUrlFor } from "./_transport.mjs";
 import { buildNoticeEmail } from "./_mail.mjs";
 
 const WINDOW_MS = 60_000;
@@ -25,7 +25,7 @@ export function createHandler({ transport } = {}) {
     const mailer = transport ?? gmailTransport();
     if (!mailer || !base || !anon) return res.status(503).json({ error: "not_configured" });
     const fromName = process.env.LIBRARY_FROM_NAME || "CMU Library";
-    const siteUrl = (process.env.SITE_URL || `${String(req.headers["x-forwarded-proto"] ?? "https").split(",")[0]}://${req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost"}`).replace(/\/$/, "");
+    const siteUrl = siteUrlFor(req);
 
     // who is sending? an active staff member or admin
     const token = clean((req.headers.authorization ?? "").replace(/^Bearer\s+/i, ""), 4000);

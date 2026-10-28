@@ -8,6 +8,7 @@
 //   ASSISTANT_WEBHOOK_SECRET   optional: sent as the x-assistant-secret header so the automation can verify the caller
 //   SUPABASE_URL, SUPABASE_ANON_KEY   already set for the site; used to check who is asking
 import { sealToolToken, TOOL_NAMES } from "./_tools.mjs";
+import { siteUrlFor } from "./_transport.mjs";
 
 const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 12;
@@ -86,7 +87,7 @@ export default async function handler(req, res) {
   }
 
   // 5. ask the automation
-  const siteUrl = (process.env.SITE_URL || `${String(req.headers["x-forwarded-proto"] ?? "https").split(",")[0]}://${req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost"}`).replace(/\/$/, "");
+  const siteUrl = siteUrlFor(req);
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {

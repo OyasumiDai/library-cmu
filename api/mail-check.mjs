@@ -3,7 +3,7 @@
 // has the loan-email functions) and, with { send: true }, sends a real branded test email with a QR code to the admin.
 // Settings > Loan emails with QR codes > "Send me a test email" calls this.
 import { buildLoanEmail } from "./_mail.mjs";
-import { explainMailError, gmailTransport, mailEnv } from "./_transport.mjs";
+import { explainMailError, gmailTransport, mailEnv, siteUrlFor } from "./_transport.mjs";
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   const { user, pass } = mailEnv();
   if (!user) problems.push("GMAIL_USER is not set in Vercel.");
   if (!pass) problems.push("GMAIL_APP_PASSWORD is not set in Vercel.");
-  if (!process.env.SITE_URL) problems.push("SITE_URL is not set in Vercel (the QR link falls back to this address).");
+  if (!process.env.SITE_URL) problems.push(`SITE_URL is not set in Vercel. Email links and QR codes point to ${siteUrlFor(req)} for now; set it to the library's real address.`);
 
   // are the database functions there? (site.sql must be run again after updates)
   const probe = await fetch(`${base}/rest/v1/rpc/mail_loan_context_user`, { method: "POST", headers, body: JSON.stringify({ p_loan: 0, p_event: "requested" }) }).catch(() => null);
@@ -42,7 +42,7 @@ export default async function handler(req, res) {
 
   let sent = false;
   if (body.send && mailer && !problems.some((p) => /Gmail|GMAIL/.test(p)) && me.email) {
-    const siteUrl = (process.env.SITE_URL || `${String(req.headers["x-forwarded-proto"] ?? "https").split(",")[0]}://${req.headers["x-forwarded-host"] ?? req.headers.host}`).replace(/\/$/, "");
+    const siteUrl = siteUrlFor(req);
     const book = (title, author, shelf) => ({ title, author, shelf, category: "Sample" });
     const ctx = {
       event: "requested",

@@ -22,3 +22,11 @@ export function explainMailError(error) {
   if (/daily user sending limit|rate/i.test(text)) return "Gmail's daily sending limit was reached.";
   return `Sending failed (${code || "error"}).`;
 }
+
+// the address links in emails point to: SITE_URL when set, else the production domain Vercel provides,
+// never a preview deployment (those sit behind Vercel's login) or whatever host the staff member happened to use
+export function siteUrlFor(req) {
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
+  const fromRequest = `${String(req.headers["x-forwarded-proto"] ?? "https").split(",")[0]}://${req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost"}`;
+  return (process.env.SITE_URL || production || fromRequest).replace(/\/$/, "");
+}
