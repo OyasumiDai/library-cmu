@@ -16,10 +16,15 @@
   <a class="skip-link" href="#main">Skip to the content</a>
   <div class="shell">
     <aside class="sidebar" id="sidebar" aria-label="Menu">
-      <a class="brand" href="/catalog" aria-label="CMU Library">
-        <img class="brand__mark" src="/assets/brand/cmu-library-crest.png" alt="" width="42" height="42">
-        <span class="brand__text"><span class="brand__title">CMU Library</span><span class="brand__sub">Read. Borrow. Explore.</span></span>
-      </a>
+      <div class="sidebar__head">
+        <a class="brand" href="/catalog" aria-label="CMU Library">
+          <img class="brand__mark" src="/assets/brand/cmu-library-crest.png" alt="" width="42" height="42">
+          <span class="brand__text"><span class="brand__title">CMU Library</span><span class="brand__sub">Read. Borrow. Explore.</span></span>
+        </a>
+        <button class="sidebar-fold" id="sidebarFold" type="button" aria-controls="sidebar" aria-expanded="true" aria-label="Collapse the sidebar" title="Collapse the sidebar">
+          <svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-left"/></svg>
+        </button>
+      </div>
       <nav class="sidebar__nav" aria-label="Main">
         {{nav}}
       </nav>
