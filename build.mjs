@@ -38,7 +38,7 @@ const link = (item, current, group) => {
 // the app sidebar: groups of links, each group shown only to the people it is meant for; "fold" groups are dropdowns, open when they hold the current page
 const foldGroup = (group, current, links) => {
   const open = group.items.some((item) => item.page === current && !item.tab) ? " open" : "";
-  return `<details class="nav-group nav-group--fold" data-visible="${group.visible ?? "all"}"${open}><summary class="nav-group__toggle" title="${group.label}"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${group.icon}"/></svg><span>${group.label}</span><svg class="icon nav-group__chevron" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-down"/></svg></summary><div class="nav-group__items">${links}</div></details>`;
+  return `<details class="nav-group nav-group--fold" data-visible="${group.visible ?? "all"}"${open}><summary class="nav-group__toggle" title="${group.label}"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${group.icon}"/></svg><span>${group.label}</span><svg class="icon nav-group__chevron" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-down"/></svg></summary><div class="nav-group__items" data-label="${group.label}">${links}</div></details>`;
 };
 const renderNav = (current) => navGroups.map((group) => {
   const links = group.items.map((item) => link(item, current, group)).join("");

@@ -118,14 +118,52 @@ function initSidebar(): void {
     show(document.documentElement.classList.contains("sidebar-collapsed"));
     fold.addEventListener("click", () => {
       const collapsed = document.documentElement.classList.toggle("sidebar-collapsed");
+      closeFlyouts();
       show(collapsed);
       try { localStorage.setItem("sidebar-collapsed", collapsed ? "1" : "0"); } catch { /* private mode: it just will not be remembered */ }
     });
   }
   scrim.addEventListener("click", () => set(false));
   sidebar.addEventListener("click", (event) => {
-    if ((event.target as Element).closest("a")) set(false);
+    if ((event.target as Element).closest("a")) {
+      set(false);
+      closeFlyouts();
+    }
   });
+  initFlyouts(sidebar);
+}
+
+// collapsed rail: a dropdown's summary opens its links as a menu beside the rail instead of inside it
+const railCollapsed = () => document.documentElement.classList.contains("sidebar-collapsed") && window.matchMedia("(min-width: 62.01rem)").matches;
+function closeFlyouts(): void {
+  document.querySelectorAll<HTMLDetailsElement>(".nav-group--fold[data-flyout]").forEach((group) => {
+    delete group.dataset.flyout;
+    group.open = group.dataset.wasOpen === "true" || !!group.querySelector(".nav-link.is-active");
+  });
+}
+function initFlyouts(sidebar: HTMLElement): void {
+  sidebar.querySelectorAll<HTMLDetailsElement>(".nav-group--fold").forEach((group) => {
+    const summary = group.querySelector<HTMLElement>(".nav-group__toggle");
+    summary?.addEventListener("click", (event) => {
+      if (!railCollapsed()) return;
+      event.preventDefault();
+      const opening = !group.dataset.flyout;
+      closeFlyouts();
+      if (!opening) return;
+      group.dataset.wasOpen = String(group.open);
+      group.style.setProperty("--flyout-top", `${summary.getBoundingClientRect().top}px`);
+      group.dataset.flyout = "true";
+      group.open = true;
+    });
+  });
+  document.addEventListener("click", (event) => {
+    if (!(event.target as Element).closest(".nav-group--fold[data-flyout]")) closeFlyouts();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeFlyouts();
+  });
+  sidebar.addEventListener("scroll", closeFlyouts, { passive: true });
+  window.addEventListener("resize", closeFlyouts);
 }
 
 export function initLayout(): void {
