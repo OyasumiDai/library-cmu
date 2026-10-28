@@ -1,6 +1,6 @@
 [
   {
-    "label": "Manage",
+    "label": "Overview",
     "visible": "staff",
     "items": [
       {
@@ -18,6 +18,60 @@
         "icon": "chart"
       },
       {
+        "label": "Students",
+        "href": "/panel?tab=students",
+        "page": "panel",
+        "tab": "students",
+        "icon": "users",
+        "need": "students"
+      },
+      {
+        "label": "Reports",
+        "href": "/panel?tab=reports",
+        "page": "panel",
+        "tab": "reports",
+        "icon": "download",
+        "need": "reports"
+      }
+    ]
+  },
+  {
+    "label": "Game",
+    "visible": "staff",
+    "fold": true,
+    "icon": "game",
+    "items": [
+      {
+        "label": "Game manage",
+        "href": "/panel?tab=game",
+        "page": "panel",
+        "tab": "game",
+        "icon": "game",
+        "need": "game"
+      },
+      {
+        "label": "Announcements",
+        "href": "/panel?tab=announcements",
+        "page": "panel",
+        "tab": "announcements",
+        "icon": "news"
+      }
+    ]
+  },
+  {
+    "label": "Library",
+    "visible": "staff",
+    "fold": true,
+    "icon": "book",
+    "items": [
+      {
+        "label": "Books",
+        "href": "/panel?tab=books",
+        "page": "panel",
+        "tab": "books",
+        "icon": "book"
+      },
+      {
         "label": "Scan pickup",
         "href": "/pickup",
         "page": "pickup",
@@ -29,29 +83,15 @@
         "page": "panel",
         "tab": "circulation",
         "icon": "shelf"
-      },
-      {
-        "label": "Books",
-        "href": "/panel?tab=books",
-        "page": "panel",
-        "tab": "books",
-        "icon": "book"
-      },
-      {
-        "label": "Announcements",
-        "href": "/panel?tab=announcements",
-        "page": "panel",
-        "tab": "announcements",
-        "icon": "news"
-      },
-      {
-        "label": "Students",
-        "href": "/panel?tab=students",
-        "page": "panel",
-        "tab": "students",
-        "icon": "users",
-        "need": "students"
-      },
+      }
+    ]
+  },
+  {
+    "label": "Administration",
+    "visible": "staff",
+    "fold": true,
+    "icon": "key",
+    "items": [
       {
         "label": "Staff",
         "href": "/panel?tab=staff",
@@ -59,22 +99,6 @@
         "tab": "staff",
         "icon": "user",
         "visible": "admin"
-      },
-      {
-        "label": "Reports",
-        "href": "/panel?tab=reports",
-        "page": "panel",
-        "tab": "reports",
-        "icon": "download",
-        "need": "reports"
-      },
-      {
-        "label": "Game",
-        "href": "/panel?tab=game",
-        "page": "panel",
-        "tab": "game",
-        "icon": "game",
-        "need": "game"
       },
       {
         "label": "Settings",
@@ -96,7 +120,7 @@
   },
   {
     "label": "Library",
-    "visible": "member",
+    "visible": "student",
     "items": [
       {
         "label": "Discover",

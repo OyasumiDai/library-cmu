@@ -53,6 +53,22 @@ body.app { display: block; }
 .nav-link .icon { transition: transform var(--dur-2) var(--ease-bounce); }
 .nav-link:hover .icon { transform: scale(1.15); }
 
+/* dropdown groups: the summary looks like a link, with a chevron that turns when open; the links sit indented under it */
+.nav-group--fold { display: block; }
+.nav-group__toggle {
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
+  color: var(--sidebar-text); font-size: var(--fs-sm); font-weight: 700; cursor: pointer; list-style: none; user-select: none;
+  transition: background-color var(--dur-1) ease, color var(--dur-1) ease;
+}
+.nav-group__toggle::-webkit-details-marker { display: none; }
+.nav-group__toggle:hover { background: var(--sidebar-hi); color: var(--sidebar-strong); }
+.nav-group__chevron { margin-left: auto; opacity: 0.7; transition: transform var(--dur-2) var(--ease-soft); }
+.nav-group--fold[open] > .nav-group__toggle .nav-group__chevron { transform: rotate(180deg); }
+.nav-group--fold:has(.nav-link.is-active) > .nav-group__toggle { color: var(--sidebar-strong); }
+.nav-group__items { display: grid; gap: 2px; margin: 2px 0 0 calc(var(--space-3) + 0.5rem); padding-left: var(--space-2); border-left: 2px solid var(--sidebar-hi); }
+.nav-group--fold[open] > .nav-group__items { animation: fade var(--dur-2) ease both; }
+.sidebar__nav:has(.nav-group--fold) { gap: var(--space-2); }
+
 .topbar {
   position: sticky; top: 0; z-index: var(--z-sticky); display: flex; align-items: center; gap: var(--space-3);
   min-height: var(--topbar-h); padding-inline: var(--gutter);
@@ -91,6 +107,12 @@ body.app { display: block; }
   .sidebar-collapsed .sidebar-fold .icon { transform: rotate(180deg); }
   .sidebar-collapsed .nav-group__label { visibility: hidden; height: 0; margin: 0; }
   .sidebar-collapsed .nav-link { justify-content: center; padding-inline: 0; }
+  /* collapsed dropdowns: the group icon with a small chevron under it; open, its link icons stack in a tinted well */
+  .sidebar-collapsed .nav-group__toggle { position: relative; justify-content: center; padding-inline: 0; padding-bottom: calc(var(--space-2) + 0.35rem); }
+  .sidebar-collapsed .nav-group__toggle > span { display: none; }
+  .sidebar-collapsed .nav-group__chevron { position: absolute; bottom: 0.1rem; left: 50%; width: 0.65rem; height: 0.65rem; margin: 0; transform: translateX(-50%); }
+  .sidebar-collapsed .nav-group--fold[open] > .nav-group__toggle .nav-group__chevron { transform: translateX(-50%) rotate(180deg); }
+  .sidebar-collapsed .nav-group__items { margin: 2px 0 0; padding: 2px; border-left: 0; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--sidebar-hi) 45%, transparent); }
 }
 @media (max-width: 62rem) { .sidebar-fold { display: none; } }
 

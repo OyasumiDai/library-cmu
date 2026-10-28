@@ -50,6 +50,9 @@ button { cursor: pointer; }
 body[data-auth="guest"] [data-visible="member"],
 body[data-auth="member"] [data-visible="guest"],
 body:not([data-staff]) [data-visible="staff"],
+body[data-auth="guest"] [data-visible="student"],
+body[data-staff] [data-visible="student"],
+.nav-group[hidden],
 body:not([data-admin]) [data-visible="admin"] { display: none !important; }
 body:not([data-perms~="students"]) [data-need="students"],
 body:not([data-perms~="reports"]) [data-need="reports"],

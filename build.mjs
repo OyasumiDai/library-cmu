@@ -35,8 +35,16 @@ const link = (item, current, group) => {
   const visible = item.visible ?? group.visible ?? "all";
   return `<a class="nav-link${active}" href="${item.href}" title="${item.label}" data-visible="${visible}"${tab}${aria}><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${item.icon}"/></svg><span>${item.label}</span></a>`;
 };
-// the app sidebar: groups of links, each group shown only to the people it is meant for
-const renderNav = (current) => navGroups.map((group) => `<div class="nav-group" data-visible="${group.visible ?? "all"}"><span class="nav-group__label">${group.label}</span>${group.items.map((item) => link(item, current, group)).join("")}</div>`).join("\n        ");
+// the app sidebar: groups of links, each group shown only to the people it is meant for; "fold" groups are dropdowns, open when they hold the current page
+const foldGroup = (group, current, links) => {
+  const open = group.items.some((item) => item.page === current && !item.tab) ? " open" : "";
+  return `<details class="nav-group nav-group--fold" data-visible="${group.visible ?? "all"}"${open}><summary class="nav-group__toggle" title="${group.label}"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${group.icon}"/></svg><span>${group.label}</span><svg class="icon nav-group__chevron" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-down"/></svg></summary><div class="nav-group__items">${links}</div></details>`;
+};
+const renderNav = (current) => navGroups.map((group) => {
+  const links = group.items.map((item) => link(item, current, group)).join("");
+  if (group.fold) return foldGroup(group, current, links);
+  return `<div class="nav-group" data-visible="${group.visible ?? "all"}"><span class="nav-group__label">${group.label}</span>${links}</div>`;
+}).join("\n        ");
 const renderFooterLinks = () => footerLinks.map((l) => `<a href="${l.href}" data-visible="${l.visible ?? "all"}">${l.label}</a>`).join("\n        ");
 // theme cards for the Settings page: a tiny preview painted by CSS, one per theme in themes.json
 const renderThemeCards = () => themes.map((t) => `<button class="theme-card" type="button" data-theme-choice="${t.id}" aria-pressed="false"><span class="theme-card__preview" aria-hidden="true"><span class="theme-card__side"></span><span class="theme-card__body"><span class="theme-card__line"></span><span class="theme-card__line theme-card__line--accent"></span><span class="theme-card__line"></span></span></span><span class="theme-card__name">${t.label}</span><span class="text-soft">${t.note}</span></button>`).join("");

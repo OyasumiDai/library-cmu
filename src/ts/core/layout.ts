@@ -156,8 +156,10 @@ export function initLayout(): void {
   }
 
   drawWidget();
+  hideEmptyNavGroups();
   onSessionChange(() => {
     drawWidget();
+    hideEmptyNavGroups();
     void refreshNotices();
   });
   void refreshNotices();
@@ -171,6 +173,16 @@ export function markPanelTab(tab: string): void {
     link.classList.toggle("is-active", active);
     if (active) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
+    const group = link.closest<HTMLDetailsElement>("details.nav-group--fold");
+    if (active && group) group.open = true;
+  });
+}
+
+// a dropdown whose links are all hidden for this person (permissions the admin did not grant) is hidden too
+function hideEmptyNavGroups(): void {
+  document.querySelectorAll<HTMLElement>(".nav-group--fold").forEach((group) => {
+    group.hidden = false;
+    group.hidden = [...group.querySelectorAll(".nav-link")].every((link) => getComputedStyle(link).display === "none");
   });
 }
 
