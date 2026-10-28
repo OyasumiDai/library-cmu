@@ -30,17 +30,15 @@ grant select on public.book_copies to anon, authenticated;
 
 create or replace function public.sync_book_copies() returns trigger
 language plpgsql security definer set search_path = public as $$
+declare
+  -- books printed before ISBNs existed (1970) have none; their copies are coded from the book id instead
+  base text := coalesce(new.isbn, new.id);
 begin
-  -- no ISBN yet means no copy codes yet; they appear as soon as one is saved
-  if new.isbn is null then
-    delete from book_copies where book_id = new.id;
-    return new;
-  end if;
   delete from book_copies where book_id = new.id and copy_no > greatest(new.copies, 0);
-  update book_copies set code = new.isbn || '-' || lpad(copy_no::text, 2, '0')
-    where book_id = new.id and code <> new.isbn || '-' || lpad(copy_no::text, 2, '0');
+  update book_copies set code = base || '-' || lpad(copy_no::text, 2, '0')
+    where book_id = new.id and code <> base || '-' || lpad(copy_no::text, 2, '0');
   insert into book_copies (code, book_id, copy_no)
-    select new.isbn || '-' || lpad(n::text, 2, '0'), new.id, n from generate_series(1, greatest(new.copies, 0)) n
+    select base || '-' || lpad(n::text, 2, '0'), new.id, n from generate_series(1, greatest(new.copies, 0)) n
     on conflict (book_id, copy_no) do nothing;
   return new;
 end $$;
@@ -49,8 +47,8 @@ drop trigger if exists books_sync_copies on public.books;
 create trigger books_sync_copies after insert or update of isbn, copies on public.books
   for each row execute function public.sync_book_copies();
 
--- give the books that already have an ISBN their copy codes now
-update public.books set copies = copies where isbn is not null;
+-- give every existing book its copy codes now
+update public.books set copies = copies;
 
 -- ask PostgREST to see the new column and table right away
 notify pgrst, 'reload schema';

@@ -79,7 +79,7 @@ export const books: PanelTab = {
     const editor = (book: Book | null) => {
       const unique = (pick: (b: Book) => string) => [...new Set(all.map(pick).filter(Boolean))].sort();
       const modal = openModal(book ? "Edit book" : "Add a book", html`<form class="form" id="bookForm" novalidate>
-        ${field("isbn", "ISBN", { value: formatIsbn(book?.isbn), required: true, hint: "The 10 or 13 digit number on the back cover or copyright page. Dashes are fine.", placeholder: "978-0306406157", attrs: 'maxlength="17" autocomplete="off"' })}
+        ${field("isbn", "ISBN", { value: formatIsbn(book?.isbn), required: !book || !!book.isbn, hint: "The 10 or 13 digit number on the back cover or copyright page. Dashes are fine.", placeholder: "978-0306406157", attrs: 'maxlength="17" autocomplete="off"' })}
         ${field("title", "Title", { value: book?.title ?? "", required: true })}
         <div class="alert alert--warning px px--warning" id="dupWarning" hidden>${icon("info")}<span>A book with this title and author already exists.</span></div>
         <div class="form__row">
@@ -94,7 +94,7 @@ export const books: PanelTab = {
             <div class="stepper"><button class="btn btn--sm btn--quiet" type="button" data-step="-1" aria-label="One fewer">-</button><input class="input" id="f-copies" name="copies" type="number" min="${book ? inUse(book) : 0}" value="${book?.copies ?? 3}"><button class="btn btn--sm btn--quiet" type="button" data-step="1" aria-label="One more">+</button></div>
             <span class="field__hint">${book ? `${inUse(book)} on loan right now, so it cannot go below that.` : ""}</span></div>
         </div>
-        ${book?.isbn ? html`<div class="field"><span class="field__label">Copy codes</span><div class="cluster" id="copyCodes"><span class="table__sub">Loading...</span></div><span class="field__hint">Each copy's own code. Write it inside the book or on its barcode label.</span></div>` : ""}
+        ${book ? html`<div class="field"><span class="field__label">Copy codes</span><div class="cluster" id="copyCodes"><span class="table__sub">Loading...</span></div><span class="field__hint">Each copy's own code. Write it inside the book or on its barcode label.</span></div>` : ""}
         <div class="field" id="reasonField" hidden><label class="field__label" for="f-reason">Why are the copies changing?</label><input class="input" id="f-reason" name="reason" placeholder="For example: 2 new copies donated"></div>
         <div class="field"><label class="field__label" for="f-synopsis">Summary</label><textarea class="textarea" id="f-synopsis" name="synopsis">${book?.synopsis ?? ""}</textarea></div>
         <div class="field"><span class="field__label">Cover picture</span>
@@ -140,9 +140,10 @@ export const books: PanelTab = {
       modal.root.querySelectorAll<HTMLElement>("[data-save]").forEach((button) => button.addEventListener("click", async () => {
         const d = formData(formEl);
         const isbn = normalizeIsbn(d.isbn ?? "");
-        if (!isbn) return fail("Enter the book's ISBN.");
-        if (!isValidIsbn(isbn)) return fail("That ISBN is not valid. Check the 10 or 13 digits (an ISBN-10 may end in X).");
-        if (all.some((b) => b.id !== book?.id && b.isbn === isbn)) return fail("Another book already has that ISBN.");
+        // a book already on the shelf may predate ISBNs (before 1970); new books always need one
+        if (!isbn && (!book || book.isbn)) return fail("Enter the book's ISBN.");
+        if (isbn && !isValidIsbn(isbn)) return fail("That ISBN is not valid. Check the 10 or 13 digits (an ISBN-10 may end in X).");
+        if (isbn && all.some((b) => b.id !== book?.id && b.isbn === isbn)) return fail("Another book already has that ISBN.");
         if (!d.title) return fail("A book needs a title.");
         // the hidden id that loans and history point to: kept as it is for existing books, made from the ISBN for new ones
         const id = book?.id ?? `isbn-${isbn}`;
@@ -154,7 +155,7 @@ export const books: PanelTab = {
           const file = fileInput.files?.[0];
           const cover_url = file ? await uploadPicture("covers", file) : d.cover_url || null;
           const input: BookInput = {
-            id, isbn, title: d.title, author: d.author ?? "", category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
+            id, isbn: isbn || null, title: d.title, author: d.author ?? "", category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
             publication_label: book?.publication_label ?? "FIRST PUBLISHED", publisher: d.publisher ?? "", language: d.language || "English",
             synopsis: d.synopsis ?? "", copies: wanted, shelf: d.shelf || "Main Library", cover_url,
           };
