@@ -33,7 +33,7 @@ const link = (item, current, group) => {
   const aria = active ? ' aria-current="page"' : "";
   const tab = (item.tab ? ` data-tab="${item.tab}"` : "") + (item.need ? ` data-need="${item.need}"` : "");
   const visible = item.visible ?? group.visible ?? "all";
-  return `<a class="nav-link${active}" href="${item.href}" data-visible="${visible}"${tab}${aria}><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${item.icon}"/></svg><span>${item.label}</span></a>`;
+  return `<a class="nav-link${active}" href="${item.href}" title="${item.label}" data-visible="${visible}"${tab}${aria}><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${item.icon}"/></svg><span>${item.label}</span></a>`;
 };
 // the app sidebar: groups of links, each group shown only to the people it is meant for
 const renderNav = (current) => navGroups.map((group) => `<div class="nav-group" data-visible="${group.visible ?? "all"}"><span class="nav-group__label">${group.label}</span>${group.items.map((item) => link(item, current, group)).join("")}</div>`).join("\n        ");

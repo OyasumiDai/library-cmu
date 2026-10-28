@@ -104,7 +104,33 @@ function initSidebar(): void {
     scrim.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
   };
-  toggle.addEventListener("click", () => set(!sidebar.classList.contains("is-open")));
+  // wide screens: the same button folds the sidebar down to an icon rail, and the choice is remembered
+  const wide = window.matchMedia("(min-width: 62.01rem)");
+  const fold = (collapsed: boolean) => {
+    document.body.classList.toggle("sidebar-collapsed", collapsed);
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.setAttribute("aria-label", collapsed ? "Expand the sidebar" : "Collapse the sidebar");
+  };
+  const stored = (): boolean => { try { return localStorage.getItem("sidebar-collapsed") === "1"; } catch { return false; } };
+  const sync = () => {
+    if (wide.matches) fold(stored());
+    else {
+      document.body.classList.remove("sidebar-collapsed");
+      toggle.setAttribute("aria-label", "Open the menu");
+      set(false);
+    }
+  };
+  sync();
+  wide.addEventListener("change", sync);
+  toggle.addEventListener("click", () => {
+    if (wide.matches) {
+      const next = !document.body.classList.contains("sidebar-collapsed");
+      fold(next);
+      try { localStorage.setItem("sidebar-collapsed", next ? "1" : "0"); } catch { /* private mode: it just will not be remembered */ }
+      return;
+    }
+    set(!sidebar.classList.contains("is-open"));
+  });
   scrim.addEventListener("click", () => set(false));
   sidebar.addEventListener("click", (event) => {
     if ((event.target as Element).closest("a")) set(false);
