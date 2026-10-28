@@ -110,7 +110,9 @@ body.app { display: block; }
   /* collapsed dropdowns: the group icon with a small chevron beside it; clicked, its links fly out to the right of the rail (layout.ts places it) */
   .sidebar-collapsed .nav-group__toggle { position: relative; justify-content: center; padding-inline: 0; }
   .sidebar-collapsed .nav-group__toggle > span { display: none; }
-  .sidebar-collapsed .nav-group__chevron { position: absolute; top: 50%; right: 0.15rem; width: 0.6rem; height: 0.6rem; margin: 0; transform: translateY(-50%) rotate(-90deg); }  .sidebar-collapsed .nav-group--fold[data-flyout] > .nav-group__toggle { background: var(--sidebar-hi); color: var(--sidebar-strong); }
+  .sidebar { z-index: calc(var(--z-sticky) + 1); } /* sticky makes the sidebar its own layer; lift it so the fly-out menu covers the page */
+  .sidebar-collapsed .nav-group__chevron,
+  .sidebar-collapsed .nav-group--fold[open] > .nav-group__toggle .nav-group__chevron { position: absolute; top: 50%; right: 0.15rem; width: 0.6rem; height: 0.6rem; margin: 0; transform: translateY(-50%) rotate(-90deg); }  .sidebar-collapsed .nav-group--fold[data-flyout] > .nav-group__toggle { background: var(--sidebar-hi); color: var(--sidebar-strong); }
   .sidebar-collapsed .nav-group--fold:has(.nav-link.is-active) > .nav-group__toggle .icon:first-child { color: var(--accent); }
   .sidebar-collapsed .nav-group--fold:not([data-flyout]) > .nav-group__items { display: none; }
   .sidebar-collapsed .nav-group--fold[data-flyout] > .nav-group__items {
