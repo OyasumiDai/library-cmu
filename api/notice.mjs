@@ -17,7 +17,17 @@ const recent = new Map();
 const clean = (value, max) => String(value ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, "").trim().slice(0, max);
 
 export function createHandler({ transport } = {}) {
+  // anything unexpected (bad JSON from the database, a missing setting) comes back as a readable reason, not a bare 500
   return async function handler(req, res) {
+    try {
+      return await send(req, res);
+    } catch (error) {
+      console.error("notice: crashed", error);
+      if (!res.headersSent) return res.status(500).json({ error: "crashed", reason: String(error?.message ?? error).slice(0, 200) });
+    }
+  };
+
+  async function send(req, res) {
     res.setHeader("Cache-Control", "no-store");
     if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
     const base = process.env.SUPABASE_URL;
@@ -53,7 +63,8 @@ export function createHandler({ transport } = {}) {
     const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body ?? {};
     const kind = ["overdue", "due_soon", "general"].includes(body.kind) ? body.kind : null;
     if (!kind) return res.status(400).json({ error: "bad_kind" });
-    const rpc = async (name, args) => { const r = await fetch(`${base}/rest/v1/rpc/${name}`, { method: "POST", headers, body: JSON.stringify(args) }); return r.ok ? r.json() : null; };
+    // functions that return nothing answer with an empty body (204), so read text and parse only when there is some
+    const rpc = async (name, args) => { const r = await fetch(`${base}/rest/v1/rpc/${name}`, { method: "POST", headers, body: JSON.stringify(args) }); const t = r.ok ? await r.text() : ""; return t ? JSON.parse(t) : null; };
 
     // who is the letter for?
     let target = null;
@@ -70,7 +81,8 @@ export function createHandler({ transport } = {}) {
       const row = Array.isArray(rows) ? rows[0] : null;
       if (!row) return res.status(404).json({ error: "student_not_found" });
       target = { id: row.id, email: row.email, name: row.full_name || row.username };
-      books = ((await rpc("staff_user_open_loans", { p_user: row.id })) ?? []).filter((b) => b.status === "borrowed");
+      const open = await rpc("staff_user_open_loans", { p_user: row.id });
+      books = (Array.isArray(open) ? open : []).filter((b) => b.status === "borrowed");
     } else return res.status(400).json({ error: "nobody_to_email" });
     if (!target.email) return res.status(422).json({ error: "no_email" });
 
@@ -88,9 +100,10 @@ export function createHandler({ transport } = {}) {
       console.error("notice: send failed", error?.code, error?.responseCode, error?.message);
       return res.status(502).json({ error: "send_failed", reason: explainMailError(error) });
     }
-    await rpc("record_notice", { p_user: target.id, p_kind: kind, p_subject: letter.subject });
+    // the email is already out: a failure to note it in the student's history must not report the send as failed
+    try { await rpc("record_notice", { p_user: target.id, p_kind: kind, p_subject: letter.subject }); } catch (error) { console.error("notice: sent, but not recorded", error); }
     return res.status(200).json({ ok: true });
-  };
+  }
 }
 
 export default createHandler();

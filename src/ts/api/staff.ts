@@ -172,6 +172,7 @@ export async function sendNotice(input: { kind: "overdue" | "due_soon" | "genera
     no_email: "That account has no email address saved.",
     slow_down: "Too many emails in the last minute. Wait a moment and try again.",
     send_failed: reason ?? "Gmail did not accept the email.",
+    crashed: `The email server hit an error: ${reason ?? "unknown"}.`,
   };
   throw new Error((error && why[error]) || `The email could not be sent (${reply.status}). Please try again.`);
 }

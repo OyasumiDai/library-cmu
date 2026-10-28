@@ -26,7 +26,7 @@ const supabase = await listen(async (req, res) => {
   if (req.url.includes("/rest/v1/profiles") && req.url.includes("select=id,email")) return json(res, 200, [{ id: "u1", email: "ann@school.edu", full_name: "Ann <b>Cruz</b>", username: "Ann" }]);
   if (req.url.includes("/rpc/staff_loan_contact")) return json(res, 200, [{ user_id: "u1", email: "ann@school.edu", full_name: "Ann Cruz", username: "Ann", title: "The Quiet Shelf", due_at: "2026-10-20T00:00:00Z", status: "borrowed" }]);
   if (req.url.includes("/rpc/staff_user_open_loans")) return json(res, 200, [{ title: "Pixel Gardens", due_at: "2026-10-22T00:00:00Z", status: "borrowed" }]);
-  if (req.url.includes("/rpc/record_notice")) { recorded.push(JSON.parse(Buffer.concat(chunks).toString())); return json(res, 200, null); }
+  if (req.url.includes("/rpc/record_notice")) { recorded.push(JSON.parse(Buffer.concat(chunks).toString())); res.writeHead(204); return res.end(); } // a void function: PostgREST answers 204 with no body
   json(res, 404, {});
 });
 

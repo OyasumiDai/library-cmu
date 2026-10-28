@@ -54,7 +54,7 @@ body.app { display: block; }
 .nav-link:hover .icon { transform: scale(1.15); }
 
 /* dropdown groups: the summary looks like a link, with a chevron that turns when open; the links sit indented under it */
-.nav-group--fold { display: block; }
+.nav-group--fold { display: block; --flyout-top: 0px; } /* layout.ts sets --flyout-top to the summary's position when the rail's fly-out opens */
 .nav-group__toggle {
   display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm);
   color: var(--sidebar-text); font-size: var(--fs-sm); font-weight: 700; cursor: pointer; list-style: none; user-select: none;
@@ -116,7 +116,7 @@ body.app { display: block; }
   .sidebar-collapsed .nav-group--fold:has(.nav-link.is-active) > .nav-group__toggle .icon:first-child { color: var(--accent); }
   .sidebar-collapsed .nav-group--fold:not([data-flyout]) > .nav-group__items { display: none; }
   .sidebar-collapsed .nav-group--fold[data-flyout] > .nav-group__items {
-    position: fixed; z-index: var(--z-menu); top: var(--flyout-top, 0); left: calc(4.5rem + var(--space-2));
+    position: fixed; z-index: var(--z-menu); top: var(--flyout-top); left: calc(4.5rem + var(--space-2));
     min-width: 12rem; margin: 0; padding: var(--space-2); border: 0; border-radius: var(--radius);
     background: var(--sidebar-bg); box-shadow: 0 0 0 1px var(--sidebar-hi), 0 18px 40px -12px var(--shadow);
     animation: fade var(--dur-1) ease both;

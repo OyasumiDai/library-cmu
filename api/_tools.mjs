@@ -48,8 +48,8 @@ const bookRow = (b) => ({
 // run one tool; returns plain data the AI can read
 export async function runTool({ tool, args = {}, claims, base, anon }) {
   const headers = { apikey: anon, Authorization: `Bearer ${claims.at}`, "Content-Type": "application/json" };
-  const rpc = async (name, body) => { const r = await fetch(`${base}/rest/v1/rpc/${name}`, { method: "POST", headers, body: JSON.stringify(body) }); return r.ok ? r.json() : null; };
-  const get = async (path) => { const r = await fetch(`${base}/rest/v1/${path}`, { headers }); return r.ok ? r.json() : null; };
+  const rpc = async (name, body) => { const r = await fetch(`${base}/rest/v1/rpc/${name}`, { method: "POST", headers, body: JSON.stringify(body) }); const text = r.ok ? await r.text() : ""; return text ? JSON.parse(text) : null; };
+  const get = async (path) => { const r = await fetch(`${base}/rest/v1/${path}`, { headers }); const text = r.ok ? await r.text() : ""; return text ? JSON.parse(text) : null; };
   if (!TOOL_NAMES.includes(tool)) return { error: "unknown_tool", tools: TOOL_NAMES };
   if (STAFF_TOOLS.has(tool) && !["staff", "admin"].includes(claims.role)) return { error: "staff_only", note: "This person is not library staff." };
 
