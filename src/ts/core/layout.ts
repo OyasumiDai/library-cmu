@@ -3,7 +3,7 @@ import { markNoticesRead, notices } from "../api/content";
 import { html, icon, qs, actions, maybe, mount, raw, escapeHtml } from "./dom";
 import { fail } from "./toast";
 import { initials, relative } from "./format";
-import { current, onSessionChange } from "./session";
+import { current, homeFor, onSessionChange } from "./session";
 import { initThemePicker } from "./theme";
 import { watchIdle } from "./idle";
 import type { Notice } from "../types";
@@ -170,6 +170,12 @@ export function initLayout(): void {
   initThemePicker();
   initSidebar();
   if (current().profile) watchIdle();
+  // public pages: the back button leads staff and admins to their panel, students to their library
+  const back = maybe<HTMLAnchorElement>("[data-back-home]");
+  if (back && current().profile) {
+    back.href = homeFor(current().profile);
+    if (current().profile!.role !== "student") back.querySelector("span")!.textContent = "Back to my panel";
+  }
 
   const el = widget();
   if (el) {

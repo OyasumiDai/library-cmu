@@ -29,12 +29,12 @@ function person(member: TeamMember) {
 function welcomeBack(): void {
   const home = homeFor(current().profile);
   const label = home.startsWith("/panel") ? "Open the panel" : "Open the library";
-  document.querySelectorAll<HTMLAnchorElement>('a[href="/register"], a[href="/login"], .landing-header__cta a[href="/catalog"]').forEach((link) => {
+  document.querySelectorAll<HTMLAnchorElement>('main a[href="/register"], main a[href="/login"]').forEach((link) => {
     // a pair like "Create an account / Sign in" would become two identical buttons: keep the first
     const twin = [...(link.parentElement?.children ?? [])].find((el) => el !== link && el instanceof HTMLAnchorElement && el.href === new URL(home, location.href).href);
     link.href = home;
     if (twin) link.hidden = true;
-    else if (!link.closest(".landing-header__cta") || link.dataset.visible === "member") link.replaceChildren(label);
+    else link.replaceChildren(label);
   });
 }
 
