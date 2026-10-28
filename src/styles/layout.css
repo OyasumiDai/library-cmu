@@ -31,7 +31,7 @@ body.app { display: block; }
 }
 .brand { display: flex; align-items: center; gap: var(--space-3); color: var(--sidebar-strong); text-decoration: none; }
 .brand:hover { color: var(--sidebar-strong); }
-.brand__mark { width: 2.6rem; height: 2.6rem; flex: none; transition: transform var(--dur-2) var(--ease-bounce); }
+.brand__mark { width: 2.6rem; height: 2.6rem; flex: none; transition: transform var(--dur-2) var(--ease-bounce), opacity var(--dur-1) ease; }
 .brand:hover .brand__mark { transform: rotate(-6deg) scale(1.08); }
 .brand__text { display: flex; flex-direction: column; line-height: 1.25; }
 .brand__title { font-family: var(--font-display); font-size: var(--fs-display-sm); letter-spacing: 0.04em; }
@@ -68,29 +68,27 @@ body.app { display: block; }
 .shell .site-main > .container { padding-inline: 0; max-width: 76rem; margin-inline: auto; }
 .shell .site-main > .container--narrow { max-width: 58rem; }
 
-/* the fold button beside the logo: hidden until the logo is hovered. Collapsed, it sits on top of the crest and takes its place on hover. */
-.sidebar__head { position: relative; display: flex; align-items: center; gap: var(--space-1); }
-.sidebar__head .brand { flex: 1; min-width: 0; }
+/* the fold button sits on top of the crest: hovering the logo swaps the crest for it */
+.sidebar__head { position: relative; }
 .sidebar-fold {
-  flex: none; display: inline-grid; place-items: center; width: 2.4rem; height: 2.4rem; padding: 0;
-  background: transparent; border: 0; border-radius: var(--radius-sm); color: var(--sidebar-text); cursor: pointer;
-  opacity: 0; transition: opacity var(--dur-1) ease, background-color var(--dur-1) ease, color var(--dur-1) ease;
+  position: absolute; top: 50%; left: var(--space-2); transform: translateY(-50%);
+  display: grid; place-items: center; width: 2.6rem; height: 2.6rem; padding: 0;
+  background: var(--sidebar-hi); border: 0; border-radius: var(--radius-sm); color: var(--sidebar-strong); cursor: pointer;
+  opacity: 0; pointer-events: none; transition: opacity var(--dur-1) ease;
 }
 .sidebar-fold .icon { transition: transform var(--dur-2) var(--ease-soft); }
-.sidebar__head:hover .sidebar-fold, .sidebar-fold:focus-visible { opacity: 1; }
-.sidebar-fold:hover { background: var(--sidebar-hi); color: var(--sidebar-strong); }
+.sidebar__head:hover .sidebar-fold, .sidebar-fold:focus-visible { opacity: 1; pointer-events: auto; }
+.sidebar__head:hover .brand__mark, .sidebar__head:has(.sidebar-fold:focus-visible) .brand__mark { opacity: 0; }
 
 /* collapsed (wide screens only): an icon rail */
 .shell { transition: grid-template-columns var(--dur-2) var(--ease-soft); }
 @media (min-width: 62.01rem) {
   .sidebar-collapsed .shell { grid-template-columns: 4.5rem minmax(0, 1fr); }
   .sidebar-collapsed .sidebar { padding-inline: var(--space-2); overflow-x: hidden; }
-  .sidebar-collapsed .sidebar__head { justify-content: center; }
-  .sidebar-collapsed .brand { flex: none; justify-content: center; padding-inline: 0; transition: opacity var(--dur-1) ease; }
+  .sidebar-collapsed .brand { justify-content: center; padding-inline: 0; }
   .sidebar-collapsed .brand__text, .sidebar-collapsed .nav-link span { display: none; }
-  .sidebar-collapsed .sidebar-fold { position: absolute; inset: 0; margin: auto; width: 2.8rem; height: 2.8rem; background: var(--sidebar-hi); }
+  .sidebar-collapsed .sidebar-fold { left: 50%; transform: translate(-50%, -50%); }
   .sidebar-collapsed .sidebar-fold .icon { transform: rotate(180deg); }
-  .sidebar-collapsed .sidebar__head:hover .brand, .sidebar-collapsed .sidebar__head:has(.sidebar-fold:focus-visible) .brand { opacity: 0; }
   .sidebar-collapsed .nav-group__label { visibility: hidden; height: 0; margin: 0; }
   .sidebar-collapsed .nav-link { justify-content: center; padding-inline: 0; }
 }

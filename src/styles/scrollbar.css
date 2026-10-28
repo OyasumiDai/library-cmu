@@ -5,5 +5,6 @@
 ::-webkit-scrollbar-thumb { background: var(--line-strong); border: 3px solid transparent; background-clip: padding-box; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); background-clip: padding-box; }
 ::-webkit-scrollbar-corner { background: transparent; }
-.sidebar { scrollbar-color: var(--sidebar-hi) transparent; }
-.sidebar::-webkit-scrollbar-thumb { background: var(--sidebar-hi); background-clip: padding-box; }
+/* the sidebar still scrolls, it just shows no bar */
+.sidebar { scrollbar-width: none; }
+.sidebar::-webkit-scrollbar { display: none; }
