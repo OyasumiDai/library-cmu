@@ -2,6 +2,7 @@ import { allBooks, archiveBook, deleteBook, saveBook, setCopies, uploadPicture, 
 import { loansByStatus } from "../api/loans";
 import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
+import { formatIsbn, isValidIsbn, normalizeIsbn } from "../core/isbn";
 import { isAdmin } from "../core/session";
 import { confirmBox, openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
@@ -34,9 +35,13 @@ export const books: PanelTab = {
         <div class="tile"><span class="tile__label">Titles</span><span class="tile__value">${active.length}</span></div>
         <div class="tile"><span class="tile__label">On the shelf</span><span class="tile__value">${active.reduce((s, b) => s + Math.max(b.copies - inUse(b), 0), 0)}</span></div>
         <div class="tile"><span class="tile__label">Fully borrowed</span><span class="tile__value">${active.filter((b) => b.copies > 0 && inUse(b) >= b.copies).length}</span></div>
-        <div class="tile"><span class="tile__label">Missing cover</span><span class="tile__value">${active.filter((b) => !b.cover_url).length}</span></div>`);
+        <div class="tile"><span class="tile__label">Missing cover</span><span class="tile__value">${active.filter((b) => !b.cover_url).length}</span></div>
+        <div class="tile"><span class="tile__label">Missing ISBN</span><span class="tile__value">${active.filter((b) => !b.isbn).length}</span></div>`);
       const needle = term.toLowerCase();
-      let rows = all.filter((b) => (!needle || `${b.title} ${b.author} ${b.id} ${b.category}`.toLowerCase().includes(needle)) && (!category || b.category === category));
+      // an ISBN matches with or without its dashes
+      const isbnNeedle = normalizeIsbn(term);
+      const matches = (b: Book) => `${b.title} ${b.author} ${b.category}`.toLowerCase().includes(needle) || (!!isbnNeedle && !!b.isbn?.includes(isbnNeedle));
+      let rows = all.filter((b) => (!needle || matches(b)) && (!category || b.category === category));
       rows = [...rows].sort((a, b) => sort === "title" ? a.title.localeCompare(b.title) : sort === "category" ? a.category.localeCompare(b.category) || a.title.localeCompare(b.title) : sort === "copies" ? b.copies - a.copies : String((b as Book & { created_at?: string }).created_at ?? "").localeCompare(String((a as Book & { created_at?: string }).created_at ?? "")));
       const body = root.querySelector<HTMLElement>("[data-body]")!;
       if (!rows.length) { mount(body, empty("No books", "Add the first one or change the search.", "book")); return; }
@@ -44,7 +49,7 @@ export const books: PanelTab = {
       mount(body, viewMode === "table"
         ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Book</th><th>Subject</th><th>Copies</th><th></th></tr></thead><tbody>
           ${shown.map((b) => html`<tr>
-            <td><span class="table__title">${b.title}</span> ${b.archived ? html`<span class="badge">archived</span>` : ""}<br><span class="table__sub">${b.id} · ${b.author}</span></td>
+            <td><span class="table__title">${b.title}</span> ${b.archived ? html`<span class="badge">archived</span>` : ""}<br><span class="table__sub">${b.isbn ? `ISBN ${formatIsbn(b.isbn)}` : html`<span class="badge badge--warning">No ISBN</span>`} · ${b.author}</span></td>
             <td>${b.category}</td><td>${bar(b)}</td>
             <td><div class="table__actions">
               <button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")} Edit</button>
@@ -74,7 +79,7 @@ export const books: PanelTab = {
     const editor = (book: Book | null) => {
       const unique = (pick: (b: Book) => string) => [...new Set(all.map(pick).filter(Boolean))].sort();
       const modal = openModal(book ? "Edit book" : "Add a book", html`<form class="form" id="bookForm" novalidate>
-        ${field("id", "Book ID", { value: book?.id ?? "", required: true, hint: book ? "The ID cannot change." : "Short and unique, for example bk-101.", attrs: book ? "readonly" : "" })}
+        ${field("isbn", "ISBN", { value: formatIsbn(book?.isbn), required: true, hint: "The 10 or 13 digit number on the back cover or copyright page. Dashes are fine.", placeholder: "978-0306406157", attrs: 'maxlength="17" autocomplete="off"' })}
         ${field("title", "Title", { value: book?.title ?? "", required: true })}
         <div class="alert alert--warning px px--warning" id="dupWarning" hidden>${icon("info")}<span>A book with this title and author already exists.</span></div>
         <div class="form__row">
@@ -129,8 +134,14 @@ export const books: PanelTab = {
 
       modal.root.querySelectorAll<HTMLElement>("[data-save]").forEach((button) => button.addEventListener("click", async () => {
         const d = formData(formEl);
-        if (!d.id || !d.title) return fail("A book needs an ID and a title.");
-        if (!book && all.some((b) => b.id === d.id)) return fail("That book ID is already used.");
+        const isbn = normalizeIsbn(d.isbn ?? "");
+        if (!isbn) return fail("Enter the book's ISBN.");
+        if (!isValidIsbn(isbn)) return fail("That ISBN is not valid. Check the 10 or 13 digits (an ISBN-10 may end in X).");
+        if (all.some((b) => b.id !== book?.id && b.isbn === isbn)) return fail("Another book already has that ISBN.");
+        if (!d.title) return fail("A book needs a title.");
+        // the hidden id that loans and history point to: kept as it is for existing books, made from the ISBN for new ones
+        const id = book?.id ?? `isbn-${isbn}`;
+        if (!book && all.some((b) => b.id === id)) return fail("Another book already has that ISBN.");
         const wanted = Number(d.copies) || 0;
         if (book && wanted < inUse(book)) return fail(`Copies cannot be lower than the ${inUse(book)} on loan.`);
         if (book && wanted !== book.copies && !d.reason) return fail("Please say why the copies are changing.");
@@ -138,7 +149,7 @@ export const books: PanelTab = {
           const file = fileInput.files?.[0];
           const cover_url = file ? await uploadPicture("covers", file) : d.cover_url || null;
           const input: BookInput = {
-            id: d.id, title: d.title, author: d.author ?? "", category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
+            id, isbn, title: d.title, author: d.author ?? "", category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
             publication_label: book?.publication_label ?? "FIRST PUBLISHED", publisher: d.publisher ?? "", language: d.language || "English",
             synopsis: d.synopsis ?? "", copies: wanted, shelf: d.shelf || "Main Library", cover_url,
           };

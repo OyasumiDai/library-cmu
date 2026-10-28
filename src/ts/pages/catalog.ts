@@ -2,6 +2,7 @@ import { categories, markRead, requestBook, searchCatalog, type CatalogQuery } f
 import { boot } from "../core/boot";
 import { actions, busy, debounce, html, icon, maybe, mount, qs } from "../core/dom";
 import { friendly } from "../core/errors";
+import { formatIsbn } from "../core/isbn";
 import { confirmBox, openModal } from "../core/modal";
 import { reveal } from "../core/motion";
 import { fail, ok } from "../core/toast";
@@ -73,7 +74,7 @@ async function load(): Promise<void> {
 }
 
 function showBook(book: CatalogBook): void {
-  const facts: [string, string][] = [["Author", book.author], ["Subject", book.category], ["Genre", book.genre], [book.publication_label || "Published", book.published], ["Publisher", book.publisher], ["Language", book.language], ["Shelf", book.shelf]];
+  const facts: [string, string][] = [["Author", book.author], ["Subject", book.category], ["Genre", book.genre], [book.publication_label || "Published", book.published], ["Publisher", book.publisher], ["Language", book.language], ["Shelf", book.shelf], ["ISBN", formatIsbn(book.isbn)]];
   const modal = openModal(book.title, html`
     <div class="book-detail">
       ${cover(book)}

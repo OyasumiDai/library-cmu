@@ -24,6 +24,8 @@ export type BookInput = Omit<Book, "archived">;
 
 export async function saveBook(book: BookInput, isNew: boolean): Promise<void> {
   const { error } = isNew ? await db().from("books").insert(book) : await db().from("books").update(book).eq("id", book.id);
+  if (error && /isbn/i.test(error.message) && /column|schema cache/i.test(error.message)) throw new Error("The database has no ISBN column yet. An admin needs to run tools/add-isbn.sql in the Supabase SQL Editor.");
+  if (error && /books_isbn_unique|duplicate key/i.test(error.message)) throw new Error("Another book already has that ISBN.");
   fail(error);
 }
 

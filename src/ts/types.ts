@@ -25,6 +25,7 @@ export interface Profile {
 
 export interface Book {
   id: string;
+  isbn?: string | null; // bare digits; null until staff add it (tools/add-isbn.sql adds the column)
   title: string;
   author: string;
   category: string;
