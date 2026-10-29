@@ -3,13 +3,55 @@ import { loansByStatus } from "../api/loans";
 import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
 import { formatIsbn, isValidIsbn, normalizeIsbn } from "../core/isbn";
-import { openModal } from "../core/modal";
+import { authorsOf, joinAuthors } from "../core/authors";
+import { confirmBox, openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
 import { cover, empty, field, loading, selectField } from "../ui/components";
 import type { Book } from "../types";
 import type { PanelTab } from "./tab";
 
 const MAX_ROWS = 60;
+
+// what an edit changes, field by field: [what, before, after]
+const LABELS: [keyof BookInput, string][] = [
+  ["isbn", "ISBN"], ["title", "Title"], ["author", "Authors"], ["edition", "Edition / version"], ["category", "Subject"], ["material", "Material"],
+  ["genre", "Genre"], ["publisher", "Publisher"], ["published", "First published"], ["language", "Language"], ["shelf", "Shelf"], ["copies", "Copies"],
+  ["synopsis", "Summary"], ["cover_url", "Cover picture"],
+];
+function bookChanges(before: Book, after: BookInput, newCover: boolean): [string, string, string][] {
+  const show = (key: keyof BookInput, value: unknown) => {
+    if (value === null || value === undefined || value === "") return "(empty)";
+    if (key === "isbn") return formatIsbn(String(value));
+    if (key === "material") return value === "fiction" ? "Fiction" : "Circulation / Reserve";
+    const text = String(value);
+    return text.length > 70 ? `${text.slice(0, 70)}...` : text;
+  };
+  const out: [string, string, string][] = [];
+  for (const [key, label] of LABELS) {
+    if (!(key in after)) continue;
+    const was = key === "author" ? joinAuthors(authorsOf(before)) : (before as unknown as Record<string, unknown>)[key];
+    const now = after[key];
+    if (String(was ?? "").trim() !== String(now ?? "").trim()) out.push([label, show(key, was), show(key, now)]);
+  }
+  if (newCover) out.push(["Cover picture", "current picture", "a new uploaded picture"]);
+  return out;
+}
+
+// the first of the two confirmations: every change, before and after
+function reviewChanges(title: string, changes: [string, string, string][]): Promise<boolean> {
+  return new Promise((resolve) => {
+    let answered = false;
+    const modal = openModal("Review your changes", html`
+      <p>You are changing <strong>${title}</strong>:</p>
+      <ul class="change-list">${changes.map(([what, was, now]) => html`<li><span class="change-list__what">${what}</span><span class="change-list__was">${was}</span>${icon("chevron-right")}<span class="change-list__now">${now}</span></li>`)}</ul>`, {
+      footer: html`<button class="btn btn--quiet" type="button" data-close>Go back</button><button class="btn" type="button" data-next>Continue</button>`,
+    });
+    modal.root.querySelector("[data-next]")?.addEventListener("click", () => { answered = true; modal.close(); resolve(true); });
+    new MutationObserver((_, observer) => {
+      if (!modal.root.isConnected) { observer.disconnect(); if (!answered) resolve(false); }
+    }).observe(document.body, { childList: true });
+  });
+}
 type Sort = "title" | "category" | "copies" | "newest";
 
 export const books: PanelTab = {
@@ -48,7 +90,7 @@ export const books: PanelTab = {
       mount(body, viewMode === "table"
         ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Book</th><th>Subject</th><th>Copies</th><th></th></tr></thead><tbody>
           ${shown.map((b) => html`<tr>
-            <td><span class="table__title">${b.title}</span> ${b.archived ? html`<span class="badge">archived</span>` : ""}<br><span class="table__sub">${b.isbn ? `ISBN ${formatIsbn(b.isbn)}` : html`<span class="badge badge--warning">No ISBN</span>`} · ${b.author}</span></td>
+            <td><span class="table__title">${b.title}</span> ${b.archived ? html`<span class="badge">archived</span>` : ""}<br><span class="table__sub">${b.isbn ? `ISBN ${formatIsbn(b.isbn)}` : html`<span class="badge badge--warning">No ISBN</span>`} · ${b.author}${b.edition ? ` · ${b.edition}` : ""}</span></td>
             <td>${b.category}</td><td>${bar(b)}</td>
             <td><div class="table__actions">
               <button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")} Edit</button>
@@ -79,9 +121,14 @@ export const books: PanelTab = {
       const modal = openModal(book ? "Edit book" : "Add a book", html`<form class="form" id="bookForm" novalidate>
         ${field("isbn", "ISBN", { value: formatIsbn(book?.isbn), required: !book || !!book.isbn, hint: "The 10 or 13 digit number on the back cover or copyright page. Dashes are fine.", placeholder: "978-0306406157", attrs: 'maxlength="17" autocomplete="off"' })}
         ${field("title", "Title", { value: book?.title ?? "", required: true })}
-        <div class="alert alert--warning px px--warning" id="dupWarning" hidden>${icon("info")}<span>A book with this title and author already exists.</span></div>
+        <div class="alert alert--warning px px--warning" id="dupWarning" hidden>${icon("info")}<span>A book with this title, author and edition already exists.</span></div>
+        <div class="field" data-field="authors"><span class="field__label">Authors *</span>
+          <div class="author-list" id="authorList"></div>
+          <datalist id="authorNames">${[...new Set(all.flatMap(authorsOf))].sort().map((v) => html`<option value="${v}"></option>`)}</datalist>
+          <button class="btn btn--sm btn--secondary" type="button" id="addAuthor">${icon("plus")} Add another author</button>
+          <span class="field__hint">One name per box, in the order printed on the book. Editors and translators can go here too, e.g. "Edward FitzGerald (translator)".</span></div>
         <div class="form__row">
-          <div class="field" data-field="author"><label class="field__label" for="f-author">Author</label><input class="input" id="f-author" name="author" list="authorList" value="${book?.author ?? ""}"><datalist id="authorList">${unique((b) => b.author).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
+          ${field("edition", "Edition / version", { value: book?.edition ?? "", placeholder: "e.g. 2nd edition, Revised 2015, Anvil Classics", attrs: 'maxlength="80"', hint: "Leave empty if there is only one edition." })}
           <div class="field" data-field="category"><label class="field__label" for="f-category">Subject</label><input class="input" id="f-category" name="category" list="categoryList" value="${book?.category ?? ""}"><datalist id="categoryList">${unique((b) => b.category).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
         </div>
         ${selectField("material", "Material (sets the loan period and overdue fine)", [{ value: "fiction", label: "Fiction" }, { value: "circulation", label: "Circulation / Reserve" }], book?.material ?? "circulation", true, "")}
@@ -111,10 +158,36 @@ export const books: PanelTab = {
       if (book && codes) void bookCopies(book.id)
         .then((list) => mount(codes, list.length ? html`${list.map((c) => html`<span class="badge">${c.code}</span>`)}` : html`<span class="table__sub">No copies yet.</span>`))
         .catch(() => mount(codes, html`<span class="table__sub">Run tools/add-isbn.sql to give copies their codes.</span>`));
+      // the authors: one box each, added and removed freely, at least one
+      const authorBox = $("#authorList");
+      const drawAuthors = (names: string[]) => {
+        mount(authorBox, html`${(names.length ? names : [""]).map((name, i) => html`<div class="author-row">
+          <span class="author-row__n">${i + 1}</span>
+          <input class="input" name="author_${i}" list="authorNames" value="${name}" aria-label="Author ${i + 1}" maxlength="120" autocomplete="off">
+          <button class="btn btn--sm btn--quiet" type="button" data-drop-author="${i}" aria-label="Remove author ${i + 1}" ${names.length > 1 ? "" : raw("disabled")}>${icon("cross")}</button></div>`)}`);
+      };
+      const typedAuthors = () => [...authorBox.querySelectorAll<HTMLInputElement>("input")].map((input) => input.value);
+      const cleanAuthors = () => [...new Set(typedAuthors().map((name) => name.trim().replace(/\s+/g, " ")).filter(Boolean))];
+      drawAuthors(book ? authorsOf(book) : [""]);
+      $("#addAuthor").addEventListener("click", () => {
+        if (typedAuthors().length >= 10) return fail("Up to 10 authors.");
+        drawAuthors([...typedAuthors(), ""]);
+        [...authorBox.querySelectorAll<HTMLInputElement>("input")].pop()?.focus();
+      });
+      authorBox.addEventListener("click", (event) => {
+        const drop = (event.target as Element).closest<HTMLElement>("[data-drop-author]");
+        if (!drop) return;
+        const names = typedAuthors();
+        names.splice(Number(drop.dataset.dropAuthor), 1);
+        drawAuthors(names);
+        dup();
+      });
+
       const dup = () => {
         const t = ($<HTMLInputElement>("[name=title]").value).trim().toLowerCase();
-        const a = $<HTMLInputElement>("[name=author]").value.trim().toLowerCase();
-        $("#dupWarning").hidden = !(t && all.some((b) => b.id !== book?.id && b.title.toLowerCase() === t && b.author.toLowerCase() === a));
+        const a = joinAuthors(cleanAuthors()).toLowerCase();
+        const e = $<HTMLInputElement>("[name=edition]").value.trim().toLowerCase();
+        $("#dupWarning").hidden = !(t && all.some((b) => b.id !== book?.id && b.title.toLowerCase() === t && joinAuthors(authorsOf(b)).toLowerCase() === a && (b.edition ?? "").trim().toLowerCase() === e));
       };
       formEl.addEventListener("input", dup);
       const reason = () => { $("#reasonField").hidden = !book || Number(copies.value) === book.copies; };
@@ -144,21 +217,36 @@ export const books: PanelTab = {
         if (isbn && !isValidIsbn(isbn)) return fail("That ISBN is not valid. Check the 10 or 13 digits (an ISBN-10 may end in X).");
         if (isbn && all.some((b) => b.id !== book?.id && b.isbn === isbn)) return fail("Another book already has that ISBN.");
         if (!d.title) return fail("A book needs a title.");
+        const authors = cleanAuthors();
+        if (!authors.length) return fail("Add at least one author.");
+        const edition = (d.edition ?? "").trim().replace(/\s+/g, " ");
         // the hidden id that loans and history point to: kept as it is for existing books, made from the ISBN for new ones
         const id = book?.id ?? `isbn-${isbn}`;
         if (!book && all.some((b) => b.id === id)) return fail("Another book already has that ISBN.");
         const wanted = Number(d.copies) || 0;
         if (book && wanted < inUse(book)) return fail(`Copies cannot be lower than the ${inUse(book)} on loan.`);
         if (book && wanted !== book.copies && !d.reason) return fail("Please say why the copies are changing.");
+        const file = fileInput.files?.[0];
+        // only send the newer columns once their SQL has been run (the loaded books then have them)
+        const has = (column: string) => column in (all[0] ?? {});
+        const draft: BookInput = {
+          id, isbn: isbn || null, title: d.title, author: joinAuthors(authors), category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
+          publication_label: book?.publication_label ?? "FIRST PUBLISHED", publisher: d.publisher ?? "", language: d.language || "English",
+          synopsis: d.synopsis ?? "", copies: wanted, shelf: d.shelf || "Main Library", cover_url: d.cover_url || null,
+          ...(has("material") ? { material: d.material === "fiction" ? "fiction" as const : "circulation" as const } : {}),
+          ...(has("authors") ? { authors } : {}),
+          ...(has("edition") ? { edition: edition || null } : {}),
+        };
+        // editing: show exactly what changes, then ask once more before it goes live for everyone
+        if (book) {
+          const changes = bookChanges(book, draft, !!file);
+          if (!changes.length) { ok("Nothing changed."); modal.close(); return; }
+          if (!(await reviewChanges(book.title, changes))) return;
+          if (!(await confirmBox("Are you sure?", `The changes to "${book.title}" show in the catalog, on tickets and in the game for everyone right away.`, "Yes, save the changes"))) return;
+        }
         try {
-          const file = fileInput.files?.[0];
-          const cover_url = file ? await uploadPicture("covers", file) : d.cover_url || null;
-          const input: BookInput = {
-            id, isbn: isbn || null, title: d.title, author: d.author ?? "", category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
-            publication_label: book?.publication_label ?? "FIRST PUBLISHED", publisher: d.publisher ?? "", language: d.language || "English",
-            synopsis: d.synopsis ?? "", copies: wanted, shelf: d.shelf || "Main Library", cover_url,
-            ...("material" in (all[0] ?? {}) ? { material: d.material === "fiction" ? "fiction" as const : "circulation" as const } : {}),
-          };
+          const cover_url = file ? await uploadPicture("covers", file) : draft.cover_url;
+          const input: BookInput = { ...draft, cover_url };
           if (book && wanted !== book.copies) {
             await saveBook({ ...input, copies: book.copies }, false);
             await setCopies(book.id, wanted, d.reason);

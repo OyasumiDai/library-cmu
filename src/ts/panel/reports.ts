@@ -64,8 +64,8 @@ const REPORTS: Report[] = [
         if (l.status === "requested") held.set(l.book_id, (held.get(l.book_id) ?? 0) + 1);
       }
       return {
-        header: ["ISBN", "Title", "Author", "Subject", "Shelf", "First published", "Copies", "On loan", "Reserved", "Free", "Status", "Date added"],
-        rows: books.map((b) => [b.isbn ? formatIsbn(b.isbn) : "(none)", b.title, b.author, b.category, b.shelf, b.published, b.copies, out.get(b.id) ?? 0, held.get(b.id) ?? 0,
+        header: ["ISBN", "Title", "Authors", "Edition", "Subject", "Shelf", "First published", "Copies", "On loan", "Reserved", "Free", "Status", "Date added"],
+        rows: books.map((b) => [b.isbn ? formatIsbn(b.isbn) : "(none)", b.title, b.author, b.edition ?? "", b.category, b.shelf, b.published, b.copies, out.get(b.id) ?? 0, held.get(b.id) ?? 0,
           Math.max(b.copies - (out.get(b.id) ?? 0) - (held.get(b.id) ?? 0), 0), b.archived ? "Archived" : "Active", csvDateTime(b.created_at)]),
       };
     },

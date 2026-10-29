@@ -40,6 +40,8 @@ export interface Book {
   cover_url: string | null;
   archived?: boolean;
   created_at?: string;
+  authors?: string[] | null; // every author in order; author holds the same as one line (tools/book-authors-edition.sql)
+  edition?: string | null;   // "2nd edition", "Revised edition, 2015"
   material?: "circulation" | "fiction"; // sets the loan period and the overdue fine (tools/borrowing-rules.sql)
 }
 

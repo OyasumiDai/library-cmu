@@ -74,7 +74,7 @@ async function load(): Promise<void> {
 }
 
 function showBook(book: CatalogBook): void {
-  const facts: [string, string][] = [["Author", book.author], ["Subject", book.category], ["Genre", book.genre], [book.publication_label || "Published", book.published], ["Publisher", book.publisher], ["Language", book.language], ["Shelf", book.shelf], ["ISBN", formatIsbn(book.isbn)], ["Loan period", book.material === "fiction" ? "5 days (Fiction)" : book.material === "circulation" ? "3 days (Circulation / Reserve)" : ""]];
+  const facts: [string, string][] = [[book.authors && book.authors.length > 1 ? "Authors" : "Author", book.author], ["Edition", book.edition ?? ""], ["Subject", book.category], ["Genre", book.genre], [book.publication_label || "Published", book.published], ["Publisher", book.publisher], ["Language", book.language], ["Shelf", book.shelf], ["ISBN", formatIsbn(book.isbn)], ["Loan period", book.material === "fiction" ? "5 days (Fiction)" : book.material === "circulation" ? "3 days (Circulation / Reserve)" : ""]];
   const modal = openModal(book.title, html`
     <div class="book-detail">
       ${cover(book)}
