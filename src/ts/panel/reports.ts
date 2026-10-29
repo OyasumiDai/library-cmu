@@ -9,7 +9,6 @@ import { formatIsbn } from "../core/isbn";
 import { openModal } from "../core/modal";
 import { current } from "../core/session";
 import { ok } from "../core/toast";
-import { dataTable } from "../ui/charts";
 import { empty, loading } from "../ui/components";
 import type { Book, Loan, LoanStatus } from "../types";
 import type { PanelTab } from "./tab";
@@ -185,12 +184,15 @@ export const reports: PanelTab = {
       if (!result) return;
       const at = new Date().toISOString();
       const sheet = csvSheet(sheetFor(r), at);
-      const modal = openModal(`CSV preview: ${r.title}`, html`
-        <p class="text-soft">${icon("download")} <strong>${sheet.name}</strong></p>
+      // long values are cut short to keep rows on one line; hovering shows the whole value
+      const table = html`<div class="table-wrap" tabindex="0"><table class="table"><thead><tr>${result.header.map((h) => html`<th>${h}</th>`)}</tr></thead>
+        <tbody>${result.rows.slice(0, PREVIEW_ROWS).map((row) => html`<tr>${row.map((c) => html`<td title="${c}">${c}</td>`)}</tr>`)}</tbody></table></div>`;
+      const modal = openModal(`CSV preview: ${r.title}`, html`<div class="csv-preview">
+        <p class="csv-preview__file text-soft">${icon("download")} <strong>${sheet.name}</strong></p>
         <dl class="book-detail__facts">${sheet.meta.slice(1).map(([k, v]) => html`<dt>${k}</dt><dd>${v}</dd>`)}</dl>
-        ${result.rows.length ? dataTable(result.header, result.rows.slice(0, PREVIEW_ROWS)) : empty("No rows", "The file will hold only the title block.", r.icon)}
+        ${result.rows.length ? table : empty("No rows", "The file will hold only the title block.", r.icon)}
         ${result.rows.length > PREVIEW_ROWS ? html`<p class="result-count">Showing the first ${PREVIEW_ROWS} of ${result.rows.length} rows here. The download has all of them.</p>` : ""}
-        <p class="text-soft">${sheet.end}</p>`, {
+        <p class="text-soft">${sheet.end}</p></div>`, {
         wide: true,
         footer: html`<button class="btn btn--quiet" type="button" data-close>Close</button><button class="btn" type="button" data-download>${icon("download")} Download CSV</button>`,
       });

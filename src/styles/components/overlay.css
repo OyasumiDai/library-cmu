@@ -1,10 +1,10 @@
-.modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: var(--space-4); background: var(--overlay); animation: fade var(--dur-2) ease both; overflow-y: auto; }
-.modal { width: min(36rem, 100%); max-height: calc(100vh - 2rem); display: flex; flex-direction: column; animation: pop var(--dur-2) var(--ease-bounce) both; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.45); }
+.modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: var(--space-4); background: var(--overlay); animation: fade var(--dur-2) ease both; overflow-y: auto; }
+.modal { width: min(36rem, 100%); min-width: 0; max-height: calc(100dvh - 2rem); display: flex; flex-direction: column; animation: pop var(--dur-2) var(--ease-bounce) both; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.45); }
 .modal--wide { width: min(52rem, 100%); }
 .modal--xl { width: min(72rem, 100%); }
 .modal__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-5) 0; }
 .modal__title { margin: 0; font-size: var(--fs-xl); }
-.modal__body { padding: var(--space-4) var(--space-5); overflow-y: auto; }
+.modal__body { padding: var(--space-4) var(--space-5); overflow-y: auto; min-width: 0; }
 .modal__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); padding: 0 var(--space-5) var(--space-5); }
 .modal__close { background: transparent; border: 0; color: var(--text-soft); padding: var(--space-1); }
 .modal__close:hover { color: var(--ink); }
@@ -32,3 +32,25 @@ body.has-modal { overflow: hidden; }
 .bell:hover { background: var(--surface-3); }
 .bell__count { position: absolute; top: -2px; right: -2px; min-width: 1.15rem; height: 1.15rem; padding: 0 3px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); border-radius: 999px; font-size: var(--fs-2xs); font-weight: 700; animation: bob 2s ease infinite; }
 .bell__panel { width: min(24rem, calc(100vw - 2rem)); max-height: 26rem; overflow-y: auto; }
+
+/* CSV preview: the window always fits the screen; the table scrolls inside its own box with the headings kept in view */
+.csv-preview { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.csv-preview__file { display: flex; align-items: center; gap: var(--space-2); margin: 0; overflow-wrap: anywhere; }
+.csv-preview .book-detail__facts { margin: 0; }
+.csv-preview .book-detail__facts dd { overflow-wrap: anywhere; }
+.csv-preview .table-wrap { max-height: min(55dvh, 32rem); overflow: auto; border: var(--border) solid var(--line); border-radius: var(--radius-sm); overscroll-behavior: contain; }
+.csv-preview .table th { position: sticky; top: 0; z-index: 1; }
+.csv-preview .table th, .csv-preview .table td { padding: var(--space-2) var(--space-3); white-space: nowrap; }
+.csv-preview .table td { max-width: 18rem; overflow: hidden; text-overflow: ellipsis; }
+.csv-preview .result-count, .csv-preview p { margin: 0; }
+@media (max-width: 40rem) {
+  .modal-backdrop:has(.modal--xl) { padding: 0; }
+  .modal--xl { width: 100%; max-height: 100dvh; height: 100dvh; border-radius: 0; }
+  .modal--xl .modal__head, .modal--xl .modal__body { padding-inline: var(--space-4); }
+  .modal--xl .modal__foot { padding: var(--space-3) var(--space-4); }
+  .modal--xl .modal__foot .btn { flex: 1; justify-content: center; }
+  .csv-preview .book-detail__facts { grid-template-columns: 1fr; gap: 0; }
+  .csv-preview .book-detail__facts dd { margin-bottom: var(--space-2); }
+  .csv-preview .table-wrap { max-height: none; flex: 1; }
+  .csv-preview .table td { max-width: 12rem; }
+}
