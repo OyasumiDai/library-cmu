@@ -80,7 +80,7 @@ export default async function handler(req, res) {
   // 4. live facts the assistant may quote
   let facts = {};
   try {
-    const rows = await (await fetch(`${base}/rest/v1/site_settings?select=key,value&key=in.(loan_days,max_loans,game_status,library_name)`, { headers: { apikey: anon } })).json();
+    const rows = await (await fetch(`${base}/rest/v1/site_settings?select=key,value&key=in.(loan_days,max_loans,game_status,library_name,loan_rules,pickup_hours)`, { headers: { apikey: anon } })).json();
     facts = Object.fromEntries((Array.isArray(rows) ? rows : []).map((row) => [row.key, row.value]));
   } catch {
     facts = {};

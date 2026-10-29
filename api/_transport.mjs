@@ -25,11 +25,28 @@ export function explainMailError(error) {
 
 // the address links in emails point to: SITE_URL when set, else the production domain Vercel provides,
 // never a preview deployment (those sit behind Vercel's login) or whatever host the staff member happened to use
+// the library's public website: the last resort, so a link in an email always opens the real site
+export const PUBLIC_SITE = "https://library-cmu.vercel.app";
+
+// a link a student can open from their inbox: https, a real host, not a local machine and not a Vercel preview
+// (preview addresses look like project-abc123-team.vercel.app or project-git-branch-team.vercel.app and sit behind Vercel's login)
+function usable(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== "https:") return false;
+    if (/^(localhost|127\.|0\.0\.0\.0|\[::1\])/.test(u.hostname) || !u.hostname.includes(".")) return false;
+    if (/\.vercel\.app$/.test(u.hostname) && /-(git-[a-z0-9-]+|[a-z0-9]{9})-[a-z0-9-]+\.vercel\.app$/.test(u.hostname)) return false;
+    return true;
+  } catch { return false; }
+}
+
 export function siteUrlFor(req) {
-  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
-  const fromRequest = `${String(req.headers["x-forwarded-proto"] ?? "https").split(",")[0]}://${req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost"}`;
   // SITE_URL written as "library.example.com" still gives a full link (QR codes and buttons need the https://)
   const site = (process.env.SITE_URL || "").trim();
-  const withScheme = site && !/^https?:\/\//i.test(site) ? `https://${site}` : site;
-  return (withScheme || production || fromRequest).replace(/\/+$/, "");
+  const candidates = [
+    site && !/^https?:\/\//i.test(site) ? `https://${site}` : site,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "",
+    `${String(req?.headers?.["x-forwarded-proto"] ?? "https").split(",")[0]}://${req?.headers?.["x-forwarded-host"] ?? req?.headers?.host ?? ""}`,
+  ].map((u) => u.replace(/\/+$/, ""));
+  return candidates.find(usable) ?? PUBLIC_SITE;
 }

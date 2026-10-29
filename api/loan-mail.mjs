@@ -21,7 +21,8 @@ async function addRules(list, base, anon) {
     if (!settings.loan_rules) return;
     for (const ctx of list) {
       const book = ctx.book ?? {};
-      const query = book.id ? `id=eq.${encodeURIComponent(book.id)}` : `title=eq.${encodeURIComponent(book.title ?? "")}`;
+      // by id when the payload has it; otherwise title and author (two editions can share a title)
+      const query = book.id ? `id=eq.${encodeURIComponent(book.id)}` : `title=eq.${encodeURIComponent(book.title ?? "")}${book.author ? `&author=eq.${encodeURIComponent(book.author)}` : ""}`;
       const [row] = await get(`books?select=material&${query}&limit=1`);
       const material = row?.material === "fiction" ? "fiction" : "circulation";
       const rule = settings.loan_rules[material];

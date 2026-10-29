@@ -26,7 +26,7 @@
         "check out",
         "reserve a book"
       ],
-      "answer": "To borrow a book:\n- Open [Discover](/catalog) and find it (search or filter).\n- Click the book, then **Request to borrow**.\n- The book is reserved for you straight away. Staff confirm the pickup and you get a notification on the bell.\n\nYou can have up to {max_loans} books requested or borrowed at once."
+      "answer": "To borrow a book:\n- Open [Discover](/catalog) and find it (search or filter).\n- Click the book, then **Request to borrow**.\n- It is reserved for you and a **ticket with a QR code** appears in [My books](/borrowing) and in your email.\n- Walk in to the library within **{pickup_days}** and show the ticket at the desk. If you do not pick it up in time, the request is cancelled.\n\nYou can have up to {max_loans} books requested or borrowed at once."
     },
     {
       "id": "reserved",
@@ -50,7 +50,7 @@
         "overdue",
         "late"
       ],
-      "answer": "Books are lent for {loan_days} days. Your due dates are on [My books](/borrowing). Bring the book back to the desk and staff will mark it returned. Overdue books are marked in red."
+      "answer": "Loan periods: {loan_rules}. The days start when you pick the book up; your due date is on your ticket in [My books](/borrowing).\n\nLate books are fined {fines}, counted every weekday (not weekends or holidays) until you return the book at the library desk."
     },
     {
       "id": "cancel",
@@ -424,7 +424,7 @@
         "show at the desk",
         "email code"
       ],
-      "answer": "When you request a book, we email you its details and a **QR code**. You can also open it any time in [My books](/borrowing). Show the QR at the library desk: staff scan it to confirm your pickup, and you get a confirmation email with the due date. If the QR will not scan, staff can type the pickup code (like CMU-1234)."
+      "answer": "When you request a book you get a **ticket with a QR code**, in [My books](/borrowing) and in your email. Walk in to the library within **{pickup_days}** and show it at the desk: staff scan it to hand the book over, and your ticket then shows the due date. If the QR will not scan, staff can type the pickup code printed under it."
     },
     {
       "id": "no_email",

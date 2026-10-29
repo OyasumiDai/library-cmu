@@ -45,7 +45,7 @@ export function renderText(text: string): Safe {
     const body = (bullet ? bullet[1] : line)
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
-      .replace(/\[([^\]]+)\]\((\/[A-Za-z0-9/_?=&#-]*)\)/g, '<a href="$2">$1</a>');
+      .replace(/\[([^\]]+)\]\((\/(?!\/)[A-Za-z0-9/_?=&#-]*)\)/g, '<a href="$2">$1</a>'); // site paths only, never //other.site
     out += bullet ? `<li>${body}</li>` : line.trim() === "" ? "<br>" : `<p>${body}</p>`;
   }
   if (inList) out += "</ul>";
@@ -53,11 +53,19 @@ export function renderText(text: string): Safe {
 }
 
 // ---------------------------------------------------------------- brain 2: quick answers
+// the loan period and fine of each material (Settings > Borrowing), or the manual's defaults
+const rules = (): { label: string; days: number; fine: number }[] => {
+  const saved = facts.loan_rules as Record<string, { label: string; days: number; fine: number }> | undefined;
+  return saved && typeof saved === "object" ? Object.values(saved) : [{ label: "Circulation / Reserve", days: 3, fine: 20 }, { label: "Fiction", days: 5, fine: 10 }];
+};
 function fill(text: string): string {
   const profile = current().profile;
   return text
     .replace("{name}", profile?.username ?? "there")
     .replace("{loan_days}", String(settingNumber(facts, "loan_days", 7)))
+    .replace("{loan_rules}", rules().map((x) => `**${x.days} days** for ${x.label}`).join(" and "))
+    .replace("{fines}", rules().map((x) => `**Php ${Number(x.fine).toFixed(2)} a day** for ${x.label}`).join(" and "))
+    .replace("{pickup_days}", `${Math.max(1, Math.round(settingNumber(facts, "pickup_hours", 48) / 24))} days`)
     .replace("{max_loans}", String(settingNumber(facts, "max_loans", 3)));
 }
 

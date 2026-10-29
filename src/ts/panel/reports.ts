@@ -4,7 +4,7 @@ import { allBooks, logReportDownload, movements } from "../api/staff";
 import { loanFines, loansByStatus, type LoanFine } from "../api/loans";
 import { actions, debounce, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
-import { csvDateTime, csvSheet, daysUntil, downloadCsv, peso, plural, type CsvReport } from "../core/format";
+import { csvDate, csvDateTime, csvSheet, daysUntil, downloadCsv, peso, plural, type CsvReport } from "../core/format";
 import { formatIsbn } from "../core/isbn";
 import { openModal } from "../core/modal";
 import { current } from "../core/session";
@@ -39,7 +39,7 @@ const PREVIEW_ROWS = 300;
 
 const within = (iso: string | null, from: string, to: string) => {
   if (!iso) return !from && !to;
-  const day = iso.slice(0, 10);
+  const day = csvDate(iso); // the day in the Philippines, as the date filters mean it (not the UTC day)
   return (!from || day >= from) && (!to || day <= to);
 };
 

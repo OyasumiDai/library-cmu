@@ -1,6 +1,7 @@
 import { allBooks } from "../api/staff";
 import { loansByStatus } from "../api/loans";
 import { actions, html, icon, mount, raw } from "../core/dom";
+import { csvDate } from "../core/format";
 import { reveal } from "../core/motion";
 import { chartCard, chartToggle, columns, dataTable, donut, kpi, percentChange, ranking, type Datum } from "../ui/charts";
 import { loading } from "../ui/components";
@@ -12,14 +13,20 @@ const RANGES: { id: Range; label: string; days: number }[] = [
   { id: "30d", label: "30 days", days: 30 }, { id: "90d", label: "90 days", days: 90 }, { id: "12m", label: "12 months", days: 365 }, { id: "all", label: "All time", days: 0 },
 ];
 const DAY = 86400000;
-const monthKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 const weekday = (iso: string) => new Intl.DateTimeFormat("en-PH", { weekday: "long", timeZone: "Asia/Manila" }).format(new Date(iso));
 
-// the label and sort key of the bucket a date falls into: days for 30 days, weeks for 90 days, months otherwise
+// the label and sort key of the bucket a date falls into: days for 30 days, weeks for 90 days, months otherwise.
+// Days, weeks and months are counted in Philippine time (a 7 AM request belongs to that day, not the UTC day before).
 function bucket(range: Range, d: Date): { key: string; label: string } {
-  if (range === "30d") { const k = d.toISOString().slice(5, 10); return { key: d.toISOString().slice(0, 10), label: k }; }
-  if (range === "90d") { const monday = new Date(d.getTime() - ((d.getDay() + 6) % 7) * DAY); return { key: monday.toISOString().slice(0, 10), label: `wk ${monday.toISOString().slice(5, 10)}` }; }
-  return { key: monthKey(d), label: d.toLocaleString("en-PH", { month: "short", year: "2-digit" }) };
+  const day = csvDate(d.toISOString()); // YYYY-MM-DD in Manila
+  if (range === "30d") return { key: day, label: day.slice(5) };
+  if (range === "90d") {
+    const noon = new Date(`${day}T12:00:00Z`);
+    noon.setUTCDate(noon.getUTCDate() - ((noon.getUTCDay() + 6) % 7)); // back to that week's Monday
+    const monday = noon.toISOString().slice(0, 10);
+    return { key: monday, label: `wk ${monday.slice(5)}` };
+  }
+  return { key: day.slice(0, 7), label: new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", month: "short", year: "2-digit" }).format(d) };
 }
 
 const trendOf = (change: string): "up" | "down" | "" => (change.startsWith("-") ? "down" : change.startsWith("+") || change === "new" ? "up" : "");

@@ -70,7 +70,8 @@ export const books: PanelTab = {
     let viewMode: "table" | "covers" = "table";
     let show: "active" | "archived" | "all" = "active";
     let locations: string[] = DEFAULT_LOCATIONS;
-    const hasColumn = (column: string) => column in (all[0] ?? {});
+    // a newer column (edition, obsolete year...) is there once its SQL is run; with no books yet, assume it is (saveBook drops it if not)
+    const hasColumn = (column: string) => !all.length || column in all[0];
 
     const inUse = (b: Book) => onLoan.get(b.id) ?? 0;
     const bar = (b: Book) => html`<span class="copies" title="${b.copies - inUse(b)} on the shelf, ${inUse(b)} on loan"><span class="copies__bar"><i style="--w:${b.copies ? Math.round((inUse(b) / b.copies) * 100) : 0}%"></i></span><small>${b.copies - inUse(b)} / ${b.copies}</small></span>`;
@@ -150,7 +151,7 @@ export const books: PanelTab = {
           ${field("edition", "Edition / version", { value: book?.edition ?? "", placeholder: "e.g. 2nd edition, Revised 2015, Anvil Classics", attrs: 'maxlength="80"', hint: "Leave empty if there is only one edition." })}
           <div class="field" data-field="category"><label class="field__label" for="f-category">Subject</label><input class="input" id="f-category" name="category" list="categoryList" value="${book?.category ?? ""}"><datalist id="categoryList">${unique((b) => b.category).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
         </div>
-        ${"obsolete_year" in (all[0] ?? {}) ? field("obsolete_year", "Obsolete year", { type: "number", value: String(book?.obsolete_year ?? THIS_YEAR + 5), required: true, attrs: `min="${book ? 1900 : THIS_YEAR}" max="2200" step="1"`, hint: `From 1 January of that year the book is archived by itself and you choose where it is kept. Usually 5 years: ${THIS_YEAR + 5}.` }) : ""}
+        ${hasColumn("obsolete_year") ? field("obsolete_year", "Obsolete year", { type: "number", value: String(book?.obsolete_year ?? THIS_YEAR + 5), required: true, attrs: `min="${book ? 1900 : THIS_YEAR}" max="2200" step="1"`, hint: `From 1 January of that year the book is archived by itself and you choose where it is kept. Usually 5 years: ${THIS_YEAR + 5}.` }) : ""}
         ${selectField("material", "Material (sets the loan period and overdue fine)", [{ value: "fiction", label: "Fiction" }, { value: "circulation", label: "Circulation / Reserve" }], book?.material ?? "circulation", true, "")}
         <div class="form__row">${field("genre", "Genre", { value: book?.genre ?? "" })}${field("publisher", "Publisher", { value: book?.publisher ?? "" })}</div>
         <div class="form__row">${field("published", "First published", { value: book?.published ?? "" })}${field("language", "Language", { value: book?.language ?? "English" })}</div>
@@ -254,7 +255,7 @@ export const books: PanelTab = {
         if (book && wanted !== book.copies && !d.reason) return fail("Please say why the copies are changing.");
         const file = fileInput.files?.[0];
         // only send the newer columns once their SQL has been run (the loaded books then have them)
-        const has = (column: string) => column in (all[0] ?? {});
+        const has = hasColumn;
         const draft: BookInput = {
           id, isbn: isbn || null, title: d.title, author: joinAuthors(authors), category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
           publication_label: book?.publication_label ?? "FIRST PUBLISHED", publisher: d.publisher ?? "", language: d.language || "English",

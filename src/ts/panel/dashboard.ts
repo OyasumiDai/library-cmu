@@ -157,9 +157,11 @@ export const dashboard: PanelTab = {
       }, 200);
       input.addEventListener("input", run);
     }
-    document.addEventListener("keydown", (event) => {
+    const onSlash = (event: KeyboardEvent) => {
+      if (!root.isConnected) { document.removeEventListener("keydown", onSlash); return; } // another tab is open now: leave "/" alone
       if (event.key === "/" && !(event.target as HTMLElement).matches("input, textarea, select")) { event.preventDefault(); root.querySelector<HTMLInputElement>("#dashQuery")?.focus(); }
-    });
+    };
+    document.addEventListener("keydown", onSlash);
 
     const refresh = async () => { try { await draw(); } catch { /* keep what is on screen */ } };
     const act = async (work: () => Promise<boolean>) => { if (await work()) await refresh(); };

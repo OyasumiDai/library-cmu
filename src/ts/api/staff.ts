@@ -23,8 +23,18 @@ export async function allBooks(): Promise<Book[]> {
 
 export type BookInput = Omit<Book, "archived">;
 
+// a column that is optional until its SQL file is run: if the database does not have it yet, the book saves without it
+const OPTIONAL_COLUMNS = ["edition", "authors", "material", "obsolete_year", "archive_location", "archive_reason", "archived_at"];
+
 export async function saveBook(book: BookInput, isNew: boolean): Promise<void> {
-  const { error } = isNew ? await db().from("books").insert(book) : await db().from("books").update(book).eq("id", book.id);
+  const row: Record<string, unknown> = { ...book };
+  let { error } = isNew ? await db().from("books").insert(row) : await db().from("books").update(row).eq("id", book.id);
+  for (let tries = 0; error && tries < OPTIONAL_COLUMNS.length; tries++) {
+    const missing = OPTIONAL_COLUMNS.find((c) => c in row && new RegExp(`'${c}' column|column [a-z_.]*${c} does not exist`, "i").test(error!.message));
+    if (!missing) break;
+    delete row[missing];
+    ({ error } = isNew ? await db().from("books").insert(row) : await db().from("books").update(row).eq("id", book.id));
+  }
   if (error && /isbn/i.test(error.message) && /column|schema cache/i.test(error.message)) throw new Error("The database has no ISBN column yet. An admin needs to run tools/add-isbn.sql in the Supabase SQL Editor.");
   if (error && /books_isbn_unique|duplicate key/i.test(error.message)) throw new Error("Another book already has that ISBN.");
   fail(error);
@@ -201,12 +211,14 @@ export async function logLoanEmail(loanId: number, kind: string): Promise<void> 
 }
 
 // every email per loan, newest first
+let noEmailLog = false; // tools/loan-email-log.sql not run yet: ask once per page, not on every refresh
 export async function loanEmails(ids: number[]): Promise<Map<number, LoanEmail[]>> {
   const out = new Map<number, LoanEmail[]>();
+  if (noEmailLog) return out;
   const unique = [...new Set(ids)];
   for (let i = 0; i < unique.length; i += 300) {
     const { data, error } = await db().from("loan_emails").select("loan_id,kind,sent_at,sender:profiles(username,full_name)").in("loan_id", unique.slice(i, i + 300)).order("sent_at", { ascending: false });
-    if (error) return out;
+    if (error) { if (error.code === "PGRST205" || error.code === "42P01" || /does not exist|could not find/i.test(error.message)) noEmailLog = true; return out; }
     for (const row of (data ?? []) as unknown as LoanEmail[]) out.set(Number(row.loan_id), [...(out.get(Number(row.loan_id)) ?? []), row]);
   }
   return out;
@@ -234,6 +246,7 @@ export async function sendNotice(input: { kind: "overdue" | "due_soon" | "genera
     send_failed: reason ?? "Gmail did not accept the email.",
     crashed: `The email server hit an error: ${reason ?? "unknown"}.`,
   };
+  if (!error && reply.status === 404) throw new Error("The email service is not deployed on this site (api/notice is missing). Redeploy on Vercel, then try again.");
   throw new Error((error && why[error]) || `The email could not be sent (${reply.status}). Please try again.`);
 }
 

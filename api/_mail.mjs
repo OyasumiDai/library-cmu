@@ -139,7 +139,7 @@ async function buildManyLoansEmail(list, siteUrl) {
     qr = qrBlock({ cid: "qr", code, caption: `One QR code for all ${n} books. Staff scan it once at the desk to confirm everything.` });
   }
   const lines = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:16px 0;border:1px solid ${C.line};border-radius:10px;background:${C.page}">${list.map((c) => bookLine(c.book, right(c))).join("")}</table>`;
-  const rows = [["Books", String(n)], ["Status", copy.status], by ? ["Pick up by", by] : null, event === "requested" ? ["Loan length", rulesOf(list[0]) ? "Fiction 5 days, Circulation / Reserve 3 days, from pickup" : `${days} days from pickup`] : null, event === "borrowed" || event === "requested" ? fineRow(list[0]) : null].filter(Boolean);
+  const rows = [["Books", String(n)], ["Status", copy.status], by ? ["Pick up by", by] : null, event === "requested" ? ["Loan length", rulesOf(list[0]) ? `${[...new Set(list.filter(rulesOf).map((c) => `${c.rules.label} ${c.rules.days} days`))].join(", ")}, from pickup` : `${days} days from pickup`] : null, (event === "borrowed" || event === "requested") && rulesOf(list[0]) ? ["Overdue fine", `${[...new Set(list.filter(rulesOf).map((c) => `${peso(c.rules.fine)} a day (${c.rules.label})`))].join(", ")} per weekday late, until returned`] : null].filter(Boolean);
   const lead = copy.lead(n, first, by, list[0].loan?.note);
   const bodyHtml = `<p style="margin:0 0 4px">${esc(lead)}</p>${lines}${qr}${detailsTable(rows)}${button("View my books", `${siteUrl}/borrowing`)}`;
   const html = layout({ title: copy.title(n), pill: copy.pill, tone: copy.tone, preheader: copy.subject(n), bodyHtml, library, siteUrl });
