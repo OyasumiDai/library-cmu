@@ -24,14 +24,6 @@
         "tab": "students",
         "icon": "users",
         "need": "students"
-      },
-      {
-        "label": "Reports",
-        "href": "/panel?tab=reports",
-        "page": "panel",
-        "tab": "reports",
-        "icon": "download",
-        "need": "reports"
       }
     ]
   },
@@ -99,6 +91,14 @@
         "tab": "staff",
         "icon": "user",
         "visible": "admin"
+      },
+      {
+        "label": "Reports",
+        "href": "/panel?tab=reports",
+        "page": "panel",
+        "tab": "reports",
+        "icon": "download",
+        "need": "reports"
       },
       {
         "label": "Settings",

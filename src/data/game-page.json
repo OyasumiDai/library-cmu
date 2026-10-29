@@ -1,0 +1,25 @@
+{
+  "features": [
+    { "title": "Walk and explore", "text": "Roam the reading rooms and shelves in first person. Climb, jump and look around at your own pace.", "image": null },
+    { "title": "Chat with others", "text": "Talk to the people in the library. Every name floats above their head with a label: Student, Staff or Admin.", "image": null },
+    { "title": "Play chess", "text": "Sit at a computer and play the computer, or open an online room and share its code with a friend.", "image": null },
+    { "title": "Borrow books", "text": "Pick a book from a shelf. The request is reserved on the website too, and a QR code is emailed to you for pickup.", "image": null },
+    { "title": "Meet the cat", "text": "Somebody has to guard the books. Say hello and give the library cat a pet.", "image": null },
+    { "title": "More on the way", "text": "New rooms, activities and events are added over time. Watch the library news for updates.", "image": null }
+  ],
+  "controls": {
+    "title": "On a computer",
+    "image": null,
+    "keys": [
+      { "keys": "W A S D", "action": "Walk" },
+      { "keys": "Mouse", "action": "Look around" },
+      { "keys": "Shift", "action": "Run" },
+      { "keys": "Space", "action": "Jump" },
+      { "keys": "E", "action": "Use things (books, computers, the cat)" },
+      { "keys": "T or Enter", "action": "Chat" },
+      { "keys": "P or Tab", "action": "Phone and book bag" },
+      { "keys": "Esc", "action": "Free the mouse" }
+    ]
+  },
+  "phone": { "title": "On a phone", "text": "Use the on-screen joystick to walk and drag anywhere else to look around.", "image": null }
+}

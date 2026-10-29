@@ -197,3 +197,22 @@ button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border
 .ticket__who strong { color: var(--ink); font-size: var(--fs-md, 1.05rem); }
 .ticket__books { width: 100%; text-align: left; }
 .ticket__books .badge { white-space: normal; text-align: left; }
+
+/* the game page editor (Game manage > Game page) */
+.gp { display: grid; gap: var(--space-4); }
+.gp-head { display: flex; align-items: baseline; gap: var(--space-2); margin: var(--space-3) 0 0; }
+.gp-head .text-soft { font-size: var(--fs-sm); font-weight: 400; }
+.gp-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: var(--space-4); }
+.gp-card { display: grid; gap: var(--space-3); align-content: start; padding: var(--space-4); }
+.gp-card .field { margin: 0; }
+.gp-card__tools { justify-content: flex-end; }
+.gp-pic { display: grid; gap: var(--space-2); }
+.gp-pic .shot__frame { aspect-ratio: 3 / 2; }
+.gp-pic label.is-busy { opacity: 0.6; pointer-events: none; }
+.gp-add { display: grid; place-content: center; justify-items: center; gap: var(--space-2); min-height: 14rem; border: 2px dashed var(--line-strong); background: transparent; color: var(--text-soft); font: inherit; font-weight: 700; cursor: pointer; }
+.gp-add:hover, .gp-add:focus-visible { border-color: var(--primary); color: var(--primary); }
+.gp-controls { display: grid; gap: var(--space-3); align-content: start; }
+.gp-keys { display: grid; gap: var(--space-2); }
+.gp-key { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr) auto; gap: var(--space-2); align-items: center; }
+.gp-preview { display: grid; gap: var(--space-5); padding: var(--space-4); border: 1px dashed var(--line-strong); border-radius: var(--radius); background: var(--page); }
+@media (max-width: 36rem) { .gp-key { grid-template-columns: minmax(0, 1fr) auto; } .gp-key input:nth-child(2) { grid-column: 1; } .gp-key button { grid-row: 1 / span 2; grid-column: 2; } }

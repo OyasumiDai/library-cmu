@@ -7,6 +7,7 @@ import { hasPerm } from "../core/session";
 import { db } from "../core/supabase";
 import { fail, ok } from "../core/toast";
 import { field, selectField } from "../ui/components";
+import { mountGamePageEditor } from "./gamePageEditor";
 import type { PanelTab } from "./tab";
 
 const STATES = [{ value: "online", label: "Live" }, { value: "maintenance", label: "Under maintenance" }, { value: "offline", label: "Offline" }];
@@ -50,7 +51,9 @@ export const gameTab: PanelTab = {
         <div class="alert px" id="fileCheck" role="status"><span>Press "Check the game file" to see if it is published.</span></div>
         <div class="form__actions"><button class="btn btn--quiet" type="button" id="check">${icon("refresh")} Check the game file</button>${host ? html`<button class="btn" type="submit">Save hosting</button>` : ""}</div>
         ${host ? "" : html`<p class="field__hint">You need the Host Game permission to change this.</p>`}
-      </form></div>`);
+      </form>
+      <section class="card px gp" id="gamePageEditor"></section></div>`);
+    mountGamePageEditor(root.querySelector<HTMLElement>("#gamePageEditor")!, s.game_page, edit);
 
     const details = root.querySelector<HTMLFormElement>("#detailsForm")!;
     details.addEventListener("input", () => { const d = formData(details); root.querySelector("#pvTitle")!.textContent = d.game_title || "Game"; root.querySelector("#pvText")!.textContent = d.game_description ?? ""; });

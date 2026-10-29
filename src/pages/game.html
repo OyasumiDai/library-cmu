@@ -18,7 +18,8 @@
 
   <section class="section" aria-labelledby="doTitle">
     <div class="section__head"><div><span class="eyebrow">Inside the game</span><h2 id="doTitle">What you can do</h2></div></div>
-    <div class="feature-grid">
+    <!-- these cards and the controls below are what staff edit in the panel (Game manage > Game page); this is what shows before that -->
+    <div class="feature-grid" id="gameFeatures">
       <article class="feature card px" data-reveal data-slot="game-explore">
         <div class="shot__frame shot__frame--art"><img src="/assets/game/frame.webp" width="1500" height="1000" alt="" loading="lazy" decoding="async"></div>
         <h3>Walk and explore</h3><p class="text-soft">Roam the reading rooms and shelves in first person. Climb, jump and look around at your own pace.</p>
@@ -48,7 +49,7 @@
 
   <section class="section" aria-labelledby="keysTitle">
     <div class="section__head"><div><span class="eyebrow">Controls</span><h2 id="keysTitle">How to play</h2></div></div>
-    <div class="controls-grid">
+    <div class="controls-grid" id="gameControls">
       <div class="card px controls" data-reveal>
         <h3>On a computer</h3>
         <dl class="keys">
