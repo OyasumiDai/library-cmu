@@ -3,10 +3,13 @@ import { allBooks, logReportDownload, movements } from "../api/staff";
 import { loansByStatus } from "../api/loans";
 import { actions, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
-import { daysUntil, downloadCsv, formatDate, formatDateTime } from "../core/format";
+import { csvDateTime, daysUntil, downloadCsv } from "../core/format";
+import { formatIsbn } from "../core/isbn";
+import { current } from "../core/session";
 import { fail, ok } from "../core/toast";
 import { dataTable } from "../ui/charts";
 import { loading } from "../ui/components";
+import type { Book } from "../types";
 import type { PanelTab } from "./tab";
 
 interface Report {
@@ -23,38 +26,60 @@ const within = (iso: string | null, from: string, to: string) => {
   return (!from || day >= from) && (!to || day <= to);
 };
 
+// ISBN by book id, for the reports that list loans
+const isbnOf = (books: Book[]) => new Map(books.map((b) => [b.id, b.isbn ? formatIsbn(b.isbn) : ""]));
+const overdueDays = (due: string | null) => (due && daysUntil(due) < 0 ? -daysUntil(due) : "");
+
 const REPORTS: Report[] = [
   {
-    id: "catalog", title: "Catalog and availability", text: "Every title with copies, what is on loan and what is free.", filters: "none",
+    id: "catalog", title: "Catalog and availability", text: "Every title with its ISBN, copies, what is on loan and what is free, and the date it was added.", filters: "none",
     async build() {
       const [books, loans] = await Promise.all([allBooks(), loansByStatus(["requested", "borrowed"], 5000)]);
       const out = new Map<string, number>(); const held = new Map<string, number>();
       for (const l of loans) (l.status === "borrowed" ? out : held).set(l.book_id, ((l.status === "borrowed" ? out : held).get(l.book_id) ?? 0) + 1);
-      return { header: ["ID", "Title", "Author", "Subject", "Shelf", "Copies", "On loan", "Reserved", "Free", "Archived"], rows: books.map((b) => [b.id, b.title, b.author, b.category, b.shelf, b.copies, out.get(b.id) ?? 0, held.get(b.id) ?? 0, Math.max(b.copies - (out.get(b.id) ?? 0) - (held.get(b.id) ?? 0), 0), b.archived ? "yes" : "no"]) };
+      return {
+        header: ["ISBN", "Title", "Author", "Subject", "Shelf", "First published", "Copies", "On loan", "Reserved", "Free", "Status", "Date added"],
+        rows: books.map((b) => [b.isbn ? formatIsbn(b.isbn) : "(none)", b.title, b.author, b.category, b.shelf, b.published, b.copies, out.get(b.id) ?? 0, held.get(b.id) ?? 0,
+          Math.max(b.copies - (out.get(b.id) ?? 0) - (held.get(b.id) ?? 0), 0), b.archived ? "Archived" : "Active", csvDateTime(b.created_at)]),
+      };
     },
   },
   {
-    id: "loans", title: "Loans", text: "Requests, checkouts and returns with dates. Filter by request date and status.", filters: "loans",
+    id: "loans", title: "Loans", text: "Requests, checkouts and returns with the date and time of each step. Filter by request date and status.", filters: "loans",
     async build(f) {
-      const loans = await loansByStatus(f.status ? [f.status as "requested"] : ["requested", "borrowed", "returned", "rejected", "cancelled"], 5000);
-      return { header: ["Loan", "Book", "Author", "Username", "Student ID", "Status", "Requested", "Borrowed", "Due", "Returned"], rows: loans.filter((l) => within(l.requested_at, f.from, f.to)).map((l) => [l.id, l.book?.title ?? "", l.book?.author ?? "", l.profile?.username ?? "", l.profile?.student_id ?? "", l.status, formatDate(l.requested_at), formatDate(l.borrowed_at), formatDate(l.due_at), formatDate(l.returned_at)]) };
+      const [loans, books] = await Promise.all([loansByStatus(f.status ? [f.status as "requested"] : ["requested", "borrowed", "returned", "rejected", "cancelled"], 5000), allBooks()]);
+      const isbn = isbnOf(books);
+      return {
+        header: ["Loan no.", "ISBN", "Book", "Author", "Student", "Username", "Student ID", "Status", "Requested", "Borrowed", "Due", "Returned", "Days overdue"],
+        rows: loans.filter((l) => within(l.requested_at, f.from, f.to)).map((l) => [l.id, isbn.get(l.book_id) ?? "", l.book?.title ?? "", l.book?.author ?? "", l.profile?.full_name ?? "", l.profile?.username ?? "",
+          l.profile?.student_id ?? "", l.status, csvDateTime(l.requested_at), csvDateTime(l.borrowed_at), csvDateTime(l.due_at), csvDateTime(l.returned_at), l.status === "borrowed" ? overdueDays(l.due_at) : ""]),
+      };
     },
   },
   {
     id: "overdue", title: "Overdue follow-up", text: "Borrowed books past their due date, longest overdue first.", filters: "none",
     async build() {
-      const loans = (await loansByStatus(["borrowed"], 5000)).filter((l) => l.due_at && daysUntil(l.due_at) < 0).sort((a, b) => String(a.due_at).localeCompare(String(b.due_at)));
-      return { header: ["Student", "Student ID", "Book", "Due", "Days overdue"], rows: loans.map((l) => [`${l.profile?.full_name} (${l.profile?.username})`, l.profile?.student_id ?? "", l.book?.title ?? "", formatDate(l.due_at), -daysUntil(l.due_at!)]) };
+      const [all, books] = await Promise.all([loansByStatus(["borrowed"], 5000), allBooks()]);
+      const isbn = isbnOf(books);
+      const loans = all.filter((l) => l.due_at && daysUntil(l.due_at) < 0).sort((a, b) => String(a.due_at).localeCompare(String(b.due_at)));
+      return {
+        header: ["Student", "Username", "Student ID", "ISBN", "Book", "Borrowed", "Due", "Days overdue"],
+        rows: loans.map((l) => [l.profile?.full_name ?? "", l.profile?.username ?? "", l.profile?.student_id ?? "", isbn.get(l.book_id) ?? "", l.book?.title ?? "", csvDateTime(l.borrowed_at), csvDateTime(l.due_at), overdueDays(l.due_at)]),
+      };
     },
   },
   {
-    id: "movements", title: "Book movements", text: "Checkouts, returns, new titles and copy changes. Filter by date.", filters: "dates",
+    id: "movements", title: "Book movements", text: "Checkouts, returns, new titles and copy changes, with the date and time of each. Filter by date.", filters: "dates",
     async build(f) {
-      const rows = await movements({ from: f.from, to: f.to, limit: 2000 });
-      return { header: ["When", "Type", "Book", "Quantity", "By", "Remarks"], rows: rows.map((m) => [formatDateTime(m.created_at), m.action, m.title, m.quantity, m.actor ?? "", m.remarks ?? ""]) };
+      const [rows, books] = await Promise.all([movements({ from: f.from, to: f.to, limit: 2000 }), allBooks()]);
+      const isbn = isbnOf(books);
+      return { header: ["Date and time", "Type", "ISBN", "Book", "Quantity", "By", "Remarks"], rows: rows.map((m) => [csvDateTime(m.created_at), m.action, isbn.get(m.book_id) ?? "", m.title, m.quantity, m.actor ?? "", m.remarks ?? ""]) };
     },
   },
 ];
+
+// the name printed on a downloaded report
+export const who = (): string => { const p = current().profile; return p ? `${p.full_name || p.username} (${p.username}, ${p.role})` : ""; };
 
 export const reports: PanelTab = {
   id: "reports",
@@ -92,7 +117,8 @@ export const reports: PanelTab = {
       },
       download: () => {
         if (!result) return;
-        downloadCsv(`${active.id}-${new Date().toISOString().slice(0, 10)}.csv`, result.header, result.rows);
+        downloadCsv({ title: active.title, file: active.id, header: result.header, rows: result.rows, by: who(),
+          filters: [["From", saved.from], ["To", saved.to], ["Status", saved.status]] });
         void logReportDownload();
         ok("Downloaded.");
       },

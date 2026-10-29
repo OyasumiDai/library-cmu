@@ -33,7 +33,9 @@ export async function signOut(): Promise<void> {
 }
 
 export async function usernameAvailable(username: string): Promise<boolean> {
-  const { data, error } = await db().rpc("username_available", { p_username: username });
+  // username_free (tools/confirmed-only.sql) also counts sign-ups still waiting for their email code
+  let { data, error } = await db().rpc("username_free", { p_username: username });
+  if (error && /username_free|function|schema cache/i.test(error.message)) ({ data, error } = await db().rpc("username_available", { p_username: username }));
   if (error) throw error;
   return data === true;
 }

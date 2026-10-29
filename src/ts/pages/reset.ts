@@ -4,6 +4,7 @@
 // The reply is the same whether or not the email has an account, so this cannot be used to find registered emails.
 import { sendResetEmail, setPassword, verifyResetCode } from "../api/auth";
 import { boot } from "../core/boot";
+import { resendCooldown, serverWait, type Cooldown } from "../core/cooldown";
 import { busy, formData, html, mount, qs } from "../core/dom";
 import { friendly } from "../core/errors";
 import { checkPassword, watchPassword } from "../core/password";
@@ -11,8 +12,6 @@ import { db } from "../core/supabase";
 import { fail } from "../core/toast";
 import { clearErrors, setFieldError } from "../ui/components";
 import { clearFailures } from "../core/lockout";
-
-const RESEND_SECONDS = 60;
 
 const TEXT: Record<number, [string, string]> = {
   1: ["Forgot your password?", "Enter your email and we will send you a 6-digit code."],
@@ -46,27 +45,13 @@ boot(({ params }) => {
     mount(qs("#resetNotice"), html``);
   };
 
-  // "Resend code" waits 60 seconds
-  let timer: ReturnType<typeof setInterval> | undefined;
-  const startResendTimer = () => {
-    let left = RESEND_SECONDS;
-    clearInterval(timer);
-    resend.disabled = true;
-    const tick = () => {
-      resend.textContent = left > 0 ? `Resend code (${left}s)` : "Resend code";
-      resend.disabled = left > 0;
-      if (left-- <= 0) clearInterval(timer);
-    };
-    tick();
-    timer = setInterval(tick, 1000);
-  };
-
+  // "Resend code" waits, longer after each resend, and remembers the wait for this email across refreshes
+  let cooldown: Cooldown | undefined;
   const sendCode = async (): Promise<boolean> => {
     try {
-      await sendResetEmail(email);
-      return true;
+      return await cooldown!.run(() => sendResetEmail(email));
     } catch (error) {
-      fail(friendly(error));
+      fail(serverWait(error) ? "Too many codes asked for. Please wait for the timer, then try again." : friendly(error));
       return false;
     }
   };
@@ -77,11 +62,19 @@ boot(({ params }) => {
     const data = formData(stepEmail);
     if (!/^\S+@\S+\.\S+$/.test(data.email ?? "")) return setFieldError(stepEmail, "email", "Enter your email.");
     email = data.email.toLowerCase();
+    cooldown?.stop();
+    cooldown = resendCooldown(resend, "reset", email);
+    // a code for this email went out moments ago: use that one instead of sending another
+    if (cooldown.left()) {
+      show(2);
+      qs("#codeHint").textContent = `A code was already sent to ${email}. Use that one, or ask for a new one when the timer ends.`;
+      codeInput.focus();
+      return;
+    }
     await busy(stepEmail.querySelector("button[type=submit]"), async () => {
       if (!(await sendCode())) return;
       show(2);
       qs("#codeHint").textContent = `If ${email} has an account, a code is on its way.`;
-      startResendTimer();
       codeInput.focus();
     });
   });
@@ -94,7 +87,7 @@ boot(({ params }) => {
   });
 
   resend.addEventListener("click", async () => {
-    if (await sendCode()) { startResendTimer(); qs("#codeHint").textContent = "A new code was sent."; }
+    if (await sendCode()) qs("#codeHint").textContent = "A new code was sent. Codes can take a minute to arrive.";
   });
   qs("#otherEmail").addEventListener("click", () => { recovered = false; show(1); emailInput.focus(); });
 

@@ -1,7 +1,8 @@
 import { loansByStatus } from "../api/loans";
 import { movements, type Movement } from "../api/staff";
 import { actions, debounce, html, icon, mount } from "../core/dom";
-import { daysUntil, downloadCsv, formatDate, formatDateTime, plural } from "../core/format";
+import { csvDateTime, daysUntil, downloadCsv, formatDate, formatDateTime, plural } from "../core/format";
+import { who } from "./reports";
 import { reveal } from "../core/motion";
 import { empty, loading, statusBadge } from "../ui/components";
 import type { Loan } from "../types";
@@ -114,7 +115,7 @@ export const circulation: PanelTab = {
       return: (el) => act(() => recordReturn(loanOf(el))),
       email: (el) => emailBorrower(loanOf(el)).then(() => undefined),
       loanLink: (el) => { view = "history"; search = el.dataset.id ?? ""; (root.querySelector("#loanSearch") as HTMLInputElement).value = search; void reload(); },
-      exportMoves: () => downloadCsv(`movements-${new Date().toISOString().slice(0, 10)}.csv`, ["Date", "Type", "Book", "Quantity", "By", "Remarks"], moves.map((m) => [formatDateTime(m.created_at), m.action, m.title, m.quantity, m.actor ?? "", m.remarks ?? ""])),
+      exportMoves: () => downloadCsv({ title: "Book movements", file: "movements", by: who(), header: ["Date and time", "Type", "Book", "Quantity", "By", "Remarks"], rows: moves.map((m) => [csvDateTime(m.created_at), m.action, m.title, m.quantity, m.actor ?? "", m.remarks ?? ""]) }),
     });
     await reload();
     void go;

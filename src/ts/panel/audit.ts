@@ -1,6 +1,7 @@
 import { auditTrail, type AuditEntry } from "../api/staff";
 import { actions, debounce, html, icon, mount } from "../core/dom";
-import { downloadCsv, formatDateTime } from "../core/format";
+import { csvDateTime, downloadCsv, formatDateTime } from "../core/format";
+import { who } from "./reports";
 import { empty, loading } from "../ui/components";
 import type { PanelTab } from "./tab";
 
@@ -40,7 +41,7 @@ export const audit: PanelTab = {
       to = (root.querySelector("#auTo") as HTMLInputElement).value;
       void load();
     });
-    actions(root, { csv: () => downloadCsv(`audit-${new Date().toISOString().slice(0, 10)}.csv`, ["When", "Who", "Action", "Module", "Details"], rows.map((r) => [formatDateTime(r.created_at), r.actor, r.action, r.module, r.details])) });
+    actions(root, { csv: () => downloadCsv({ title: "Audit trail", file: "audit-trail", by: who(), filters: [["Search", search], ["Module", module], ["From", from], ["To", to]], header: ["Date and time", "Who", "Action", "Module", "Details"], rows: rows.map((r) => [csvDateTime(r.created_at), r.actor, r.action, r.module, r.details]) }) });
     await load();
   },
 };

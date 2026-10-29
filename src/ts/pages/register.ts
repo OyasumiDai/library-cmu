@@ -1,6 +1,7 @@
 import { confirmSignupCode, EmailTakenError, register, resendSignupCode, usernameAvailable } from "../api/auth";
 import { courses, publicSettings, registrationInfo, settingText } from "../api/content";
 import { boot } from "../core/boot";
+import { resendCooldown, serverWait } from "../core/cooldown";
 import { busy, debounce, formData, html, icon, mount, qs } from "../core/dom";
 import { friendly } from "../core/errors";
 import { checkPassword, watchPassword } from "../core/password";
@@ -11,8 +12,6 @@ import type { Course } from "../types";
 
 const USERNAME = /^[A-Za-z0-9][A-Za-z0-9_ .-]{2,15}$/;
 const PH_MOBILE = /^(?:\+?63|0)9\d{9}$/;
-
-const RESEND_SECONDS = 60;
 
 // step 2 of joining: the 6-digit code that was emailed
 function showConfirm(email: string): void {
@@ -30,17 +29,15 @@ function showConfirm(email: string): void {
   input.addEventListener("input", () => { input.value = input.value.replace(/\D/g, "").slice(0, 10); });
   input.addEventListener("paste", (event) => { event.preventDefault(); input.value = (event.clipboardData?.getData("text") ?? "").replace(/\D/g, "").slice(0, 10); });
 
-  let timer: ReturnType<typeof setInterval> | undefined;
-  const startTimer = () => {
-    let left = RESEND_SECONDS;
-    clearInterval(timer);
-    const tick = () => { resend.textContent = left > 0 ? `Resend code (${left}s)` : "Resend code"; resend.disabled = left > 0; if (left-- <= 0) clearInterval(timer); };
-    tick();
-    timer = setInterval(tick, 1000);
-  };
-  startTimer();
+  // sign-up just sent the first code, so the wait starts now (and grows with each resend)
+  const cooldown = resendCooldown(resend, "signup", email);
+  if (!cooldown.left()) cooldown.sent();
   resend.addEventListener("click", async () => {
-    try { await resendSignupCode(email); ok("A new code was sent."); startTimer(); } catch (error) { fail(friendly(error)); }
+    try {
+      if (await cooldown.run(() => resendSignupCode(email))) ok("A new code was sent. Codes can take a minute to arrive.");
+    } catch (error) {
+      fail(serverWait(error) ? "Too many codes asked for. Please wait for the timer, then try again." : friendly(error));
+    }
   });
 
   confirmForm.addEventListener("submit", async (event) => {

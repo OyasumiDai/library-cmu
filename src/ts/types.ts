@@ -39,6 +39,7 @@ export interface Book {
   shelf: string;
   cover_url: string | null;
   archived?: boolean;
+  created_at?: string;
 }
 
 export interface CatalogBook extends Book {
