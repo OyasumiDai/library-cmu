@@ -1,10 +1,9 @@
-import { allBooks, archiveBook, bookCopies, deleteBook, findIsbns, saveBook, setCopies, setIsbn, uploadPicture, type BookInput } from "../api/staff";
+import { allBooks, archiveBook, bookCopies, findIsbns, saveBook, setCopies, setIsbn, uploadPicture, type BookInput } from "../api/staff";
 import { loansByStatus } from "../api/loans";
 import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
 import { formatIsbn, isValidIsbn, normalizeIsbn } from "../core/isbn";
-import { isAdmin } from "../core/session";
-import { confirmBox, openModal } from "../core/modal";
+import { openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
 import { cover, empty, field, loading } from "../ui/components";
 import type { Book } from "../types";
@@ -53,8 +52,7 @@ export const books: PanelTab = {
             <td>${b.category}</td><td>${bar(b)}</td>
             <td><div class="table__actions">
               <button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")} Edit</button>
-              <button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")} ${b.archived ? "Restore" : "Archive"}</button>
-              ${isAdmin() ? html`<button class="btn btn--sm btn--danger" data-action="delete" data-id="${b.id}" aria-label="Delete">${icon("trash")}</button>` : ""}</div></td></tr>`)}</tbody></table></div>`
+              <button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")} ${b.archived ? "Restore" : "Archive"}</button></div></td></tr>`)}</tbody></table></div>`
         : html`<div class="cover-grid">${shown.map((b) => html`<article class="cover-tile">${cover(b)}<strong>${b.title}</strong><small>${b.author}</small>${bar(b)}
             <div class="cluster"><button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")}</button><button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")}</button></div></article>`)}</div>`);
       if (rows.length > MAX_ROWS) body.append(Object.assign(document.createElement("p"), { className: "result-count", textContent: `Showing ${MAX_ROWS} of ${rows.length}. Search to narrow it down.` }));
@@ -242,7 +240,6 @@ export const books: PanelTab = {
       edit: (el) => editor(all.find((b) => b.id === el.dataset.id) ?? null),
       mode: (el) => { viewMode = el.dataset.mode as typeof viewMode; root.querySelectorAll<HTMLElement>("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); draw(); },
       archive: (el) => { const b = all.find((x) => x.id === el.dataset.id)!; return attempt(() => archiveBook(b.id, !b.archived), b.archived ? "Restored." : "Archived. Its history is kept."); },
-      delete: async (el) => { const b = all.find((x) => x.id === el.dataset.id)!; if (await confirmBox("Delete this book?", `"${b.title}" and its loan history will be removed for good.`, "Delete", true)) await attempt(() => deleteBook(b.id), "Deleted."); },
     });
     void raw;
     await reload();

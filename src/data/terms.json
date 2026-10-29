@@ -1,0 +1,144 @@
+{
+  "title": "Terms and Conditions of Use",
+  "platform": "CMU Library Explorer",
+  "effective": "October 29, 2026",
+  "intro": [
+    "Welcome to CMU Library Explorer, a gamified virtual library platform developed for the College of Computer Studies in City of Malabon University. The platform consists of a website and an interactive 3D virtual library game designed to let users explore library resources, view book information, submit borrowing requests, and interact with game-related features.",
+    "By accessing or using CMU Library Explorer, you acknowledge that you have read and understood these Terms and Conditions and agree to comply with the rules stated below. If you do not agree with these terms, please refrain from using features that require your acceptance."
+  ],
+  "sections": [
+    {
+      "title": "1. Purpose of the Platform",
+      "paragraphs": ["CMU Library Explorer is designed to serve as an additional digital environment for exploring selected library resources and related information. Its features may include:"],
+      "list": [
+        "Browsing the book catalog and viewing basic bibliographic information.",
+        "Reading book synopses and viewing displayed availability information.",
+        "Submitting and monitoring borrowing requests.",
+        "Exploring the 3D virtual library and interacting with its minigames.",
+        "Accessing announcements, personal activity records, and other available platform features.",
+        "Using authorized administrative and library staff functions according to assigned access permissions."
+      ],
+      "after": ["The platform supplements resource discovery and library-related activities. It does not replace the physical university library, its official policies, or its established lending procedures."]
+    },
+    {
+      "title": "2. User Eligibility and Account Registration",
+      "paragraphs": [
+        "Users must provide accurate information when registering for an account or updating their profiles. Users must not impersonate another person, use false identifying information, or register using another person's credentials without authorization.",
+        "Certain features are available only to authenticated users. Access to student, library staff, and administrative functions depends on the user's assigned role and permissions.",
+        "Users are responsible for keeping their login credentials confidential and for activities performed through their accounts. Users must notify the platform's authorized administrator through the available contact channel if they suspect unauthorized access to their accounts.",
+        "The administrator may restrict, suspend, or deactivate an account when there are reasonable grounds to believe that the account has been misused, compromised, or used in violation of these terms."
+      ]
+    },
+    {
+      "title": "3. Acceptable Use",
+      "paragraphs": ["Users agree to use the platform responsibly and only for its intended educational and library-related purposes.", "Users must not:"],
+      "list": [
+        "Attempt to access another user's account or restricted administrative functions without authorization.",
+        "Bypass authentication, access controls, staff permissions, or other security measures.",
+        "Interfere with the platform's operation, database, network, or other users' access.",
+        "Upload, transmit, or introduce malicious software, harmful code, or unauthorized commands.",
+        "Deliberately submit false borrowing requests or manipulate catalog, circulation, or activity records.",
+        "Copy, modify, distribute, or exploit platform content in ways that violate applicable laws or the rights of others.",
+        "Use the platform for unlawful activities or activities that disrupt its intended educational purpose."
+      ],
+      "after": ["Violations may result in restricted access, account suspension, or other appropriate action consistent with applicable policies and laws."]
+    },
+    {
+      "title": "4. Book Catalog and Resource Information",
+      "paragraphs": [
+        "The platform displays selected information about books and other library resources, which may include titles, authors, publication details, synopses, locations, and availability information.",
+        "CMU Library Explorer maintains its own independently created and managed database. It is not automatically integrated with the university's existing library database or official library records.",
+        "Although reasonable efforts may be made to maintain accurate information, records displayed on the platform may be incomplete, outdated, or different from the information maintained by the physical library. Users should confirm important details with authorized library personnel when necessary.",
+        "The platform does not guarantee that every listed resource is available for immediate borrowing."
+      ]
+    },
+    {
+      "title": "5. Borrowing Requests and Library Procedures",
+      "paragraphs": [
+        "Users may submit borrowing requests for eligible books listed in the platform's catalog. Requests are subject to the platform's applicable validation rules and review by authorized library personnel.",
+        "Submitting a borrowing request does not automatically constitute approval, confirm that a book has been reserved, or guarantee that the requested book will be issued to the user.",
+        "Library staff may approve or reject requests based on displayed availability, applicable borrowing limits, and other relevant conditions. Users must follow the instructions provided by authorized library personnel and comply with the applicable physical library procedures before a requested book is issued.",
+        "Borrowing status, due dates, and related information displayed on the platform are based on the records maintained in its independently managed database. Users should contact the library staff if they identify discrepancies or require clarification."
+      ]
+    },
+    {
+      "title": "6. Virtual Library Game and Interactive Features",
+      "paragraphs": [
+        "The 3D virtual library game provides an interactive representation of selected aspects of the university library. Available activities may include exploring virtual sections, interacting with objects or points of interest, and participating in minigames.",
+        "Users agree to interact with the game and its features responsibly. Game activities are intended to complement the platform's library-related purpose and must not be used to interfere with other system functions or manipulate recorded information.",
+        "Game access and individual features may be modified, temporarily unavailable, or restricted when necessary for maintenance, security, or technical reasons."
+      ]
+    },
+    {
+      "title": "7. Copyright and Intellectual Property",
+      "paragraphs": [
+        "Books, illustrations, photographs, graphics, software, and other materials displayed through the platform may be protected by copyright or other intellectual property rights.",
+        "The platform is intended to display basic bibliographic information and short book synopses rather than reproduce complete copyrighted books. Users must not use the platform to reproduce, distribute, publish, or otherwise exploit copyrighted materials without appropriate authorization or a valid legal basis.",
+        "The platform's original interface, game environment, design elements, and software components may also be protected by applicable intellectual property laws. Access to the platform does not transfer ownership of these materials to users.",
+        "Users must respect the rights of authors, publishers, developers, and other applicable rights holders. These provisions are subject to the Intellectual Property Code of the Philippines, Republic Act No. 8293, as amended."
+      ]
+    },
+    {
+      "title": "8. Privacy and Personal Information",
+      "paragraphs": [
+        "The platform may process information necessary for account registration, authentication, profile management, borrowing requests, notifications, system security, and the recording of selected user activities.",
+        "Personal information must be handled in accordance with applicable data privacy requirements, including the Data Privacy Act of 2012, Republic Act No. 10173, and its applicable implementing rules and regulations.",
+        "Users should review the platform's separate Privacy Notice before submitting personal information. The Privacy Notice should explain the information collected, the purposes and legal basis for processing, any applicable disclosures, retention periods, the identity and contact details of the responsible personal information controller, and the rights available to data subjects.",
+        "Users must not access, collect, disclose, or misuse another person's personal information without proper authorization.",
+        "Acceptance of these Terms and Conditions does not replace any separate consent or privacy information required by applicable law."
+      ]
+    },
+    {
+      "title": "9. Security and System Availability",
+      "paragraphs": [
+        "The platform's administrators may implement security controls, monitor relevant system events, and maintain audit records for purposes such as protecting accounts, investigating suspected misuse, and maintaining system integrity.",
+        "The platform may experience interruptions because of maintenance, technical problems, connectivity issues, security incidents, or other circumstances beyond the operators' reasonable control.",
+        "Although reasonable measures should be taken to protect the platform and its records, uninterrupted availability and complete protection against every possible security incident cannot be guaranteed.",
+        "Users must report suspected security issues through the contact channel made available on the website and must not attempt to exploit discovered vulnerabilities."
+      ]
+    },
+    {
+      "title": "10. Platform Limitations and Disclaimer",
+      "paragraphs": [
+        "CMU Library Explorer is an independently maintained digital platform developed for library resource exploration and related activities. Unless separately and formally authorized, it must not be interpreted as an official integration with the university's existing library database or as a replacement for official university records.",
+        "The platform is made available for its stated educational and library-related purposes. To the extent permitted by applicable law, the platform's operators do not guarantee uninterrupted operation, error-free performance, complete catalog information, or the availability of every listed resource.",
+        "Nothing in these terms removes rights or obligations that cannot legally be excluded or waived."
+      ]
+    },
+    {
+      "title": "11. Suspension and Termination of Access",
+      "paragraphs": [
+        "Access to an account or platform feature may be suspended, restricted, or terminated when necessary to address unauthorized access, security risks, misuse, violations of these terms, or other legitimate operational concerns.",
+        "Where appropriate, the responsible administrator may notify the affected user of the action and its reason. Users may seek clarification through the contact channel provided on the website.",
+        "Any applicable borrowing obligations or pending matters should be addressed with authorized library personnel. Suspension of a platform account does not automatically cancel, approve, or otherwise determine an outstanding borrowing request or physical library obligation."
+      ]
+    },
+    {
+      "title": "12. Changes to These Terms",
+      "paragraphs": [
+        "These Terms and Conditions may be revised when platform features, operating procedures, security requirements, or applicable legal requirements change.",
+        "The current version should be made accessible on the website, together with its effective date. Where a revision materially affects users' rights or obligations, reasonable notice should be given when practicable. Where renewed acceptance is required, users will be asked to review and accept the revised terms before continuing to use the affected features."
+      ]
+    },
+    {
+      "title": "13. Applicable Law",
+      "paragraphs": [
+        "These Terms and Conditions shall be interpreted in accordance with applicable laws of the Republic of the Philippines.",
+        "Any dispute arising from the use of the platform should first be addressed through appropriate communication with the responsible platform administrators. This provision does not prevent any party from exercising rights or pursuing remedies available under applicable law."
+      ]
+    },
+    {
+      "title": "14. Contact and Support",
+      "paragraphs": ["For questions, concerns, suspected security issues, or clarification regarding these Terms and Conditions, users should contact the platform administrators through the official contact details displayed on the website."],
+      "facts": [
+        ["Platform", "CMU Library Explorer"],
+        ["Institutional Context", "College of Computer Studies, City of Malabon University"],
+        ["Contact Email", "{contact}"]
+      ]
+    },
+    {
+      "title": "Acknowledgment and Acceptance",
+      "paragraphs": ["By selecting the checkbox labeled \"I agree to the Terms and Conditions\" and proceeding to use the applicable account-based features, I acknowledge that I have read and understood these Terms and Conditions and agree to comply with the rules governing the use of CMU Library Explorer."]
+    }
+  ]
+}

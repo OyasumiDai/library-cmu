@@ -6,13 +6,13 @@ import { html, icon, mount, qs, maybe } from "./dom";
 import { friendly } from "./errors";
 import { initLayout } from "./layout";
 import { reveal, watchReveal } from "./motion";
-import { openModal } from "./modal";
 import { fail } from "./toast";
 import { current, homeFor, initSession, isMember, isStaff, type SessionState } from "./session";
 import { isConfigured } from "./supabase";
 import { LOGIN } from "./config";
 import { initAssistant } from "./assistant";
 import { fillFooter } from "../ui/footer";
+import { agreeToTerms } from "../ui/terms";
 
 export type Access = "all" | "member" | "guest" | "staff";
 
@@ -56,14 +56,8 @@ async function askForTerms(): Promise<void> {
   if (!profile) return;
   const wanted = settingText(await publicSettings(), "terms_version");
   if (!wanted || profile.terms_version === wanted) return;
-  const modal = openModal("Our terms were updated", html`
-    <p>Please read the <a href="/terms" target="_blank" rel="noopener">terms</a> and <a href="/privacy" target="_blank" rel="noopener">privacy notice</a> (version ${wanted}) and accept them to keep borrowing.</p>`, {
-    footer: html`<button class="btn px" type="button" data-accept>I accept</button>`,
-  });
-  modal.root.querySelector("[data-accept]")?.addEventListener("click", async () => {
-    await acceptTerms(wanted);
-    modal.close();
-  });
+  // the full terms, read to the end and agreed to; closing without agreeing asks again on the next page
+  if (await agreeToTerms("Agree and continue")) await acceptTerms(wanted);
 }
 
 // Supabase sends people back with #error=...&error_code=otp_expired when an email link is old or was already opened

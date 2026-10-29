@@ -5,6 +5,7 @@ import story from "../../data/story.json";
 import { boot } from "../core/boot";
 import { actions, html, icon, mount, qs } from "../core/dom";
 import { formatDate } from "../core/format";
+import { termsBody } from "../ui/terms";
 import type { ContentBody, TeamMember } from "../types";
 
 const PRIVACY_FALLBACK: ContentBody = {
@@ -74,6 +75,12 @@ boot(async () => {
       qs("#teamSection").hidden = false;
       mount(qs("#teamGrid"), html`${people.map(person)}`);
     }
+    return;
+  }
+  // the terms are fixed text (src/data/terms.json): the same words people agree to when they sign up
+  if (slug === "terms") {
+    qs("#pageTitle").textContent = "Terms and Conditions";
+    mount(qs("#pageBody"), await termsBody());
     return;
   }
   const page = await contentPage(slug);

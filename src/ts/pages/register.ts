@@ -6,6 +6,7 @@ import { friendly } from "../core/errors";
 import { checkPassword, watchPassword } from "../core/password";
 import { fail, ok } from "../core/toast";
 import { clearErrors, setFieldError } from "../ui/components";
+import { agreeToTerms } from "../ui/terms";
 import type { Course } from "../types";
 
 const USERNAME = /^[A-Za-z0-9][A-Za-z0-9_ .-]{2,15}$/;
@@ -157,9 +158,14 @@ boot(async () => {
     if (!picked) problems.push(["course", "Choose your course."]);
     else if (picked.majors.length && !data.major) problems.push(["major", "Choose your major."]);
     if (!data.year_level) problems.push(["year_level", "Choose your year level."]);
-    if (!(form.elements.namedItem("terms") as HTMLInputElement).checked) problems.push(["terms", "Please accept the terms to continue."]);
     problems.forEach(([name, message]) => setFieldError(form, name, message));
     if (problems.length) { form.querySelector<HTMLElement>(".is-invalid input, .is-invalid select")?.focus(); return; }
+
+    // the form is complete: now the terms must be read to the end and agreed to, or no account is made
+    if (!(await agreeToTerms("Agree and create account"))) {
+      fail("Your account was not created. You need to agree to the Terms and Conditions first.");
+      return;
+    }
 
     const chosen = picked;
     await busy(form.querySelector("button[type=submit]"), async () => {
