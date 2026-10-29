@@ -13,3 +13,7 @@ export interface PanelTab {
 export const go = (tab: string, query = ""): void => {
   location.href = `/panel?tab=${tab}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
 };
+
+// the address the panel was opened with, before it tidies it to ?tab=...: a section can read extra instructions from it
+// (a notification link like ?tab=books&q=Title&show=review&open=1)
+export const openedWith = new URLSearchParams(location.search);

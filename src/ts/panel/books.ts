@@ -11,7 +11,7 @@ import { confirmBox, openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
 import { cover, empty, field, loading, selectField } from "../ui/components";
 import type { Book } from "../types";
-import type { PanelTab } from "./tab";
+import { openedWith, type PanelTab } from "./tab";
 
 const MAX_ROWS = 60;
 const THIS_YEAR = Number(new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila", year: "numeric" }).format(new Date()));
@@ -536,6 +536,16 @@ export const books: PanelTab = {
     void raw;
     void publicSettings().then((s) => { if (Array.isArray(s.archive_locations)) locations = (s.archive_locations as unknown[]).filter((x): x is string => typeof x === "string"); }).catch(() => undefined);
     await reload();
+    // opened from an approval notification: show the review list and open that book (review for an admin, the fix form for its author)
+    // read once: switching to Books again from the sidebar should not reopen it
+    const asked = new URLSearchParams(openedWith); openedWith.delete("open"); openedWith.delete("show");
+    if (asked.get("show") === "review") { show = "review"; const select = root.querySelector<HTMLSelectElement>("#bookShow"); if (select) select.value = "review"; draw(); }
+    if (asked.get("open") === "1" && term) {
+      const book = all.find((b) => b.title.toLowerCase() === term.toLowerCase() && waiting(b)) ?? all.find((b) => b.title.toLowerCase() === term.toLowerCase());
+      if (!book) ok(`"${term}" is no longer waiting. It may have been approved or removed.`);
+      else if (book.approval_status === "pending" && isAdmin()) review(book);
+      else if (book.approval_status === "revision" || book.approval_status === "pending") editor(book);
+    }
     await sweepObsolete();
   },
 };

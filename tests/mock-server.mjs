@@ -186,7 +186,7 @@ if (process.env.MOCK_DEMO) {
   const ago = (m) => new Date(Date.now() - m * 60000).toISOString();
   [["New book request", "Cyrus Reyes requested \"The Quiet Shelf 1\".", "request", 12, false], ["New book request", "Mia Reyes requested \"Pixel Gardens 1\".", "request", 95, false],
    ["Book overdue", "Joy Reyes has not returned \"Maps of Malabon 2\" (2 days late).", "overdue", 240, false], ["Book returned", "Leo Reyes returned \"Blue Hour 3\".", "returned", 60 * 26, true],
-   ["Request cancelled", "Ana Reyes did not pick up \"Night Reading 4\" within 2 days.", "cancelled", 60 * 30, true], ["New announcement", "Library hours change next week.", "announcement", 60 * 50, true]]
+   ["Request cancelled", "Ana Reyes did not pick up \"Night Reading 4\" within 2 days.", "cancelled", 60 * 30, true], ["New announcement", "Library hours change next week.", "announcement", 60 * 50, true], ["Book waiting for approval", "Shan Reyes added \"Pixel Gardens 2\". Review it in Books.", "approval", 3, false]]
     .forEach(([title, message, type, m, read], i) => db.notifications.push({ id: 900 + i, user_id: uid.admin, title, message, type, is_read: read, created_at: ago(m) }));
 }
 

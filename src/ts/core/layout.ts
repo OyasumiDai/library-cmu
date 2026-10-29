@@ -85,8 +85,18 @@ function openAccountMenu(): void {
 // ---------------------------------------------------------------- the bell's panel
 // Each notification gets an icon and a colour for its kind, and a page it leads to when clicked.
 type NoticeKind = { icon: string; tone: "info" | "success" | "warning" | "danger" | "accent" };
+// a book a staff member added, waiting for or back from an admin (tools/book-approval.sql)
+const isBookApproval = (n: Notice) => n.type === "approval" || /book (waiting|resubmitted) for approval|book (approved|needs revision)/i.test(n.title);
+// the book's title, quoted in the message: Dave added "Dave's Diary". Review it in Books.
+const quotedTitle = (n: Notice) => /"([^"]+)"/.exec(n.message)?.[1] ?? "";
+
 function kindOf(n: Notice): NoticeKind {
   const text = `${n.type} ${n.title}`.toLowerCase();
+  if (isBookApproval(n)) {
+    if (/needs revision/i.test(n.title)) return { icon: "edit", tone: "warning" };
+    if (/approved/i.test(n.title)) return { icon: "check", tone: "success" };
+    return { icon: "clock", tone: "accent" };
+  }
   if (/overdue|fine|late/.test(text)) return { icon: "clock", tone: "danger" };
   if (/reject|declin|cancel/.test(text)) return { icon: "cross", tone: "danger" };
   if (/due|remind/.test(text)) return { icon: "calendar", tone: "warning" };
@@ -99,6 +109,13 @@ function kindOf(n: Notice): NoticeKind {
 function linkOf(n: Notice): string {
   const text = `${n.type} ${n.title}`.toLowerCase();
   const staff = current().profile?.role !== "student";
+  // approvals open the book itself in Books: waiting ones in the review list, with the review (or the fix) window open
+  if (isBookApproval(n)) {
+    const title = quotedTitle(n);
+    const open = /approved/i.test(n.title) ? "" : "&open=1";
+    const show = /approved/i.test(n.title) ? "" : "&show=review";
+    return `/panel?tab=books${title ? `&q=${encodeURIComponent(title)}` : ""}${show}${open}`;
+  }
   if (/announce|news/.test(text)) return "/announcements";
   if (/request|reserv|overdue|due|return|borrow|pick|approv|reject|declin|cancel|checkout|fine/.test(text)) return staff ? "/panel?tab=circulation" : "/borrowing";
   return "/notifications";
