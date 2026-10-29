@@ -35,7 +35,9 @@ function card(rows: PickupInfo[], banner = "", fines = new Map<number, LoanFine>
         <h2>${who.full_name || who.username}</h2>
         <p class="text-soft">${who.username}${who.student_id ? ` · ID ${who.student_id}` : ""} · Code <span class="mono">${who.pickup_code}</span></p>
       </div>
-      <ul class="list">${rows.map((r) => html`<li class="list__item">
+      ${waiting.length + out.length > 1 ? html`<p class="field__hint scan-pick__hint">Tick the books this visit is for. A student can return one book and keep reading another.</p>` : ""}
+      <ul class="list">${rows.map((r) => html`<li class="list__item ${r.status === "requested" || r.status === "borrowed" ? "scan-pick" : ""}">
+        ${r.status === "requested" || r.status === "borrowed" ? html`<label class="scan-pick__box" title="${r.status === "requested" ? "Hand this book over now" : "This book is being returned now"}"><input class="check__box" type="checkbox" data-pick="${r.status}" value="${r.id}" checked aria-label="${r.status === "requested" ? "Hand over" : "Return"} ${r.title}"></label>` : ""}
         <div class="scan-result__cover">${cover({ id: String(r.id), title: r.title, cover_url: r.cover_url })}</div>
         <div class="list__body"><p class="list__title">${r.title}</p><p class="list__meta">${r.author} · Shelf ${r.shelf}${fines.get(r.id) ? ` · ${fines.get(r.id)!.label}, ${plural(fines.get(r.id)!.loan_days, "day")}` : ""}</p>
           ${r.due_at ? html`<p class="list__meta">Due ${formatDate(r.due_at)} <span class="badge badge--${dueLabel(r.due_at).tone}">${dueLabel(r.due_at).text.replace(/^Due [A-Z][a-z]{2} \d+, \d{4}$/, "On loan")}</span></p>` : html`<p class="list__meta">Requested ${formatDateTime(r.requested_at)}${fines.get(r.id)?.pickup_by ? ` · pick up by ${formatDateTime(fines.get(r.id)!.pickup_by)}` : ""}</p>`}
@@ -43,8 +45,8 @@ function card(rows: PickupInfo[], banner = "", fines = new Map<number, LoanFine>
         ${statusBadge(r.status)}</li>`)}</ul>
       ${owed ? html`<div class="alert alert--danger px px--danger" role="status">${icon("info")}<span>Overdue fines to collect: <strong>${peso(owed)}</strong>. They stop growing once you record the return.</span></div>` : ""}
       <div class="cluster">
-        ${waiting.length ? html`<button class="btn btn--lg" type="button" data-action="confirm">${icon("check")} Confirm pickup${waiting.length > 1 ? ` (${waiting.length} books)` : ""}</button>` : ""}
-        ${out.length ? html`<button class="btn btn--lg btn--secondary" type="button" data-action="return">${icon("download")} Record return${out.length > 1 ? ` (${out.length} books)` : ""}</button>` : ""}
+        ${waiting.length ? html`<button class="btn btn--lg" type="button" data-action="confirm" data-count="requested">${icon("check")} Confirm pickup<span data-label>${waiting.length > 1 ? ` (${waiting.length} books)` : ""}</span></button>` : ""}
+        ${out.length ? html`<button class="btn btn--lg btn--secondary" type="button" data-action="return" data-count="borrowed">${icon("download")} Record return<span data-label>${out.length > 1 ? ` (${out.length} books)` : ""}</span></button>` : ""}
         ${!waiting.length && !out.length ? html`<p class="text-soft">Nothing to do: this student has no reserved or borrowed books.</p>` : ""}
         <button class="btn btn--quiet" type="button" data-action="clear">Scan another</button>
       </div>
@@ -72,15 +74,30 @@ boot(({ params }) => {
 
   // each book with its loan period, the pickup deadline or due date, and any fine (staff collect it at the desk)
   const show = async (rows: PickupInfo[], banner = "") => mount(result, card(rows, banner, await loanFines(rows.map((r) => r.id)).catch(() => new Map())));
+  const ticked = (status: "requested" | "borrowed") => [...result.querySelectorAll<HTMLInputElement>(`[data-pick="${status}"]`)].filter((box) => box.checked).map((box) => Number(box.value));
+  // "Record return (1 of 2 books)": the buttons say what they will do, and do nothing with no book ticked
+  result.addEventListener("change", (event) => {
+    const box = (event.target as Element).closest<HTMLInputElement>("[data-pick]");
+    if (!box) return;
+    const status = box.dataset.pick as "requested" | "borrowed";
+    const total = result.querySelectorAll(`[data-pick="${status}"]`).length;
+    const chosen = ticked(status).length;
+    const button = result.querySelector<HTMLButtonElement>(`[data-count="${status}"]`);
+    if (!button) return;
+    button.disabled = chosen === 0;
+    button.querySelector("[data-label]")!.textContent = total > 1 ? ` (${chosen === total ? `${total} books` : `${chosen} of ${total} books`})` : "";
+    box.closest(".scan-pick")?.classList.toggle("is-skipped", !box.checked);
+  });
 
-  const confirm = async (rows: PickupInfo[]): Promise<void> => {
-    const ids = open(rows, "requested").map((r) => r.id);
+  const confirm = async (rows: PickupInfo[], only?: number[]): Promise<void> => {
+    const ids = open(rows, "requested").map((r) => r.id).filter((id) => !only || only.includes(id));
+    if (!ids.length) return;
     try {
       await checkoutMany(ids);
       const fresh = await lookupPickup(rows[0].pickup_code);
-      ok(ids.length > 1 ? `Handed over ${ids.length} books` : `Handed over: ${rows[0].title}`);
+      ok(ids.length > 1 ? `Handed over ${ids.length} books` : `Handed over: ${rows.find((r) => r.id === ids[0])?.title ?? rows[0].title}`);
       beep(true);
-      remember(open(rows, "requested"), "picked up");
+      remember(open(rows, "requested").filter((r) => ids.includes(r.id)), "picked up");
       await show(fresh.length ? fresh : rows, `Pickup confirmed. ${rows[0].username} was notified and emailed once for ${ids.length > 1 ? "all the books" : "the book"}.`);
     } catch (error) {
       beep(false);
@@ -138,21 +155,27 @@ boot(({ params }) => {
 
   actions(qs("[data-page-root]"), {
     confirm: async () => {
+      const only = ticked("requested");
+      if (!only.length) return fail("Tick at least one book to hand over.");
       const rows = await lookupPickup(lastCode).catch(() => []);
-      if (open(rows, "requested").length) await confirm(rows);
+      if (open(rows, "requested").length) await confirm(rows, only);
     },
     return: async () => {
+      // only the books the student is giving back now; the others stay on loan
+      const only = ticked("borrowed");
+      if (!only.length) return fail("Tick at least one book to return.");
       const rows = await lookupPickup(lastCode).catch(() => []);
-      const ids = open(rows, "borrowed").map((r) => r.id);
+      const ids = open(rows, "borrowed").map((r) => r.id).filter((id) => only.includes(id));
       if (!ids.length) return;
+      const kept = open(rows, "borrowed").length - ids.length;
       try {
         // the fine is final at the moment of return: read it first so the desk knows what to collect
         const due = [...(await loanFines(ids).catch(() => new Map<number, LoanFine>())).values()].reduce((sum, f) => sum + f.amount, 0);
         await giveBackMany(ids);
         beep(true);
-        remember(open(rows, "borrowed"), "returned");
+        remember(open(rows, "borrowed").filter((r) => ids.includes(r.id)), "returned");
         const fresh = await lookupPickup(rows[0].pickup_code);
-        await show(fresh.length ? fresh : rows, `Return recorded. ${rows[0].username} was notified and emailed once.${due ? ` Collect the overdue fine of ${peso(due)}.` : ""}`);
+        await show(fresh.length ? fresh : rows, `Return recorded for ${ids.length === 1 ? `"${rows.find((r) => r.id === ids[0])?.title}"` : `${ids.length} books`}. ${rows[0].username} was notified and emailed once.${kept ? ` ${kept === 1 ? "1 book stays" : `${kept} books stay`} on loan.` : ""}${due ? ` Collect the overdue fine of ${peso(due)}.` : ""}`);
       } catch (error) { fail(friendly(error)); }
     },
     clear: () => { lastCode = ""; waitingView(); },

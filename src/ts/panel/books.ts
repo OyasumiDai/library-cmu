@@ -1,4 +1,6 @@
-import { allBooks, archiveBook, archiveObsolete, bookCopies, findIsbns, saveBook, setArchiveDetails, setCopies, setIsbn, uploadPicture, type BookInput } from "../api/staff";
+import { allBooks, archiveBook, archiveObsolete, bookCopies, findIsbns, reviewBook, saveBook, setArchiveDetails, setCopies, setIsbn, uploadPicture, type BookInput } from "../api/staff";
+import { formatDateTime } from "../core/format";
+import { current, isAdmin } from "../core/session";
 import { publicSettings } from "../api/content";
 import { loansByStatus } from "../api/loans";
 import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
@@ -68,7 +70,11 @@ export const books: PanelTab = {
     let category = "";
     let sort: Sort = "title";
     let viewMode: "table" | "covers" = "table";
-    let show: "active" | "archived" | "all" = "active";
+    let show: "active" | "archived" | "all" | "review" = "active";
+    // a book a staff member added waits for an admin (tools/book-approval.sql); it is kept out of the catalog until approved
+    const waiting = (b: Book) => b.approval_status === "pending" || b.approval_status === "revision";
+    const shelved = (b: Book) => !!b.archived && !waiting(b);
+    const submitterName = (b: Book) => b.submitter ? (b.submitter.full_name || b.submitter.username) : "a staff member";
     let locations: string[] = DEFAULT_LOCATIONS;
     // a newer column (edition, obsolete year...) is there once its SQL is run; with no books yet, assume it is (saveBook drops it if not)
     const hasColumn = (column: string) => !all.length || column in all[0];
@@ -76,7 +82,9 @@ export const books: PanelTab = {
     const inUse = (b: Book) => onLoan.get(b.id) ?? 0;
     const bar = (b: Book) => html`<span class="copies" title="${b.copies - inUse(b)} on the shelf, ${inUse(b)} on loan"><span class="copies__bar"><i style="--w:${b.copies ? Math.round((inUse(b) / b.copies) * 100) : 0}%"></i></span><small>${b.copies - inUse(b)} / ${b.copies}</small></span>`;
 
-    const archiveBadge = (b: Book) => !b.archived ? ""
+    const archiveBadge = (b: Book) => b.approval_status === "pending" ? html`<span class="badge badge--warning">${icon("clock")} waiting for approval</span>`
+      : b.approval_status === "revision" ? html`<span class="badge badge--danger">${icon("edit")} needs revision</span>`
+      : !b.archived ? ""
       : b.archive_location ? html`<span class="badge">${icon("archive")} ${b.archive_location}${b.archive_reason === "obsolete" ? " · obsolete" : ""}</span>`
       : hasColumn("archive_location") ? html`<span class="badge badge--warning">archived · no location</span>` : html`<span class="badge">archived</span>`;
 
@@ -87,9 +95,17 @@ export const books: PanelTab = {
     const draw = () => {
       const active = all.filter((b) => !b.archived);
       // archived books nobody has given a place yet (usually ones that just reached their obsolete year)
-      const homeless = hasColumn("archive_location") ? all.filter((b) => b.archived && !b.archive_location) : [];
+      const homeless = hasColumn("archive_location") ? all.filter((b) => shelved(b) && !b.archive_location) : [];
+      // approvals: admins see what waits for them; staff see their own books that came back with a note
+      const pendingCount = all.filter((b) => b.approval_status === "pending").length;
+      const mineBack = all.filter((b) => b.approval_status === "revision" && b.submitted_by === current().profile?.id);
+      mount(root.querySelector<HTMLElement>("#approvalNotice")!, isAdmin() && pendingCount
+        ? html`<div class="alert alert--info px px--info" role="status">${icon("clock")}<span class="grow"><strong>${pendingCount === 1 ? "1 book is" : `${pendingCount} books are`} waiting for your approval.</strong> Staff added ${pendingCount === 1 ? "it" : "them"}; ${pendingCount === 1 ? "it stays" : "they stay"} out of the catalog until you decide.</span><button class="btn btn--sm" type="button" data-action="show-review">Review now</button></div>`
+        : mineBack.length
+          ? html`<div class="alert alert--danger px px--danger" role="status">${icon("edit")}<span class="grow"><strong>${mineBack.length === 1 ? "1 of your books needs" : `${mineBack.length} of your books need`} changes</strong> before an admin can approve ${mineBack.length === 1 ? "it" : "them"}. Open it, read the note, fix it and save to send it back.</span><button class="btn btn--sm" type="button" data-action="show-review">See ${mineBack.length === 1 ? "it" : "them"}</button></div>`
+          : "");
       mount(root.querySelector<HTMLElement>("#archiveNotice")!, homeless.length ? html`<div class="alert alert--warning px px--warning" role="status">${icon("archive")}<span class="grow"><strong>${homeless.length === 1 ? "1 archived book has" : `${homeless.length} archived books have`} no location yet.</strong> Choose where ${homeless.length === 1 ? "it is" : "each one is"} kept.</span><button class="btn btn--sm" type="button" data-action="locate">Choose locations</button></div>` : "");
-      const counts = { active: active.length, archived: all.length - active.length, all: all.length };
+      const counts = { active: active.length, archived: all.filter(shelved).length, all: all.length, review: all.filter(waiting).length };
       root.querySelectorAll<HTMLOptionElement>("#bookShow option").forEach((o) => { o.textContent = `${o.dataset.label} (${counts[o.value as keyof typeof counts]})`; });
       const tiles = root.querySelector<HTMLElement>("#bookTiles")!;
       mount(tiles, html`
@@ -102,7 +118,7 @@ export const books: PanelTab = {
       // an ISBN matches with or without its dashes
       const isbnNeedle = normalizeIsbn(term);
       const matches = (b: Book) => `${b.title} ${b.author} ${b.category}`.toLowerCase().includes(needle) || (!!isbnNeedle && !!b.isbn?.includes(isbnNeedle));
-      let rows = all.filter((b) => (!needle || matches(b)) && (!category || b.category === category) && (show === "all" || (show === "archived") === !!b.archived));
+      let rows = all.filter((b) => (!needle || matches(b)) && (!category || b.category === category) && (show === "all" || (show === "review" ? waiting(b) : show === "archived" ? shelved(b) : !b.archived)));
       rows = [...rows].sort((a, b) => sort === "title" ? a.title.localeCompare(b.title) : sort === "category" ? a.category.localeCompare(b.category) || a.title.localeCompare(b.title) : sort === "copies" ? b.copies - a.copies : String((b as Book & { created_at?: string }).created_at ?? "").localeCompare(String((a as Book & { created_at?: string }).created_at ?? "")));
       const body = root.querySelector<HTMLElement>("[data-body]")!;
       if (!rows.length) { mount(body, show === "archived" ? empty("Nothing in the archive", "Archived books and books past their obsolete year show up here.", "archive") : empty("No books", "Add the first one or change the search.", "book")); return; }
@@ -114,7 +130,10 @@ export const books: PanelTab = {
             <td>${b.category}</td><td>${bar(b)}</td>
             <td><div class="table__actions">
               <button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")} Edit</button>
-              <button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")} ${b.archived ? "Restore" : "Archive"}</button></div></td></tr>`)}</tbody></table></div>`
+              ${waiting(b)
+                ? (isAdmin() && b.approval_status === "pending" ? html`<button class="btn btn--sm" data-action="review" data-id="${b.id}">${icon("check")} Review</button>` : "")
+                : html`<button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")} ${b.archived ? "Restore" : "Archive"}</button>`}</div>
+              ${waiting(b) ? html`<span class="table__sub">added by ${submitterName(b)}${b.review_note && b.approval_status === "revision" ? html` · <em>"${b.review_note}"</em>` : ""}</span>` : ""}</td></tr>`)}</tbody></table></div>`
         : html`<div class="cover-grid">${shown.map((b) => html`<article class="cover-tile">${cover(b)}<strong>${b.title}</strong><small>${b.author}</small>${bar(b)}
             <div class="cluster"><button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")}</button><button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")}</button></div></article>`)}</div>`);
       if (rows.length > MAX_ROWS) body.append(Object.assign(document.createElement("p"), { className: "result-count", textContent: `Showing ${MAX_ROWS} of ${rows.length}. Search to narrow it down.` }));
@@ -138,7 +157,9 @@ export const books: PanelTab = {
     // ---- add / edit: suggestions from what already exists, a duplicate warning, a copies counter that cannot go below what is on loan
     const editor = (book: Book | null) => {
       const unique = (pick: (b: Book) => string) => [...new Set(all.map(pick).filter(Boolean))].sort();
-      const modal = openModal(book ? "Edit book" : "Add a book", html`<form class="form" id="bookForm" novalidate>
+      const modal = openModal(book ? (book.approval_status === "revision" ? "Fix and resubmit" : "Edit book") : "Add a book", html`<form class="form" id="bookForm" novalidate>
+        ${book?.approval_status === "revision" && book.review_note ? html`<div class="alert alert--danger px px--danger">${icon("edit")}<span><strong>The admin asked for changes:</strong> "${book.review_note}". Saving sends the book back for approval.</span></div>` : ""}
+        ${!book && !isAdmin() && hasColumn("approval_status") ? html`<div class="alert alert--info px px--info">${icon("info")}<span>An admin checks every new book before it goes in the catalog. You will get a notification when it is approved or needs changes.</span></div>` : ""}
         ${field("isbn", "ISBN", { value: formatIsbn(book?.isbn), required: !book || !!book.isbn, hint: "The 10 or 13 digit number on the back cover or copyright page. Dashes are fine.", placeholder: "978-0306406157", attrs: 'maxlength="17" autocomplete="off"' })}
         ${field("title", "Title", { value: book?.title ?? "", required: true })}
         <div class="alert alert--warning px px--warning" id="dupWarning" hidden>${icon("info")}<span>A book with this title, author and edition already exists.</span></div>
@@ -279,12 +300,44 @@ export const books: PanelTab = {
             await saveBook({ ...input, copies: book.copies }, false);
             await setCopies(book.id, wanted, d.reason);
           } else await saveBook(input, !book);
-          ok("Saved.");
+          ok(!book && !isAdmin() && hasColumn("approval_status") ? "Sent to an admin for approval. It goes in the catalog once approved."
+            : book?.approval_status === "revision" && !isAdmin() ? "Resubmitted. An admin will check it again." : "Saved.");
           modal.close();
           await reload();
           await sweepObsolete();
           if (button.dataset.save === "again") editor(null);
         } catch (error) { fail(friendly(error)); }
+      }));
+    };
+
+    // ---- approval: the admin sees everything about the book, then approves it or sends it back with a note
+    const review = (b: Book) => {
+      const facts: [string, string][] = [["ISBN", b.isbn ? formatIsbn(b.isbn) : "(none)"], ["Authors", b.author], ["Edition", b.edition ?? ""], ["Subject", b.category], ["Material", b.material === "fiction" ? "Fiction" : b.material ? "Circulation / Reserve" : ""],
+        ["Genre", b.genre], ["Publisher", b.publisher], ["First published", b.published], ["Language", b.language], ["Shelf", b.shelf], ["Copies", String(b.copies)], ["Obsolete year", b.obsolete_year ? String(b.obsolete_year) : ""],
+        ["Added by", submitterName(b)], ["Added on", b.created_at ? formatDateTime(b.created_at) : ""]];
+      const modal = openModal("Review this book", html`
+        <div class="book-detail">${cover(b)}<div>
+          <h3 class="review__title">${b.title}</h3>
+          <dl class="book-detail__facts">${facts.filter(([, v]) => v).map(([k, v]) => html`<dt>${k}</dt><dd>${v}</dd>`)}</dl>
+          ${b.synopsis ? html`<p class="text-soft">${b.synopsis}</p>` : ""}</div></div>
+        <div class="field"><label class="field__label" for="reviewNote">Note to ${submitterName(b)}</label>
+          <textarea class="textarea" id="reviewNote" rows="3" maxlength="500" placeholder="Needed when you ask for a revision, e.g. 'The ISBN is for another edition; please check the back cover.'"></textarea></div>`, {
+        wide: true,
+        footer: html`<button class="btn btn--quiet" type="button" data-close>Later</button><button class="btn btn--secondary" type="button" data-decide="revise">${icon("edit")} Ask for revision</button><button class="btn" type="button" data-decide="approve">${icon("check")} Approve</button>`,
+      });
+      modal.root.querySelectorAll<HTMLButtonElement>("[data-decide]").forEach((button) => button.addEventListener("click", async () => {
+        const decision = button.dataset.decide as "approve" | "revise";
+        const note = modal.root.querySelector<HTMLTextAreaElement>("#reviewNote")!.value.trim();
+        if (decision === "revise" && !note) { fail("Write what needs to change, so the staff member knows what to fix."); modal.root.querySelector<HTMLTextAreaElement>("#reviewNote")!.focus(); return; }
+        if (decision === "approve" && !(await confirmBox("Approve this book?", `"${b.title}" goes into the catalog for students right away.`, "Approve"))) return;
+        button.disabled = true;
+        try {
+          await reviewBook(b.id, decision, note);
+          ok(decision === "approve" ? `Approved. "${b.title}" is in the catalog now.` : `Sent back to ${submitterName(b)} with your note.`);
+          modal.close();
+          await reload();
+          if (!all.some(waiting)) { show = "active"; const select = root.querySelector<HTMLSelectElement>("#bookShow"); if (select) select.value = "active"; draw(); }
+        } catch (error) { fail(friendly(error)); button.disabled = false; }
       }));
     };
 
@@ -438,11 +491,12 @@ export const books: PanelTab = {
 
     mount(root, html`<div class="panel__tab">
       <div class="panel__heading"><h2>Books</h2><div class="cluster"><button class="btn btn--secondary" data-action="find-isbns">${icon("search")} Find missing ISBNs</button><button class="btn" data-action="add">${icon("plus")} Add a book</button></div></div>
+      <div id="approvalNotice"></div>
       <div id="archiveNotice"></div>
       <div class="tile-grid" id="bookTiles"></div>
       <div class="toolbar toolbar--wide px px--soft">
         <div class="field search"><label class="visually-hidden" for="bookSearch">Search books</label>${icon("search")}<input class="input" id="bookSearch" type="search" placeholder="Title, author, ISBN or subject" value="${term}"></div>
-        <div class="field"><label class="field__label" for="bookShow">Show</label><select class="select" id="bookShow"><option value="active" data-label="Active books">Active books</option><option value="archived" data-label="Archive">Archive</option><option value="all" data-label="All books">All books</option></select></div>
+        <div class="field"><label class="field__label" for="bookShow">Show</label><select class="select" id="bookShow"><option value="active" data-label="Active books">Active books</option><option value="review" data-label="Waiting for approval">Waiting for approval</option><option value="archived" data-label="Archive">Archive</option><option value="all" data-label="All books">All books</option></select></div>
         <div class="field"><label class="field__label" for="bookCategory">Subject</label><select class="select" id="bookCategory"></select></div>
         <div class="field"><label class="field__label" for="bookSort">Sort by</label><select class="select" id="bookSort"><option value="title">Title</option><option value="category">Subject</option><option value="copies">Most copies</option><option value="newest">Newest</option></select></div>
         <div class="seg" role="group" aria-label="View as"><button class="seg__btn" type="button" data-action="mode" data-mode="table" aria-pressed="true">Table</button><button class="seg__btn" type="button" data-action="mode" data-mode="covers" aria-pressed="false">Covers</button></div>
@@ -458,6 +512,8 @@ export const books: PanelTab = {
       edit: (el) => editor(all.find((b) => b.id === el.dataset.id) ?? null),
       mode: (el) => { viewMode = el.dataset.mode as typeof viewMode; root.querySelectorAll<HTMLElement>("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); draw(); },
       archive: (el) => { const b = all.find((x) => x.id === el.dataset.id)!; return b.archived ? restore(b) : archive(b); },
+      "show-review": () => { show = "review"; const select = root.querySelector<HTMLSelectElement>("#bookShow"); if (select) select.value = "review"; draw(); },
+      review: (el) => review(all.find((x) => x.id === el.dataset.id)!),
       locate: () => chooseLocations(all.filter((b) => b.archived && !b.archive_location)),
     });
     void raw;

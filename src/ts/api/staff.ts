@@ -16,9 +16,16 @@ export async function stats(): Promise<DashboardStats> {
 
 // ---------------------------------------------------------------- books
 export async function allBooks(): Promise<Book[]> {
-  const { data, error } = await db().from("books").select("*").order("title");
+  // with who added it, once tools/book-approval.sql is run (before that the link does not exist, so ask without it)
+  let { data, error } = await db().from("books").select("*, submitter:profiles!books_submitted_by_fkey(username,full_name)").order("title");
+  if (error) ({ data, error } = await db().from("books").select("*").order("title"));
   fail(error);
   return (data ?? []) as Book[];
+}
+
+// the admin's decision on a book a staff member added: publish it, or send it back with a note
+export async function reviewBook(id: string, decision: "approve" | "revise", note: string): Promise<void> {
+  fail((await db().rpc("review_book", { p_book_id: id, p_decision: decision, p_note: note || null })).error);
 }
 
 export type BookInput = Omit<Book, "archived">;

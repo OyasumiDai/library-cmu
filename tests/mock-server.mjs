@@ -24,6 +24,7 @@ const db = {
     author: ["Ana Cruz", "Leo Santos", "Mika Reyes"][i % 3], category: subjects[i % 5], genre: "Cozy", published: String(1990 + i), publication_label: "FIRST PUBLISHED",
     publisher: "CMU Press", language: "English", synopsis: "A gentle story about people, books and the quiet corners where they meet.", copies: i % 7 === 0 ? 1 : 3, shelf: "Main Library", archived: false, cover_url: null, created_at: now(),
     obsolete_year: i === 3 || i === 4 ? 2025 : 2031, archive_location: null, archive_reason: null, archived_at: null,
+    approval_status: i === 7 ? "pending" : "approved", review_note: null, submitted_by: i === 7 ? uid.staff : null, ...(i === 7 ? { archived: true, submitter: { username: "Shan", full_name: "Shan Reyes" } } : {}),
   })),
   loans: [], notifications: [], user_activity: [],
   announcements: [{ id: 1, title: "Welcome back, readers!", body: "The library is open Monday to Friday, 8 AM to 6 PM. New arrivals are on the cozy shelf.", published: true, created_at: now() }],
@@ -165,6 +166,8 @@ const rpc = {
   archive_obsolete_books: (_a, me) => { staffOnly(me); const year = new Date().getFullYear();
     return db.books.filter((b) => !b.archived && b.obsolete_year && b.obsolete_year <= year && !db.loans.some((l) => l.book_id === b.id && ["requested", "borrowed"].includes(l.status)))
       .map((b) => { Object.assign(b, { archived: true, archive_reason: "obsolete", archive_location: null, archived_at: now() }); return { id: b.id, title: b.title }; }); },
+  review_book: (a, me) => { if (me?.role !== "admin") throw new Error("Only an admin can approve books."); const b = db.books.find((x) => x.id === a.p_book_id);
+    if (a.p_decision === "approve") Object.assign(b, { approval_status: "approved", archived: false, review_note: a.p_note }); else { if (!a.p_note) throw new Error("Say what needs to change."); Object.assign(b, { approval_status: "revision", review_note: a.p_note }); } },
   dashboard_stats: (_a, me) => {
     staffOnly(me);
     const count = (st) => db.loans.filter((l) => l.status === st).length;
@@ -196,7 +199,7 @@ if (process.env.MOCK_DEMO) {
     const person = students[i % students.length];
     const ago = (i * 37) % 60;
     const status = ago < 3 ? "requested" : i % 9 === 0 ? "rejected" : ago < 14 ? "borrowed" : "returned";
-    const loan = { id: ++seq, pickup_code: `DE40${String(i).padStart(4, "0")}`, book_id: book.id, user_id: person.id, status, requested_at: at(ago, i % 9), borrowed_at: null, due_at: null, returned_at: null, note: null };
+    const loan = { id: ++seq, pickup_code: `DE40000${i % students.length}`, book_id: book.id, user_id: person.id, status, requested_at: at(ago, i % 9), borrowed_at: null, due_at: null, returned_at: null, note: null };
     if (status === "borrowed" || status === "returned") Object.assign(loan, { borrowed_at: at(ago - 0.5, 0), due_at: at(ago - 7.5, 0) });
     if (status === "returned") loan.returned_at = at(Math.max(ago - 6 - (i % 4), 0.2), 0);
     db.loans.push(loan);

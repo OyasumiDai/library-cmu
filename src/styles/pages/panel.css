@@ -242,3 +242,14 @@ button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border
 .emailed { margin-top: var(--space-1); white-space: normal; }
 .emailed .icon, .emailed-dot .icon { width: 0.85rem; height: 0.85rem; vertical-align: -0.1em; }
 .emailed-dot { color: var(--info); font-weight: 700; white-space: nowrap; }
+
+/* the admin's "Review this book" window */
+.review__title { margin: 0 0 var(--space-2); }
+
+/* Scan pickup: a tick box on each book, so a visit can return one book and leave another on loan */
+.scan-pick__hint { margin: 0; }
+.scan-pick__box { display: grid; place-items: center; align-self: center; padding: var(--space-2); cursor: pointer; }
+.scan-pick__box .check__box { width: 1.35rem; height: 1.35rem; }
+.scan-pick { transition: opacity var(--dur-1) ease; }
+.scan-pick.is-skipped { opacity: 0.5; }
+.scan-pick.is-skipped .list__title { text-decoration: line-through; }
