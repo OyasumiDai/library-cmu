@@ -23,6 +23,7 @@ const db = {
     id: `bk-${100 + i}`, title: `${["The Quiet Shelf", "Pixel Gardens", "A Cat in the Stacks", "Night Reading", "Maps of Malabon", "Blue Hour"][i % 6]} ${Math.floor(i / 6) + 1}`,
     author: ["Ana Cruz", "Leo Santos", "Mika Reyes"][i % 3], category: subjects[i % 5], genre: "Cozy", published: String(1990 + i), publication_label: "FIRST PUBLISHED",
     publisher: "CMU Press", language: "English", synopsis: "A gentle story about people, books and the quiet corners where they meet.", copies: i % 7 === 0 ? 1 : 3, shelf: "Main Library", archived: false, cover_url: null, created_at: now(),
+    obsolete_year: i === 3 || i === 4 ? 2025 : 2031, archive_location: null, archive_reason: null, archived_at: null,
   })),
   loans: [], notifications: [], user_activity: [],
   announcements: [{ id: 1, title: "Welcome back, readers!", body: "The library is open Monday to Friday, 8 AM to 6 PM. New arrivals are on the cozy shelf.", published: true, created_at: now() }],
@@ -160,6 +161,10 @@ const rpc = {
   expire_unclaimed_requests: (_a, me) => db.loans.filter((l) => l.status === "requested" && Date.now() - new Date(l.requested_at).getTime() > 48 * 3600000)
     .map((l) => { Object.assign(l, { status: "cancelled", note: "Not picked up within 2 days" }); return { loan_id: l.id, user_id: l.user_id }; })
     .filter((r) => me?.role !== "student" || r.user_id === me.id),
+  // tools/book-obsolete-archive.sql: archive books whose obsolete year has come and that have nothing out
+  archive_obsolete_books: (_a, me) => { staffOnly(me); const year = new Date().getFullYear();
+    return db.books.filter((b) => !b.archived && b.obsolete_year && b.obsolete_year <= year && !db.loans.some((l) => l.book_id === b.id && ["requested", "borrowed"].includes(l.status)))
+      .map((b) => { Object.assign(b, { archived: true, archive_reason: "obsolete", archive_location: null, archived_at: now() }); return { id: b.id, title: b.title }; }); },
   dashboard_stats: (_a, me) => {
     staffOnly(me);
     const count = (st) => db.loans.filter((l) => l.status === st).length;

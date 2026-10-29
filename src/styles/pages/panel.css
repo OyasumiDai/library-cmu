@@ -232,3 +232,8 @@ button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border
   .change-list li { grid-template-columns: auto minmax(0, 1fr); }
   .change-list__what { grid-column: 1 / -1; }
 }
+
+/* "Where are these books kept?": the book on the left, its place on the right (stacked on phones) */
+.place-list .list__item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 1fr); gap: var(--space-3); align-items: center; }
+.place-list .list__body { min-width: 0; }
+@media (max-width: 36rem) { .place-list .list__item { grid-template-columns: minmax(0, 1fr); } }

@@ -62,6 +62,19 @@ export async function archiveBook(id: string, archived: boolean): Promise<void> 
   fail((await db().rpc("archive_book", { p_book_id: id, p_archived: archived })).error);
 }
 
+// ---- obsolete years and the archive (tools/book-obsolete-archive.sql)
+// archives every book whose obsolete year has come (nothing out on loan); returns them so staff can say where each is kept
+export async function archiveObsolete(): Promise<{ id: string; title: string }[]> {
+  const { data, error } = await db().rpc("archive_obsolete_books");
+  if (error) return []; // the SQL is not run yet
+  return (data ?? []) as { id: string; title: string }[];
+}
+
+// where an archived book is kept, and why it was archived; or, when restoring, a new obsolete year
+export async function setArchiveDetails(id: string, details: { archive_location?: string | null; archive_reason?: string | null; archived_at?: string | null; obsolete_year?: number | null }): Promise<void> {
+  fail((await db().from("books").update(details).eq("id", id)).error);
+}
+
 export async function deleteBook(id: string): Promise<void> {
   fail((await db().from("books").delete().eq("id", id)).error);
 }

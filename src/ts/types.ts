@@ -42,7 +42,11 @@ export interface Book {
   created_at?: string;
   authors?: string[] | null; // every author in order; author holds the same as one line (tools/book-authors-edition.sql)
   edition?: string | null;   // "2nd edition", "Revised edition, 2015"
-  material?: "circulation" | "fiction"; // sets the loan period and the overdue fine (tools/borrowing-rules.sql)
+  material?: "circulation" | "fiction";
+  obsolete_year?: number | null;    // archived by itself from 1 January of this year (tools/book-obsolete-archive.sql)
+  archive_location?: string | null; // where an archived book is kept
+  archive_reason?: string | null;   // "obsolete" or "manual"
+  archived_at?: string | null; // sets the loan period and the overdue fine (tools/borrowing-rules.sql)
 }
 
 export interface CatalogBook extends Book {
