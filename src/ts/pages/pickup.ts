@@ -60,6 +60,8 @@ boot(({ params }) => {
   let scanner: Scanner | null = null;
   let lastCode = "";
   let lastAt = 0;
+  let lastRejected = "";
+  let lastRejectedAt = 0;
   let working = false;
 
   try { auto.checked = localStorage.getItem(AUTO) === "1"; } catch { /* private mode */ }
@@ -88,7 +90,13 @@ boot(({ params }) => {
 
   const handle = async (text: string): Promise<void> => {
     const code = extractCode(text);
-    if (!code) { beep(false); return fail("That is not a library QR code."); }
+    if (!code) {
+      // the camera reads the same QR many times a second: say it once, and show what was read so a wrong code can be spotted
+      if (text === lastRejected && Date.now() - lastRejectedAt < 5000) return;
+      lastRejected = text; lastRejectedAt = Date.now();
+      beep(false);
+      return fail(`That is not a library QR code. It reads: "${text.trim().slice(0, 80)}${text.trim().length > 80 ? "..." : ""}"`);
+    }
     if (working || (code === lastCode && Date.now() - lastAt < 4000)) return;
     working = true; lastCode = code; lastAt = Date.now();
     try {

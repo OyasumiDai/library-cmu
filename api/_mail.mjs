@@ -59,7 +59,7 @@ export function detailsTable(rows) {
 // the QR code in a frame, with the code underneath so it still works if the image does not load
 export function qrBlock({ cid, code, caption }) {
   return `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:22px 0"><tr><td align="center" style="background:${C.tint};border-radius:12px;padding:22px 16px;font-family:${FONT}">
-    <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#ffffff;border:3px solid ${C.deep};border-radius:12px;padding:12px"><img src="cid:${cid}" width="180" height="180" alt="QR code ${esc(code)}" style="display:block;border:0"></td></tr></table>
+    <table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="background:#ffffff;border:3px solid ${C.deep};border-radius:12px;padding:8px"><img src="cid:${cid}" width="260" height="260" alt="QR code ${esc(code)}" style="display:block;border:0;width:260px;max-width:100%;height:auto;background:#ffffff;image-rendering:pixelated"></td></tr></table>
     <div style="margin-top:14px;font-size:12px;letter-spacing:2px;color:${C.soft};text-transform:uppercase">Pickup code</div>
     <div style="font-family:'Courier New',monospace;font-size:22px;font-weight:bold;letter-spacing:3px;color:${C.deep};margin:2px 0 8px">${esc(code)}</div>
     <div style="font-size:13px;color:${C.text};line-height:1.5;max-width:340px">${esc(caption)}</div></td></tr></table>`;
@@ -96,7 +96,8 @@ export function otpBlock(code, caption) {
 }
 
 export async function qrPng(text) {
-  return QRCode.toBuffer(text, { type: "png", errorCorrectionLevel: "M", margin: 1, width: 360, color: { dark: C.deep, light: "#ffffff" } });
+  // pure black on white with a wide quiet zone, drawn large: phone screens, glare and dark-mode email apps still scan it
+  return QRCode.toBuffer(text, { type: "png", errorCorrectionLevel: "M", margin: 4, width: 600, color: { dark: "#000000", light: "#ffffff" } });
 }
 
 // ---------------------------------------------------------------- several books in one email

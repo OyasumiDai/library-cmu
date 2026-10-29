@@ -28,5 +28,8 @@ export function explainMailError(error) {
 export function siteUrlFor(req) {
   const production = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
   const fromRequest = `${String(req.headers["x-forwarded-proto"] ?? "https").split(",")[0]}://${req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost"}`;
-  return (process.env.SITE_URL || production || fromRequest).replace(/\/$/, "");
+  // SITE_URL written as "library.example.com" still gives a full link (QR codes and buttons need the https://)
+  const site = (process.env.SITE_URL || "").trim();
+  const withScheme = site && !/^https?:\/\//i.test(site) ? `https://${site}` : site;
+  return (withScheme || production || fromRequest).replace(/\/+$/, "");
 }

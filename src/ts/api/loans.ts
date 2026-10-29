@@ -131,8 +131,11 @@ export async function loanFines(ids: number[]): Promise<Map<number, LoanFine>> {
 // Cancels requests not picked up within the pickup window (2 days) and emails the students.
 // The database also does this every 15 minutes (pg_cron); running it when a page opens keeps it on time without that.
 // Students get back only their own; staff get everyone's and send one email per student.
+let noExpiry = false; // the SQL is not run yet: ask once per page, not on every scan
 export async function expireUnclaimed(): Promise<number> {
+  if (noExpiry) return 0;
   const { data, error } = await db().rpc("expire_unclaimed_requests");
+  if (missing(error)) noExpiry = true;
   if (error) return 0;
   const rows = (data ?? []) as { loan_id: number; user_id: string }[];
   const byStudent = new Map<string, number[]>();
