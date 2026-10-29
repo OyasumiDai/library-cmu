@@ -84,6 +84,8 @@ export async function boot(run: (page: PageContext) => Promise<void> | void): Pr
       if (access === "staff" && isMember()) return redirect("/catalog");
       return redirect(`${LOGIN}?next=${next}`);
     }
+    // staff and admins start on their dashboard, not the student catalog (a search link with ?q= still opens it)
+    if (location.pathname === "/catalog" && !location.search && isStaff()) return redirect(homeFor(state.profile));
     initLayout();
     watchReveal();
     explainLinkError();

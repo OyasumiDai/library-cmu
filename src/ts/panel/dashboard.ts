@@ -1,29 +1,25 @@
 import { publicSettings, registrationInfo, settingText } from "../api/content";
 import { allBooks, people, refreshOverdue, stats } from "../api/staff";
 import { loansByStatus } from "../api/loans";
-import { actions, debounce, html, icon, mount, raw } from "../core/dom";
-import { dueLabel, formatDate, plural, relative } from "../core/format";
+import { actions, debounce, html, icon, mount } from "../core/dom";
+import { dueLabel, formatDateTime, plural, relative } from "../core/format";
 import { reveal } from "../core/motion";
 import { current, hasPerm } from "../core/session";
-import { chartToggle, chartCard, columns, dataTable, percentChange } from "../ui/charts";
+import { chartToggle, chartCard, columns, dataTable, kpi, percentChange, ranking } from "../ui/charts";
 import { empty, loading } from "../ui/components";
 import type { Book, DashboardStats, Loan, Profile } from "../types";
 import { checkOut, emailBorrower, rejectLoan } from "./loanActions";
 import { go, type PanelTab } from "./tab";
 
 const VERBS: Record<string, string> = { request: "requested", checkout: "borrowed", return: "returned", decline: "was declined for", cancel: "cancelled a request for" };
+const ACTIVITY_ICONS: Record<string, string> = { request: "bell", checkout: "shelf", return: "check", decline: "cross", cancel: "cross" };
 const REFRESH_MS = 60_000;
 
 const greeting = (): string => {
   const hour = Number(new Intl.DateTimeFormat("en-PH", { hour: "numeric", hour12: false, timeZone: "Asia/Manila" }).format(new Date())) % 24;
   return hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 };
-
-function tile(label: string, value: number, note = "", tone = "", tab = "") {
-  return html`<${raw(tab ? "button" : "div")} class="tile" ${tab ? raw(`type="button" data-action="open" data-tab="${tab}"`) : ""}>
-    <span class="tile__label">${label}</span><span class="tile__value" data-count="${value}">0</span>${note ? html`<span class="tile__note ${tone}">${note}</span>` : ""}
-  </${raw(tab ? "button" : "div")}>`;
-}
+const today = (): string => new Intl.DateTimeFormat("en-PH", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "Asia/Manila" }).format(new Date());
 
 export const dashboard: PanelTab = {
   id: "dashboard",
@@ -47,47 +43,83 @@ export const dashboard: PanelTab = {
       const series = s.series.map((d) => ({ label: d.day.slice(5), value: Number(d.total) }));
       const status = settingText(settings, "game_status", "maintenance");
       const notice = settingText(settings, "site_notice");
-      const scroll = root.querySelector<HTMLInputElement>("#dashQuery")?.value ?? "";
+      const typed = root.querySelector<HTMLInputElement>("#dashQuery")?.value ?? "";
+      const popular = s.popular.slice(0, 5).map((p) => ({ label: p.title, value: Number(p.total) }));
+      const summary = [
+        waiting.length ? `${plural(waiting.length, "request")} waiting` : "No requests waiting",
+        overdue.length ? `${plural(overdue.length, "loan")} overdue` : "nothing overdue",
+        s.due_soon ? `${plural(s.due_soon, "loan")} due in the next 2 days` : "nothing due soon",
+      ].join(" · ");
+
       mount(root, html`
-        <div class="panel__tab">
-          <div class="panel__heading">
-            <div><h2>${greeting()}, ${profile.username}</h2>
-              <p class="text-soft">${waiting.length ? `${plural(waiting.length, "request")} waiting` : "No requests waiting"}${overdue.length ? `, ${plural(overdue.length, "loan")} overdue` : ""}. ${s.due_soon ? `${plural(s.due_soon, "loan")} due in the next 2 days.` : "Nothing due soon."}</p></div>
+        <div class="panel__tab dash">
+          <header class="dash-hero card px">
+            <div class="dash-hero__text">
+              <span class="eyebrow">${today()}</span>
+              <h2>${greeting()}, ${profile.full_name?.split(" ")[0] || profile.username}</h2>
+              <p class="text-soft">${summary}.</p>
+            </div>
+            <div class="dash-hero__actions">
+              <a class="btn btn--accent" href="/pickup">${icon("qr")} Scan pickup</a>
+              <button class="btn btn--secondary" type="button" data-action="open" data-tab="books">${icon("plus")} Add a book</button>
+              <button class="btn btn--quiet" type="button" data-action="open" data-tab="announcements">${icon("news")} Announce</button>
+            </div>
+            <div class="field search dash-search"><label class="visually-hidden" for="dashQuery">Search books, loans and students</label>${icon("search")}
+              <input class="input" id="dashQuery" type="search" placeholder="Search books, loans and students (press / to focus)" autocomplete="off" value="${typed}">
+              <div class="dash-search__results" id="dashResults" hidden></div></div>
+          </header>
+
+          <div class="kpi-grid">
+            ${kpi({ label: "Waiting requests", value: s.requested, icon: "bell", tone: 2, tab: "circulation", note: waiting.length ? "ready to check out" : "all caught up", trend: waiting.length ? "" : "up" })}
+            ${kpi({ label: "On loan", value: s.borrowed, icon: "shelf", tone: 1, tab: "circulation", note: `${s.due_soon} due soon` })}
+            ${kpi({ label: "Overdue", value: s.overdue, icon: "clock", tone: 4, tab: "circulation", note: s.overdue ? "needs follow-up" : "all on time", trend: s.overdue ? "down" : "up" })}
+            ${kpi({ label: "Titles", value: s.titles, icon: "book", tone: 3, tab: "books", note: `${s.copies} copies` })}
+            ${kpi({ label: "Students", value: s.students, icon: "users", tone: 5, tab: hasPerm("students") ? "students" : undefined, note: s.new_students ? `+${s.new_students} new this month` : "no new sign-ups", trend: s.new_students ? "up" : "" })}
           </div>
-          <div class="field search dash-search"><label class="visually-hidden" for="dashQuery">Search books, loans and students</label>${icon("search")}
-            <input class="input" id="dashQuery" type="search" placeholder="Search books, loans and students (press / to focus)" autocomplete="off" value="${scroll}">
-            <div class="dash-search__results" id="dashResults" hidden></div></div>
-          <div class="tile-grid">
-            ${tile("Titles", s.titles, `${s.copies} copies`, "", "books")}
-            ${tile("Waiting requests", s.requested, "", "", "circulation")}
-            ${tile("On loan", s.borrowed, `${s.due_soon} due soon`, "", "circulation")}
-            ${tile("Overdue", s.overdue, s.overdue ? "needs follow-up" : "all on time", s.overdue ? "tile__note--down" : "tile__note--up", "circulation")}
-          </div>
-          ${chartCard("chartRequests", `Loan requests, last 14 days (${change} vs the 14 days before)`, columns(series), dataTable(["Day", "Requests"], series.map((d) => [d.label, d.value])))}
-          <div class="grid grid--2">
-            <section class="card px" data-reveal><div class="panel__heading"><h3>Waiting requests</h3><button class="btn btn--sm btn--quiet" type="button" data-action="open" data-tab="circulation">See all</button></div>
-              ${waiting.length ? html`<ul class="list">${waiting.slice(0, 5).map((l) => html`<li class="list__item"><div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.username} · ${relative(l.requested_at)}</p></div>
-                <div class="table__actions"><button class="btn btn--sm" type="button" data-action="checkout" data-id="${l.id}">${icon("check")} Check out</button><button class="btn btn--sm btn--danger" type="button" data-action="reject" data-id="${l.id}">${icon("cross")}</button></div></li>`)}</ul>` : empty("No waiting requests", "You are all caught up.", "check")}</section>
-            <section class="card px" data-reveal><h3>Overdue loans</h3>
-              ${overdue.length ? html`<ul class="list">${overdue.slice(0, 5).map((l) => html`<li class="list__item"><div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.username} · <span class="text-danger">${dueLabel(l.due_at).text}</span></p></div>
-                <button class="btn btn--sm btn--secondary" type="button" data-action="email" data-id="${l.id}">${icon("mail")} Email</button></li>`)}</ul>` : empty("Nothing overdue", "Every loan is on time.", "check")}
-              ${s.full_titles.length ? html`<h4 class="dash-sub">Every copy on loan</h4><ul class="chips">${s.full_titles.map((t) => html`<li class="chip">${t.title}</li>`)}</ul>` : ""}</section>
-          </div>
-          <div class="grid grid--2">
-            <section class="card px" data-reveal><h3>Recent activity</h3>
-              ${s.recent.length ? html`<ul class="list">${s.recent.map((a) => html`<li class="list__item"><div class="list__body"><p><strong>${a.username}</strong> ${VERBS[a.type] ?? a.type} ${a.title ?? ""}</p><p class="list__meta">${relative(a.created_at)}</p></div></li>`)}</ul>` : empty("No activity yet", "Requests and returns appear here.", "clock")}</section>
-            <section class="card px" data-reveal><h3>Quick actions</h3>
-              <div class="cluster"><button class="btn btn--sm" type="button" data-action="open" data-tab="books">${icon("plus")} Add a book</button><button class="btn btn--sm btn--secondary" type="button" data-action="open" data-tab="announcements">${icon("news")} New announcement</button><a class="btn btn--sm btn--accent" href="/pickup">${icon("qr")} Scan pickup</a><button class="btn btn--sm btn--quiet" type="button" data-action="open" data-tab="analytics">${icon("chart")} Analytics</button></div>
-              <h4 class="dash-sub">Site status</h4>
-              <ul class="status-list"><li><span class="status-dot" data-state="${status}"></span>Game: <strong>${status === "online" ? "live" : status}</strong></li>
-                <li><span class="status-dot" data-state="${registrationOpen ? "online" : "maintenance"}"></span>Registration: <strong>${registrationOpen ? "open" : "closed"}</strong></li>
-                <li><span class="status-dot" data-state="${notice ? "online" : "offline"}"></span>Site notice: <strong>${notice ? "showing" : "none"}</strong></li></ul>
-              <p class="field__hint">Updated ${formatDate(new Date().toISOString())}. This page refreshes itself every minute.</p></section>
+
+          <div class="dash-grid">
+            <div class="dash-grid__main">
+              ${chartCard("chartRequests", `Loan requests, last 14 days`, columns(series), dataTable(["Day", "Requests"], series.map((d) => [d.label, d.value])),
+                html`<span class="chip ${change.startsWith("-") ? "chip--down" : "chip--up"}">${change} vs the 14 days before</span>`)}
+              <section class="card px" data-reveal>
+                <div class="card__head"><h3>${icon("bell")} Waiting requests</h3><button class="btn btn--sm btn--quiet" type="button" data-action="open" data-tab="circulation">See all</button></div>
+                ${waiting.length ? html`<ul class="list">${waiting.slice(0, 6).map((l) => html`<li class="list__item dash-row">
+                  <div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.full_name || l.profile?.username} · ${relative(l.requested_at)}</p></div>
+                  <div class="table__actions"><button class="btn btn--sm" type="button" data-action="checkout" data-id="${l.id}">${icon("check")} Check out</button><button class="btn btn--sm btn--danger" type="button" data-action="reject" data-id="${l.id}" aria-label="Decline">${icon("cross")}</button></div></li>`)}</ul>`
+                  : empty("No waiting requests", "You are all caught up.", "check")}
+              </section>
+            </div>
+
+            <aside class="dash-grid__side">
+              <section class="card px" data-reveal>
+                <div class="card__head"><h3>${icon("clock")} Overdue</h3>${overdue.length ? html`<span class="chip chip--down">${overdue.length}</span>` : ""}</div>
+                ${overdue.length ? html`<ul class="list">${overdue.slice(0, 5).map((l) => html`<li class="list__item dash-row"><div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.username} · <span class="text-danger">${dueLabel(l.due_at).text}</span></p></div>
+                  <button class="btn btn--sm btn--secondary" type="button" data-action="email" data-id="${l.id}" aria-label="Email the borrower">${icon("mail")}</button></li>`)}</ul>`
+                  : empty("Nothing overdue", "Every loan is on time.", "check")}
+                ${s.full_titles.length ? html`<h4 class="dash-sub">Every copy on loan</h4><ul class="chips">${s.full_titles.map((t) => html`<li class="chip">${t.title}</li>`)}</ul>` : ""}
+              </section>
+              <section class="card px" data-reveal>
+                <div class="card__head"><h3>${icon("star")} Most borrowed</h3><button class="btn btn--sm btn--quiet" type="button" data-action="open" data-tab="analytics">More</button></div>
+                ${ranking(popular)}
+              </section>
+              <section class="card px" data-reveal>
+                <h3>${icon("refresh")} Recent activity</h3>
+                ${s.recent.length ? html`<ul class="feed">${s.recent.slice(0, 6).map((a) => html`<li class="feed__item"><span class="feed__dot">${icon(ACTIVITY_ICONS[a.type] ?? "info")}</span>
+                  <div><p><strong>${a.username}</strong> ${VERBS[a.type] ?? a.type} ${a.title ?? ""}</p><p class="list__meta">${relative(a.created_at)}</p></div></li>`)}</ul>`
+                  : empty("No activity yet", "Requests and returns appear here.", "clock")}
+              </section>
+              <section class="card px" data-reveal>
+                <h3>${icon("settings")} Site status</h3>
+                <ul class="status-list"><li><span class="status-dot" data-state="${status}"></span>Game <strong>${status === "online" ? "live" : status}</strong></li>
+                  <li><span class="status-dot" data-state="${registrationOpen ? "online" : "maintenance"}"></span>Registration <strong>${registrationOpen ? "open" : "closed"}</strong></li>
+                  <li><span class="status-dot" data-state="${notice ? "online" : "offline"}"></span>Site notice <strong>${notice ? "showing" : "none"}</strong></li></ul>
+                <p class="field__hint">Updated ${formatDateTime(new Date().toISOString())}. Refreshes every minute.</p>
+              </section>
+            </aside>
           </div>
         </div>`);
       reveal(root);
       wireSearch();
-      root.querySelectorAll<HTMLElement>("[data-count]").forEach((el) => { el.textContent = el.dataset.count ?? "0"; });
       lookup.open = open;
     };
     const lookup: { open: Loan[] } = { open: [] };
@@ -108,7 +140,7 @@ export const dashboard: PanelTab = {
         if (q.length < 2) { box.hidden = true; return; }
         const data = await loadIndex();
         const hit = (...parts: (string | null | undefined)[]) => parts.join(" ").toLowerCase().includes(q);
-        const books = data.books.filter((b) => hit(b.title, b.author, b.id)).slice(0, 4);
+        const books = data.books.filter((b) => hit(b.title, b.author, b.isbn, b.id)).slice(0, 4);
         const loans = data.loans.filter((l) => hit(l.book?.title, l.profile?.username, l.profile?.full_name, l.profile?.student_id, String(l.id))).slice(0, 4);
         const students = data.students.filter((p) => hit(p.username, p.full_name, p.email, p.student_id)).slice(0, 4);
         box.hidden = false;

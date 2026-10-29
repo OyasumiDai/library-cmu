@@ -47,6 +47,18 @@ export function donut(parts: Datum[]): Safe {
     </div>`;
 }
 
+// a headline number: coloured icon, the number, what it counts, and a note (green when good, red when not).
+// With a tab it is a button that opens that tab.
+export function kpi(o: { label: string; value: number | string; icon: string; note?: string; trend?: "up" | "down" | ""; tone?: 1 | 2 | 3 | 4 | 5; tab?: string }): Safe {
+  const tag = o.tab ? "button" : "div";
+  const icon = `<svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${escapeHtml(o.icon)}"/></svg>`;
+  return html`<${raw(tag)} class="kpi" style="--kpi:var(--chart-${o.tone ?? 1})" ${o.tab ? raw(`type="button" data-action="open" data-tab="${escapeHtml(o.tab)}"`) : ""}>
+    <span class="kpi__icon">${raw(icon)}</span>
+    <span class="kpi__body"><span class="kpi__value">${o.value}</span><span class="kpi__label">${o.label}</span>
+      ${o.note ? html`<span class="kpi__note ${o.trend ? `kpi__note--${o.trend}` : ""}">${o.note}</span>` : ""}</span>
+  </${raw(tag)}>`;
+}
+
 export function dataTable(headers: string[], rows: (string | number)[][]): Safe {
   return html`<div class="table-wrap"><table class="table"><thead><tr>${headers.map((h) => html`<th>${h}</th>`)}</tr></thead>
     <tbody>${rows.map((r) => html`<tr>${r.map((c) => html`<td>${c}</td>`)}</tr>`)}</tbody></table></div>`;

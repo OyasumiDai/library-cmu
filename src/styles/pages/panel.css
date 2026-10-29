@@ -86,3 +86,90 @@ button.person-card { cursor: pointer; }
 .qr-modal { display: grid; justify-items: center; gap: var(--space-3); text-align: center; }
 .qr-modal img { width: min(18rem, 100%); height: auto; padding: var(--space-3); background: #fff; border: 3px solid var(--sidebar-bg); border-radius: var(--radius); image-rendering: pixelated; }
 .qr-modal__code { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+
+/* ------------------------------------------------------------- dashboard and analytics */
+.dash { display: grid; gap: var(--space-5); }
+.dash h3 { display: flex; align-items: center; gap: var(--space-2); margin: 0; font-size: var(--fs-md, 1.05rem); }
+.dash h3 .icon { color: var(--primary); }
+.card__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-3); }
+
+/* the welcome band: greeting and date, quick actions, the search box under both */
+.dash-hero {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--space-4) var(--space-5);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 12%, var(--surface)), var(--surface) 60%);
+}
+.dash-hero h2 { margin: 0 0 var(--space-1); font-size: clamp(1.35rem, 1.1rem + 1.2vw, 1.9rem); }
+.dash-hero__text { min-width: 0; }
+.dash-hero p { margin: 0; }
+.dash-hero .eyebrow { margin-bottom: var(--space-1); }
+.dash-hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
+.dash-hero .dash-search { grid-column: 1 / -1; max-width: none; }
+
+/* headline numbers */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr)); gap: var(--space-4); }
+.kpi { --kpi: var(--chart-1);
+  display: flex; align-items: flex-start; gap: var(--space-3); min-width: 0; padding: var(--space-4); text-align: left; font: inherit; color: inherit;
+  background: var(--surface); border: var(--border) solid var(--line); border-radius: var(--radius);
+  transition: transform var(--dur-1) ease, border-color var(--dur-1) ease, box-shadow var(--dur-1) ease;
+}
+button.kpi { cursor: pointer; }
+button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border-color: var(--kpi); box-shadow: 0 10px 24px -16px var(--shadow); }
+.kpi__icon { display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--kpi) 16%, transparent); color: var(--kpi); }
+.kpi__body { display: grid; gap: 2px; min-width: 0; }
+.kpi__value { font-size: var(--fs-2xl); font-weight: 700; line-height: 1.05; color: var(--ink); }
+.kpi__label { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-soft); }
+.kpi__note { font-size: var(--fs-xs); color: var(--text-soft); overflow-wrap: anywhere; }
+.kpi__note--up { color: var(--success); }
+.kpi__note--down { color: var(--danger); }
+
+/* two columns on wide screens: the main work on the left, the side panels on the right */
+.dash-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+.dash-grid__main, .dash-grid__side { display: grid; gap: var(--space-5); min-width: 0; }
+.dash .chart-card, .dash .card { margin: 0; min-width: 0; }
+.dash-row { flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
+.dash-row .list__body { min-width: 10rem; }
+.chip--up { background: var(--success-bg); color: var(--success); }
+.chip--down { background: var(--danger-bg); color: var(--danger); }
+
+/* recent activity: an icon per kind of event */
+.feed { display: grid; gap: var(--space-3); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.feed__item { display: flex; gap: var(--space-3); align-items: flex-start; margin: 0; font-size: var(--fs-sm); }
+.feed__item p { margin: 0; }
+.feed__dot { display: grid; place-items: center; flex: none; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--surface-3); color: var(--primary); }
+.feed__dot .icon { width: 0.95rem; height: 0.95rem; }
+
+/* analytics */
+.dash-hero--slim { grid-template-columns: minmax(0, 1fr) auto; }
+.seg--scroll { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.seg--scroll::-webkit-scrollbar { display: none; }
+.seg--scroll .seg__btn { white-space: nowrap; padding-block: var(--space-2); }
+.ana-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-5); align-items: start; }
+.insights { display: grid; gap: var(--space-2); margin: var(--space-3) 0 0; padding: 0; list-style: none; }
+.insights__item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--space-3); margin: 0; padding: var(--space-3); border-radius: var(--radius-sm); background: var(--surface-2); font-size: var(--fs-sm); }
+.insights__icon { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: var(--radius-sm); background: var(--surface); color: var(--primary); }
+.insights__label { color: var(--text-soft); }
+.insights__item strong { text-align: right; }
+
+@media (max-width: 75rem) {
+  .dash-grid { grid-template-columns: minmax(0, 1fr); }
+  .dash-grid__side { grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); }
+}
+@media (max-width: 52rem) {
+  .dash-hero, .dash-hero--slim { grid-template-columns: minmax(0, 1fr); }
+  .dash-hero__actions { justify-content: flex-start; }
+  .ana-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 36rem) {
+  .dash { gap: var(--space-4); }
+  .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); }
+  .kpi { flex-direction: column; gap: var(--space-2); padding: var(--space-3); }
+  .kpi__icon { width: 2.25rem; height: 2.25rem; }
+  .kpi__value { font-size: var(--fs-xl); }
+  .dash-hero__actions .btn { flex: 1 1 auto; justify-content: center; }
+  .dash-row .table__actions { width: 100%; }
+  .dash-row .table__actions .btn:first-child { flex: 1; justify-content: center; }
+  .insights__item { grid-template-columns: auto minmax(0, 1fr); }
+  .insights__item strong { grid-column: 2; text-align: left; }
+  .ranking__row { grid-template-columns: 1.25rem minmax(0, 1fr) 2rem; }
+  .ranking__track { grid-column: 2 / -1; grid-row: 2; }
+}

@@ -180,6 +180,9 @@ export function initLayout(): void {
   initThemePicker();
   initSidebar();
   if (current().profile) watchIdle();
+  // the sidebar logo leads home: the dashboard for staff and admins, the catalog for students
+  const logo = maybe<HTMLAnchorElement>(".sidebar .brand");
+  if (logo && current().profile) logo.href = homeFor(current().profile);
   // public pages: the back button leads staff and admins to their panel, students to their library
   const back = maybe<HTMLAnchorElement>("[data-back-home]");
   if (back && current().profile) {

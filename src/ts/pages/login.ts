@@ -69,7 +69,9 @@ boot(({ params }) => {
           if (remember.checked) localStorage.setItem(REMEMBER, data.email);
           else localStorage.removeItem(REMEMBER);
         } catch { /* private mode */ }
-        location.href = safeNext(params.get("next"), homeFor(profile));
+        // staff go to their dashboard even when the way back points at the student catalog
+        const next = profile && profile.role !== "student" && /^\/catalog\/?$/.test(params.get("next") ?? "") ? null : params.get("next");
+        location.href = safeNext(next, homeFor(profile));
       } catch (error) {
         // only a wrong email or password counts; a network problem is not the person's fault
         if (/Invalid login credentials/i.test((error as Error).message ?? "")) {
