@@ -25,7 +25,7 @@ body.app { display: block; }
 
 .sidebar {
   position: sticky; top: 0; align-self: start; height: 100vh; display: flex; flex-direction: column; gap: var(--space-4);
-  padding: var(--space-4) var(--space-3); overflow-y: auto;
+  padding: var(--space-4) var(--space-3); overflow: hidden;
   background: var(--sidebar-bg); color: var(--sidebar-text);
   transition: background-color var(--dur-3) ease;
 }
@@ -38,7 +38,10 @@ body.app { display: block; }
 .brand__sub { font-size: var(--fs-xs); opacity: 0.75; }
 .sidebar .brand { padding: var(--space-2); }
 
-.sidebar__nav { display: grid; gap: var(--space-4); align-content: start; flex: 1; }
+/* the main links scroll on their own; the account links (.sidebar__foot) stay pinned at the bottom */
+.sidebar__nav { display: grid; gap: var(--space-4); align-content: start; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.sidebar__foot { flex: none; display: grid; gap: 2px; margin-inline: calc(-1 * var(--space-3)); padding: var(--space-3) var(--space-3) 0; border-top: 1px solid var(--sidebar-hi); }
+.sidebar__foot .nav-group { gap: 2px; }
 .nav-group { display: grid; gap: 2px; }
 .nav-group__label { padding: 0 var(--space-3); margin-bottom: var(--space-1); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.55; }
 .nav-link {
@@ -100,7 +103,8 @@ body.app { display: block; }
 .shell { transition: grid-template-columns var(--dur-2) var(--ease-soft); }
 @media (min-width: 62.01rem) {
   .sidebar-collapsed .shell { grid-template-columns: 4.5rem minmax(0, 1fr); }
-  .sidebar-collapsed .sidebar { padding-inline: var(--space-2); overflow-x: hidden; }
+  .sidebar-collapsed .sidebar { padding-inline: var(--space-2); }
+  .sidebar-collapsed .sidebar__foot { margin-inline: calc(-1 * var(--space-2)); padding-inline: var(--space-2); }
   .sidebar-collapsed .brand { justify-content: center; padding-inline: 0; }
   .sidebar-collapsed .brand__text, .sidebar-collapsed .nav-link span { display: none; }
   .sidebar-collapsed .sidebar-fold { left: 50%; transform: translate(-50%, -50%); }
@@ -159,3 +163,10 @@ body[data-page="index"] .site-main { padding: 0; }
 
 .toast-region { position: fixed; right: var(--space-4); bottom: var(--space-4); z-index: var(--z-toast); display: flex; flex-direction: column; gap: var(--space-3); width: min(24rem, calc(100vw - 2rem)); pointer-events: none; }
 @media (max-width: 38rem) { .grid--wide { --min: 8.5rem; } .grid--4#homeBooks { --cols: 2; } }
+
+/* the pinned account links: nothing to pin for guests; the unread badge sits at the end of Notifications, or over its icon on the rail */
+body[data-auth="guest"] .sidebar__foot { display: none; }
+.nav-link__badge { margin-left: auto; min-width: 1.35rem; padding: 0 0.4rem; border-radius: 999px; background: var(--danger); color: #fff; font-size: var(--fs-2xs); font-weight: 700; line-height: 1.35rem; text-align: center; }
+@media (min-width: 62.01rem) {
+  .sidebar-collapsed .nav-link__badge { position: absolute; top: 0.1rem; right: 0.6rem; min-width: 1.1rem; padding: 0 0.25rem; line-height: 1.1rem; box-shadow: 0 0 0 2px var(--sidebar-bg); }
+}

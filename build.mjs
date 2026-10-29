@@ -40,9 +40,11 @@ const foldGroup = (group, current, links) => {
   const open = group.items.some((item) => item.page === current && !item.tab) ? " open" : "";
   return `<details class="nav-group nav-group--fold" data-visible="${group.visible ?? "all"}"${open}><summary class="nav-group__toggle" title="${group.label}"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${group.icon}"/></svg><span>${group.label}</span><svg class="icon nav-group__chevron" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-down"/></svg></summary><div class="nav-group__items" data-label="${group.label}">${links}</div></details>`;
 };
-const renderNav = (current) => navGroups.map((group) => {
+// "pin" groups (the account links) sit at the bottom of the sidebar, below the part that scrolls, and have no heading
+const renderNav = (current, pinned = false) => navGroups.filter((group) => !!group.pin === pinned).map((group) => {
   const links = group.items.map((item) => link(item, current, group)).join("");
   if (group.fold) return foldGroup(group, current, links);
+  if (pinned) return `<div class="nav-group" data-visible="${group.visible ?? "all"}">${links}</div>`;
   return `<div class="nav-group" data-visible="${group.visible ?? "all"}"><span class="nav-group__label">${group.label}</span>${links}</div>`;
 }).join("\n        ");
 const renderFooterLinks = () => footerLinks.map((l) => `<a href="${l.href}" data-visible="${l.visible ?? "all"}">${l.label}</a>`).join("\n        ");
@@ -60,7 +62,7 @@ function renderPage(file) {
     title: meta.title, description: meta.description ?? "", entry: meta.entry ?? page, access: meta.access ?? "all",
     page, version, body: meta.body ?? "", content: raw.slice(match[0].length),
     header: shell === "landing" ? partial("header") : "", footer: shell === "landing" ? partial("footer") : "",
-    nav: renderNav(page), footerLinks: renderFooterLinks(), themeCards: renderThemeCards(),
+    nav: renderNav(page), navFoot: renderNav(page, true), footerLinks: renderFooterLinks(), themeCards: renderThemeCards(),
   };
   let html = partial(shell === "app" ? "layout-app" : shell === "auth" ? "layout-auth" : "layout");
   for (let pass = 0; pass < 3; pass++) {

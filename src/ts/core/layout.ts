@@ -47,7 +47,16 @@ async function refreshNotices(): Promise<void> {
 const widget = (): HTMLElement | null => maybe("#userWidget");
 const closeMenus = (): void => document.querySelectorAll("#userWidget .menu").forEach((m) => m.remove());
 
+// the unread count on the sidebar's Notifications link too (a dot over the icon when the rail is collapsed)
+function drawNavBadge(): void {
+  const item = maybe<HTMLAnchorElement>('.sidebar__foot a[href="/notifications"]');
+  if (!item) return;
+  item.querySelector(".nav-link__badge")?.remove();
+  if (unread > 0 && current().profile) item.insertAdjacentHTML("beforeend", html`<b class="nav-link__badge" aria-label="${unread} unread">${unread > 9 ? "9+" : unread}</b>`.value);
+}
+
 function drawWidget(): void {
+  drawNavBadge();
   const el = widget();
   if (!el) return;
   el.dataset.state = current().profile ? "member" : "guest";
@@ -163,6 +172,7 @@ function initFlyouts(sidebar: HTMLElement): void {
     if (event.key === "Escape") closeFlyouts();
   });
   sidebar.addEventListener("scroll", closeFlyouts, { passive: true });
+  sidebar.querySelector(".sidebar__nav")?.addEventListener("scroll", closeFlyouts, { passive: true });
   window.addEventListener("resize", closeFlyouts);
 }
 

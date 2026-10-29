@@ -182,6 +182,7 @@
         "page": "settings",
         "icon": "sparkle"
       }
-    ]
+    ],
+    "pin": true
   }
 ]
