@@ -63,3 +63,6 @@
 .meter[data-level="4"] i { background: var(--success); }
 .meter__label { font-size: var(--fs-xs); font-weight: 700; color: var(--text-soft); }
 .input--code { font-size: var(--fs-xl); letter-spacing: 0.5em; text-align: center; }
+
+/* a hint that warns but does not block (an ISBN whose check digit does not match) */
+.field__hint--warn { color: var(--warning); font-weight: 600; }

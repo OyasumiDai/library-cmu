@@ -1,10 +1,11 @@
-.modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: var(--space-4); background: var(--overlay); animation: fade var(--dur-2) ease both; overflow-y: auto; }
-.modal { width: min(36rem, 100%); min-width: 0; max-height: calc(100dvh - 2rem); display: flex; flex-direction: column; animation: pop var(--dur-2) var(--ease-bounce) both; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.45); }
+.modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; grid-template-columns: minmax(0, 1fr); place-items: center; padding: var(--space-4); background: var(--overlay); animation: fade var(--dur-2) ease both; overflow: hidden; }
+/* the window always fits the screen (its pixel border included); only its middle part scrolls */
+.modal { box-sizing: border-box; width: min(36rem, 100%); min-width: 0; max-height: calc(100dvh - 2 * var(--space-4) - 8px); display: flex; flex-direction: column; animation: pop var(--dur-2) var(--ease-bounce) both; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.45); }
 .modal--wide { width: min(52rem, 100%); }
 .modal--xl { width: min(72rem, 100%); }
 .modal__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-5) 0; }
 .modal__title { margin: 0; font-size: var(--fs-xl); }
-.modal__body { padding: var(--space-4) var(--space-5); overflow-y: auto; min-width: 0; }
+.modal__body { flex: 1 1 auto; min-height: 0; padding: var(--space-4) var(--space-5); overflow-y: auto; overscroll-behavior: contain; min-width: 0; }
 .modal__foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--space-3); padding: 0 var(--space-5) var(--space-5); }
 .modal__close { background: transparent; border: 0; color: var(--text-soft); padding: var(--space-1); }
 .modal__close:hover { color: var(--ink); }

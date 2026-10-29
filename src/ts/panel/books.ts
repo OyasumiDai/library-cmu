@@ -5,7 +5,7 @@ import { publicSettings } from "../api/content";
 import { loansByStatus } from "../api/loans";
 import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
-import { formatIsbn, isValidIsbn, normalizeIsbn } from "../core/isbn";
+import { formatIsbn, isIsbnShape, isValidIsbn, normalizeIsbn } from "../core/isbn";
 import { authorsOf, joinAuthors } from "../core/authors";
 import { confirmBox, openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
@@ -160,7 +160,7 @@ export const books: PanelTab = {
       const modal = openModal(book ? (book.approval_status === "revision" ? "Fix and resubmit" : "Edit book") : "Add a book", html`<form class="form" id="bookForm" novalidate>
         ${book?.approval_status === "revision" && book.review_note ? html`<div class="alert alert--danger px px--danger">${icon("edit")}<span><strong>The admin asked for changes:</strong> "${book.review_note}". Saving sends the book back for approval.</span></div>` : ""}
         ${!book && !isAdmin() && hasColumn("approval_status") ? html`<div class="alert alert--info px px--info">${icon("info")}<span>An admin checks every new book before it goes in the catalog. You will get a notification when it is approved or needs changes.</span></div>` : ""}
-        ${field("isbn", "ISBN", { value: formatIsbn(book?.isbn), required: !book || !!book.isbn, hint: "The 10 or 13 digit number on the back cover or copyright page. Dashes are fine.", placeholder: "978-0306406157", attrs: 'maxlength="17" autocomplete="off"' })}
+        ${field("isbn", "ISBN", { value: book?.isbn ?? "", required: !book || !!book.isbn, hint: "The 10 or 13 digit number on the back cover or copyright page. Digits only (an ISBN-10 may end in X).", placeholder: "9780306406157", attrs: 'inputmode="numeric" autocomplete="off" spellcheck="false"' })}
         ${field("title", "Title", { value: book?.title ?? "", required: true })}
         <div class="alert alert--warning px px--warning" id="dupWarning" hidden>${icon("info")}<span>A book with this title, author and edition already exists.</span></div>
         <div class="field" data-field="authors"><span class="field__label">Authors *</span>
@@ -172,10 +172,10 @@ export const books: PanelTab = {
           ${field("edition", "Edition / version", { value: book?.edition ?? "", placeholder: "e.g. 2nd edition, Revised 2015, Anvil Classics", attrs: 'maxlength="80"', hint: "Leave empty if there is only one edition." })}
           <div class="field" data-field="category"><label class="field__label" for="f-category">Subject</label><input class="input" id="f-category" name="category" list="categoryList" value="${book?.category ?? ""}"><datalist id="categoryList">${unique((b) => b.category).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
         </div>
-        ${hasColumn("obsolete_year") ? field("obsolete_year", "Obsolete year", { type: "number", value: String(book?.obsolete_year ?? THIS_YEAR + 5), required: true, attrs: `min="${book ? 1900 : THIS_YEAR}" max="2200" step="1"`, hint: `From 1 January of that year the book is archived by itself and you choose where it is kept. Usually 5 years: ${THIS_YEAR + 5}.` }) : ""}
+        ${hasColumn("obsolete_year") ? field("obsolete_year", "Obsolete year", { value: String(book?.obsolete_year ?? THIS_YEAR + 5), required: true, placeholder: String(THIS_YEAR + 5), attrs: 'inputmode="numeric" autocomplete="off" data-year', hint: `From 1 January of that year the book is archived by itself and you choose where it is kept. Usually 5 years: ${THIS_YEAR + 5}.` }) : ""}
         ${selectField("material", "Material (sets the loan period and overdue fine)", [{ value: "fiction", label: "Fiction" }, { value: "circulation", label: "Circulation / Reserve" }], book?.material ?? "circulation", true, "")}
         <div class="form__row">${field("genre", "Genre", { value: book?.genre ?? "" })}${field("publisher", "Publisher", { value: book?.publisher ?? "" })}</div>
-        <div class="form__row">${field("published", "First published", { value: book?.published ?? "" })}${field("language", "Language", { value: book?.language ?? "English" })}</div>
+        <div class="form__row">${field("published", "First published", { value: book?.published ?? "", placeholder: "e.g. 1998", hint: book?.published && !/^\d{4}$/.test(book.published) ? "A 4-digit year. The current text stays if you leave it as it is." : "The year, 4 digits.", attrs: 'inputmode="numeric" autocomplete="off" data-year' })}${field("language", "Language", { value: book?.language ?? "English" })}</div>
         <div class="form__row">
           <div class="field" data-field="shelf"><label class="field__label" for="f-shelf">Shelf</label><input class="input" id="f-shelf" name="shelf" list="shelfList" value="${book?.shelf ?? "Main Library"}"><datalist id="shelfList">${unique((b) => b.shelf).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
           <div class="field" data-field="copies"><label class="field__label" for="f-copies">Copies</label>
@@ -196,6 +196,19 @@ export const books: PanelTab = {
       const formEl = modal.root.querySelector<HTMLFormElement>("#bookForm")!;
       const $ = <T extends HTMLElement>(sel: string) => formEl.querySelector<T>(sel)!;
       const copies = $<HTMLInputElement>("#f-copies");
+      const isbnBox = $<HTMLInputElement>("#f-isbn");
+      const isbnHint = isbnBox.closest(".field")!.querySelector<HTMLElement>(".field__hint")!;
+      const isbnText = isbnHint.textContent ?? "";
+      isbnBox.addEventListener("input", () => {
+        isbnBox.value = isbnBox.value.toUpperCase().replace(/[^0-9X]/g, "").replace(/X(?=.)/g, "").slice(0, 13);
+        const v = isbnBox.value;
+        isbnHint.textContent = !v ? isbnText : v.length !== 10 && v.length !== 13 ? `${v.length} digits so far: an ISBN has 10 or 13.` : isValidIsbn(v) ? "Looks right." : "Saved as typed. Its last digit does not match the usual check, so double-check the number on the book.";
+        isbnHint.classList.toggle("field__hint--warn", !!v && (v.length === 10 || v.length === 13) && !isValidIsbn(v));
+      });
+      formEl.querySelectorAll<HTMLInputElement>("[data-year]").forEach((box) => box.addEventListener("input", () => {
+        // a legacy text like "1875-1877" stays untouched until someone types in the box
+        box.value = box.value.replace(/\D/g, "").slice(0, 4);
+      }));
       const codes = formEl.querySelector<HTMLElement>("#copyCodes");
       if (book && codes) void bookCopies(book.id)
         .then((list) => mount(codes, list.length ? html`${list.map((c) => html`<span class="badge">${c.code}</span>`)}` : html`<span class="table__sub">No copies yet.</span>`))
@@ -256,7 +269,11 @@ export const books: PanelTab = {
         const isbn = normalizeIsbn(d.isbn ?? "");
         // a book already on the shelf may predate ISBNs (before 1970); new books always need one
         if (!isbn && (!book || book.isbn)) return fail("Enter the book's ISBN.");
-        if (isbn && !isValidIsbn(isbn)) return fail("That ISBN is not valid. Check the 10 or 13 digits (an ISBN-10 may end in X).");
+        if (isbn && !isIsbnShape(isbn)) return fail(`An ISBN has 10 or 13 digits; this one has ${isbn.length}.`);
+        const published = (d.published ?? "").trim();
+        // a new value must be a year; an older book's text (like "1875-1877") may stay as it is
+        if (published && published !== (book?.published ?? "") && !/^\d{4}$/.test(published)) return fail("Write the first published year as 4 digits, for example 1998.");
+        if (/^\d{4}$/.test(published) && Number(published) > THIS_YEAR) return fail(`The first published year cannot be after ${THIS_YEAR}.`);
         if (isbn && all.some((b) => b.id !== book?.id && b.isbn === isbn)) return fail("Another book already has that ISBN.");
         if (!d.title) return fail("A book needs a title.");
         const authors = cleanAuthors();
@@ -264,7 +281,7 @@ export const books: PanelTab = {
         const edition = (d.edition ?? "").trim().replace(/\s+/g, " ");
         const obsolete = Number(d.obsolete_year);
         if (d.obsolete_year !== undefined) {
-          if (!Number.isInteger(obsolete) || obsolete < 1900 || obsolete > 2200) return fail(`Enter the obsolete year as a 4-digit year, for example ${THIS_YEAR + 5}.`);
+          if (!/^\d{4}$/.test(d.obsolete_year) || obsolete < 1900 || obsolete > 2200) return fail(`Enter the obsolete year as a 4-digit year, for example ${THIS_YEAR + 5}.`);
           if (!book && obsolete < THIS_YEAR) return fail(`A new book's obsolete year cannot be in the past (it is ${THIS_YEAR} now).`);
           if (book && !book.archived && obsolete <= THIS_YEAR && !(await confirmBox("Archive this book now?", `An obsolete year of ${obsolete} means "${book.title}" is obsolete already. It will be moved to the archive and you will choose where it is kept.`, "Yes, that is right"))) return;
         }
@@ -472,7 +489,7 @@ export const books: PanelTab = {
           const own = normalizeIsbn(modal.root.querySelector<HTMLInputElement>(`[data-own="${b.id}"]`)!.value);
           const isbn = own || modal.root.querySelector<HTMLSelectElement>(`[data-pick="${b.id}"]`)!.value;
           if (!isbn) continue;
-          if (!isValidIsbn(isbn)) return fail(`The ISBN typed for "${b.title}" is not valid.`);
+          if (!isIsbnShape(isbn)) return fail(`The ISBN typed for "${b.title}" needs 10 or 13 digits.`);
           chosen.set(b.id, isbn);
         }
         const values = [...chosen.values()];

@@ -5,6 +5,12 @@ export function normalizeIsbn(value: string): string {
   return value.replace(/[\s-]/g, "").toUpperCase();
 }
 
+// the right shape: 10 digits (the last may be X) or 13 digits. Saving needs only this; the check digit is a soft warning,
+// so a book can be added even when its printed number does not pass the checksum.
+export function isIsbnShape(value: string): boolean {
+  return /^(\d{9}[\dX]|\d{13})$/.test(normalizeIsbn(value));
+}
+
 export function isValidIsbn(value: string): boolean {
   const isbn = normalizeIsbn(value);
   if (/^\d{9}[\dX]$/.test(isbn)) {
