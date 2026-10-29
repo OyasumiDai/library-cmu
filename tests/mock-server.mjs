@@ -160,6 +160,23 @@ const rpc = {
   },
 };
 
+// MOCK_DEMO=1 fills in two months of loans, so the dashboard, analytics and reports have something to draw
+if (process.env.MOCK_DEMO) {
+  const students = db.profiles.filter((p) => p.role === "student");
+  const at = (dayAgo, hour) => new Date(Date.now() - dayAgo * 86400000 - hour * 3600000).toISOString();
+  for (let i = 0; i < 60; i++) {
+    const book = db.books[(i * 7) % db.books.length];
+    const person = students[i % students.length];
+    const ago = (i * 37) % 60;
+    const status = ago < 3 ? "requested" : i % 9 === 0 ? "rejected" : ago < 14 ? "borrowed" : "returned";
+    const loan = { id: ++seq, pickup_code: `DEMO${i}`, book_id: book.id, user_id: person.id, status, requested_at: at(ago, i % 9), borrowed_at: null, due_at: null, returned_at: null, note: null };
+    if (status === "borrowed" || status === "returned") Object.assign(loan, { borrowed_at: at(ago - 0.5, 0), due_at: at(ago - 7.5, 0) });
+    if (status === "returned") loan.returned_at = at(Math.max(ago - 6 - (i % 4), 0.2), 0);
+    db.loans.push(loan);
+    db.user_activity.push({ id: ++seq, user_id: person.id, type: status === "returned" ? "return" : status === "borrowed" ? "checkout" : "request", book_id: book.id, details: {}, created_at: loan.requested_at });
+  }
+}
+
 http.createServer(async (req, res) => {
   if (req.method === "OPTIONS") return send(res, 204);
   const url = new URL(req.url, "http://x");

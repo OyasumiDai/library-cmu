@@ -70,7 +70,7 @@ export const dashboard: PanelTab = {
           </header>
 
           <div class="kpi-grid">
-            ${kpi({ label: "Waiting requests", value: s.requested, icon: "bell", tone: 2, tab: "circulation", note: waiting.length ? "ready to check out" : "all caught up", trend: waiting.length ? "" : "up" })}
+            ${kpi({ label: "Requests", value: s.requested, icon: "bell", tone: 2, tab: "circulation", note: waiting.length ? "waiting to check out" : "all caught up", trend: waiting.length ? "" : "up" })}
             ${kpi({ label: "On loan", value: s.borrowed, icon: "shelf", tone: 1, tab: "circulation", note: `${s.due_soon} due soon` })}
             ${kpi({ label: "Overdue", value: s.overdue, icon: "clock", tone: 4, tab: "circulation", note: s.overdue ? "needs follow-up" : "all on time", trend: s.overdue ? "down" : "up" })}
             ${kpi({ label: "Titles", value: s.titles, icon: "book", tone: 3, tab: "books", note: `${s.copies} copies` })}
@@ -88,6 +88,12 @@ export const dashboard: PanelTab = {
                   <div class="table__actions"><button class="btn btn--sm" type="button" data-action="checkout" data-id="${l.id}">${icon("check")} Check out</button><button class="btn btn--sm btn--danger" type="button" data-action="reject" data-id="${l.id}" aria-label="Decline">${icon("cross")}</button></div></li>`)}</ul>`
                   : empty("No waiting requests", "You are all caught up.", "check")}
               </section>
+              <section class="card px" data-reveal>
+                <h3>${icon("refresh")} Recent activity</h3>
+                ${s.recent.length ? html`<ul class="feed">${s.recent.slice(0, 6).map((a) => html`<li class="feed__item"><span class="feed__dot" data-kind="${a.type}">${icon(ACTIVITY_ICONS[a.type] ?? "info")}</span>
+                  <div class="feed__text"><p><strong>${a.username}</strong> ${VERBS[a.type] ?? a.type} <em>${a.title ?? ""}</em></p><p class="list__meta">${relative(a.created_at)}</p></div></li>`)}</ul>`
+                  : empty("No activity yet", "Requests and returns appear here.", "clock")}
+              </section>
             </div>
 
             <aside class="dash-grid__side">
@@ -103,16 +109,10 @@ export const dashboard: PanelTab = {
                 ${ranking(popular)}
               </section>
               <section class="card px" data-reveal>
-                <h3>${icon("refresh")} Recent activity</h3>
-                ${s.recent.length ? html`<ul class="feed">${s.recent.slice(0, 6).map((a) => html`<li class="feed__item"><span class="feed__dot">${icon(ACTIVITY_ICONS[a.type] ?? "info")}</span>
-                  <div><p><strong>${a.username}</strong> ${VERBS[a.type] ?? a.type} ${a.title ?? ""}</p><p class="list__meta">${relative(a.created_at)}</p></div></li>`)}</ul>`
-                  : empty("No activity yet", "Requests and returns appear here.", "clock")}
-              </section>
-              <section class="card px" data-reveal>
                 <h3>${icon("settings")} Site status</h3>
-                <ul class="status-list"><li><span class="status-dot" data-state="${status}"></span>Game <strong>${status === "online" ? "live" : status}</strong></li>
-                  <li><span class="status-dot" data-state="${registrationOpen ? "online" : "maintenance"}"></span>Registration <strong>${registrationOpen ? "open" : "closed"}</strong></li>
-                  <li><span class="status-dot" data-state="${notice ? "online" : "offline"}"></span>Site notice <strong>${notice ? "showing" : "none"}</strong></li></ul>
+                <ul class="status-list status-list--dash"><li><span class="status-dot" data-state="${status}"></span><span>Game</span><strong>${status === "online" ? "live" : status}</strong></li>
+                  <li><span class="status-dot" data-state="${registrationOpen ? "online" : "maintenance"}"></span><span>Registration</span><strong>${registrationOpen ? "open" : "closed"}</strong></li>
+                  <li><span class="status-dot" data-state="${notice ? "online" : "offline"}"></span><span>Site notice</span><strong>${notice ? "showing" : "none"}</strong></li></ul>
                 <p class="field__hint">Updated ${formatDateTime(new Date().toISOString())}. Refreshes every minute.</p>
               </section>
             </aside>

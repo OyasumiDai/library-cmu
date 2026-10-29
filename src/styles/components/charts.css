@@ -2,20 +2,34 @@
 
 .chart-card__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
 .chart-card__head h3 { margin: 0; }
+.chart-card__head .cluster { flex-wrap: nowrap; }
+.chart-card__head .select { width: auto; }
 .seg { display: inline-flex; padding: 3px; background: var(--surface-3); border-radius: var(--radius-sm); }
 .seg__btn { padding: var(--space-1) var(--space-3); background: transparent; border: 0; border-radius: 4px; font-size: var(--fs-xs); font-weight: 700; color: var(--text-soft); transition: background-color var(--dur-1) ease, color var(--dur-1) ease; }
 .seg__btn[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px var(--shadow); }
 
-.columns { display: flex; align-items: flex-end; gap: 4px; height: 11rem; margin: 0; padding: 0 0 var(--space-5); list-style: none; overflow-x: auto; }
-.columns__item { position: relative; flex: 1 0 1.4rem; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; margin: 0; border-radius: var(--radius-sm); }
+.columns { display: flex; align-items: flex-end; gap: 4px; height: 12rem; margin: 0; padding: 0 0 var(--space-5); list-style: none; background: repeating-linear-gradient(to top, transparent 0 calc(25% - 1px), var(--line) calc(25% - 1px) 25%) 0 0 / 100% calc(100% - var(--space-5)) no-repeat; }
+.columns__item { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; margin: 0; border-radius: var(--radius-sm); }
 .columns__item:hover, .columns__item:focus-visible { background: var(--surface-2); outline-offset: 0; }
-.columns__bar { width: 70%; height: var(--h, 0%); min-height: 3px; background: var(--chart-1); border-radius: 4px 4px 0 0; transform-origin: bottom; animation: grow var(--dur-3) var(--ease-soft) both; }
+.columns__bar { width: min(70%, 2.5rem); height: var(--h, 0%); min-height: 3px; background: linear-gradient(to top, color-mix(in srgb, var(--chart-1) 70%, transparent), var(--chart-1)); border-radius: 6px 6px 2px 2px; transform-origin: bottom; animation: grow var(--dur-3) var(--ease-soft) both; }
 .columns__value { margin-bottom: 2px; font-size: var(--fs-2xs); font-weight: 700; color: var(--text-soft); }
 .columns__label { position: absolute; bottom: calc(var(--space-5) * -0.9); font-size: var(--fs-2xs); color: var(--text-soft); white-space: nowrap; }
+.columns__item:hover .columns__bar, .columns__item:focus-visible .columns__bar { background: var(--chart-2); }
+.columns__item.is-latest .columns__bar { background: linear-gradient(to top, color-mix(in srgb, var(--chart-2) 70%, transparent), var(--chart-2)); }
+.columns--dense { gap: 2px; }
+.columns--dense .columns__value { opacity: 0; transition: opacity var(--dur-1) ease; }
+.columns--dense .columns__item:hover .columns__value, .columns--dense .columns__item:focus-visible .columns__value { opacity: 1; }
+.columns--dense .columns__item:not([data-tick]) .columns__label { visibility: hidden; }
+.columns-empty { display: grid; place-items: center; height: 8rem; margin: 0; border: 1px dashed var(--line-strong); border-radius: var(--radius); color: var(--text-soft); }
+@media (max-width: 36rem) {
+  .columns { height: 10rem; gap: 2px; }
+  .columns__value { display: none; }
+  .columns__item:not([data-tick-sm]) .columns__label { visibility: hidden; }
+}
 @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 
 .ranking { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.ranking__row { display: grid; grid-template-columns: 1.5rem minmax(6rem, 14rem) 1fr 2.2rem; gap: var(--space-3); align-items: center; margin: 0; padding: 2px var(--space-2); border-radius: var(--radius-sm); font-size: var(--fs-sm); }
+.ranking__row { display: grid; grid-template-columns: 1.5rem minmax(0, 2fr) minmax(2.5rem, 1fr) 2.2rem; gap: var(--space-3); align-items: center; margin: 0; padding: 2px var(--space-2); border-radius: var(--radius-sm); font-size: var(--fs-sm); }
 .ranking__row:hover, .ranking__row:focus-visible { background: var(--surface-2); outline-offset: 0; }
 .ranking__rank { color: var(--text-soft); font-weight: 700; }
 .ranking__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -23,7 +37,7 @@
 .ranking__bar { display: block; height: 100%; width: var(--w, 0%); background: var(--chart-1); border-radius: 999px; animation: bar-in var(--dur-3) var(--ease-soft) both; transform-origin: left; }
 @keyframes bar-in { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
-.donut-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-5); }
+.donut-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-5) var(--space-6); }
 .donut { position: relative; display: grid; place-items: center; width: 9rem; height: 9rem; background: var(--ring); border-radius: 50%; }
 .donut::after { content: ""; position: absolute; inset: 1.6rem; background: var(--surface); border-radius: 50%; }
 .donut span { position: relative; z-index: 1; font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }

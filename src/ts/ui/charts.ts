@@ -8,10 +8,17 @@ export interface Datum {
 }
 
 // vertical columns, for things over time
+// Many columns get thin: the numbers then show on hover only, and just every few dates are labelled
+// (data-tick on wide screens, data-tick-sm on phones) so the labels never run into each other.
+// The last column (the most recent day) is highlighted. All zero shows a short note instead of a flat line.
 export function columns(data: Datum[]): Safe {
+  if (!data.some((d) => d.value > 0)) return html`<p class="columns-empty">No requests in this period yet.</p>`;
   const top = Math.max(1, ...data.map((d) => d.value));
-  return html`<ul class="columns" role="list">${data.map((d) => html`
-    <li class="columns__item" tabindex="0" title="${d.label}: ${d.value}" aria-label="${d.label}: ${d.value}">
+  const every = Math.max(1, Math.ceil(data.length / 8));
+  const everySm = Math.max(1, Math.ceil(data.length / 5));
+  const tick = (i: number, n: number) => (data.length - 1 - i) % n === 0; // counted back from the newest, so it is always labelled
+  return html`<ul class="columns ${data.length > 16 ? "columns--dense" : ""}" role="list">${data.map((d, i) => html`
+    <li class="columns__item ${i === data.length - 1 ? "is-latest" : ""}" tabindex="0" title="${d.label}: ${d.value}" aria-label="${d.label}: ${d.value}" ${tick(i, every) ? raw("data-tick") : ""} ${tick(i, everySm) ? raw("data-tick-sm") : ""}>
       <span class="columns__value">${d.value}</span>
       <span class="columns__bar" style="--h:${Math.round((d.value / top) * 100)}%"></span>
       <span class="columns__label">${d.label}</span>
