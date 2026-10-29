@@ -1,6 +1,7 @@
 .modal-backdrop { position: fixed; inset: 0; z-index: var(--z-modal); display: grid; place-items: center; padding: var(--space-4); background: var(--overlay); animation: fade var(--dur-2) ease both; overflow-y: auto; }
 .modal { width: min(36rem, 100%); max-height: calc(100vh - 2rem); display: flex; flex-direction: column; animation: pop var(--dur-2) var(--ease-bounce) both; box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.45); }
 .modal--wide { width: min(52rem, 100%); }
+.modal--xl { width: min(72rem, 100%); }
 .modal__head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-4) var(--space-5) 0; }
 .modal__title { margin: 0; font-size: var(--fs-xl); }
 .modal__body { padding: var(--space-4) var(--space-5); overflow-y: auto; }
