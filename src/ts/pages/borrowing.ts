@@ -55,7 +55,7 @@ function row(loan: Loan) {
 
 function draw(): void {
   const counts = Object.fromEntries(TABS.map((t) => [t.id, loans.filter((l) => (t.statuses as readonly string[]).includes(l.status)).length]));
-  mount(qs("#loanTabs"), html`${TABS.map((t) => html`<button class="tab" role="tab" type="button" data-action="tab" data-tab="${t.id}" aria-selected="${t.id === tab}">${t.label} <span class="tab__count">${counts[t.id]}</span></button>`)}`);
+  mount(qs("#loanTabs"), html`${TABS.map((t) => html`<button class="tab" role="tab" type="button" data-action="tab" data-tab="${t.id}" aria-selected="${String(t.id === tab)}">${t.label} <span class="tab__count">${counts[t.id]}</span></button>`)}`);
   const shown = loans.filter((l) => (TABS.find((t) => t.id === tab)!.statuses as readonly string[]).includes(l.status));
   const owed = loans.reduce((sum, l) => sum + (fines.get(l.id)?.amount ?? 0), 0);
   const list = qs("#loanList");

@@ -192,6 +192,26 @@ export async function userActivity(userId: string, limit = 50): Promise<{ id: nu
   return (data ?? []) as unknown as { id: number; type: string; book_id: string | null; created_at: string; book: { title: string } | null }[];
 }
 
+// ---- which loans were already emailed (tools/loan-email-log.sql); before the SQL is run these quietly do nothing
+export interface LoanEmail { loan_id: number; kind: string; sent_at: string; sender: { username: string; full_name: string } | null }
+
+export async function logLoanEmail(loanId: number, kind: string): Promise<void> {
+  const { data } = await db().auth.getSession();
+  await db().from("loan_emails").insert({ loan_id: loanId, kind, sent_by: data.session?.user.id });
+}
+
+// every email per loan, newest first
+export async function loanEmails(ids: number[]): Promise<Map<number, LoanEmail[]>> {
+  const out = new Map<number, LoanEmail[]>();
+  const unique = [...new Set(ids)];
+  for (let i = 0; i < unique.length; i += 300) {
+    const { data, error } = await db().from("loan_emails").select("loan_id,kind,sent_at,sender:profiles(username,full_name)").in("loan_id", unique.slice(i, i + 300)).order("sent_at", { ascending: false });
+    if (error) return out;
+    for (const row of (data ?? []) as unknown as LoanEmail[]) out.set(Number(row.loan_id), [...(out.get(Number(row.loan_id)) ?? []), row]);
+  }
+  return out;
+}
+
 // formal email through the server function (the library's Gmail account); the function checks the sender is staff
 export async function sendNotice(input: { kind: "overdue" | "due_soon" | "general"; loan_id?: number; user_id?: string; message?: string }): Promise<void> {
   const { data } = await db().auth.getSession();

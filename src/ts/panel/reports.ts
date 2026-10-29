@@ -207,7 +207,7 @@ export const reports: PanelTab = {
       const f = filters.get(r.id)!;
       mount(root, html`<div class="panel__tab">
         <div class="panel__heading"><h2>Reports</h2></div>
-        <div class="tabs" role="tablist">${REPORTS.map((x) => html`<button class="tab" role="tab" type="button" data-action="pick" data-id="${x.id}" aria-selected="${x.id === r.id}">${x.title}</button>`)}</div>
+        <div class="tabs" role="tablist">${REPORTS.map((x) => html`<button class="tab" role="tab" type="button" data-action="pick" data-id="${x.id}" aria-selected="${String(x.id === r.id)}">${x.title}</button>`)}</div>
         <section class="card px">
           <div class="panel__heading"><h3>${icon(r.icon)} ${r.title}</h3>
             <div class="cluster">

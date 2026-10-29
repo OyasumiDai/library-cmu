@@ -1,5 +1,5 @@
 import { publicSettings, registrationInfo, settingText } from "../api/content";
-import { allBooks, people, refreshOverdue, stats } from "../api/staff";
+import { allBooks, loanEmails, people, refreshOverdue, stats, type LoanEmail } from "../api/staff";
 import { expireUnclaimed, loanFines, loansByStatus, type LoanFine } from "../api/loans";
 import { actions, debounce, html, icon, mount } from "../core/dom";
 import { dueLabel, formatDateTime, peso, plural, relative } from "../core/format";
@@ -30,11 +30,13 @@ export const dashboard: PanelTab = {
     mount(root, loading("Counting the shelves"));
     let timer: ReturnType<typeof setInterval> | undefined;
     let index: { books: Book[]; loans: Loan[]; students: Profile[] } | null = null;
+    let emailed = new Map<number, LoanEmail[]>(); // reminders already sent per loan
 
     const draw = async () => {
       await expireUnclaimed().catch(() => 0); // requests past the 2-day pickup window are cancelled and emailed
       const [s, open, settings, registration] = await Promise.all([stats(), loansByStatus(["requested", "borrowed"]), publicSettings(), registrationInfo().catch(() => null)]);
       const fines = await loanFines(open.filter((l) => l.status === "borrowed").map((l) => l.id)).catch(() => new Map<number, LoanFine>());
+      emailed = await loanEmails(open.filter((l) => l.status === "borrowed").map((l) => l.id)).catch(() => new Map());
       return paint(s, open, settings, registration?.open ?? true, fines);
     };
 
@@ -102,7 +104,7 @@ export const dashboard: PanelTab = {
             <aside class="dash-grid__side">
               <section class="card px" data-reveal>
                 <div class="card__head"><h3>${icon("clock")} Overdue</h3>${overdue.length ? html`<span class="chip chip--down">${overdue.length}</span>` : ""}</div>
-                ${overdue.length ? html`<ul class="list">${overdue.slice(0, 5).map((l) => html`<li class="list__item dash-row"><div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.username} · <span class="text-danger">${dueLabel(l.due_at).text}${fines.get(l.id)?.amount ? ` · fine ${peso(fines.get(l.id)!.amount)}` : ""}</span></p></div>
+                ${overdue.length ? html`<ul class="list">${overdue.slice(0, 5).map((l) => html`<li class="list__item dash-row"><div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.username} · <span class="text-danger">${dueLabel(l.due_at).text}${fines.get(l.id)?.amount ? ` · fine ${peso(fines.get(l.id)!.amount)}` : ""}</span>${emailed.get(l.id)?.length ? html` · <span class="emailed-dot" title="Last emailed ${formatDateTime(emailed.get(l.id)![0].sent_at)}">${icon("mail")} emailed${emailed.get(l.id)!.length > 1 ? ` ${emailed.get(l.id)!.length}x` : ""}</span>` : ""}</p></div>
                   <button class="btn btn--sm btn--secondary" type="button" data-action="email" data-id="${l.id}" aria-label="Email the borrower">${icon("mail")}</button></li>`)}</ul>`
                   : empty("Nothing overdue", "Every loan is on time.", "check")}
                 ${s.full_titles.length ? html`<h4 class="dash-sub">Every copy on loan</h4><ul class="chips">${s.full_titles.map((t) => html`<li class="chip">${t.title}</li>`)}</ul>` : ""}
@@ -167,7 +169,7 @@ export const dashboard: PanelTab = {
       jump: (el) => go(el.dataset.tab ?? "dashboard", el.dataset.q),
       checkout: (el) => act(() => checkOut(loanOf(el), true)),
       reject: (el) => act(() => rejectLoan(loanOf(el))),
-      email: (el) => act(() => emailBorrower(loanOf(el))),
+      email: (el) => act(() => emailBorrower(loanOf(el), emailed.get(Number(el.dataset.id)) ?? [])),
     });
     chartToggle(root);
 

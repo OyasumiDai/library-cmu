@@ -237,3 +237,8 @@ button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border
 .place-list .list__item { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 1fr); gap: var(--space-3); align-items: center; }
 .place-list .list__body { min-width: 0; }
 @media (max-width: 36rem) { .place-list .list__item { grid-template-columns: minmax(0, 1fr); } }
+
+/* "already emailed" on a loan (Circulation and the dashboard) */
+.emailed { margin-top: var(--space-1); white-space: normal; }
+.emailed .icon, .emailed-dot .icon { width: 0.85rem; height: 0.85rem; vertical-align: -0.1em; }
+.emailed-dot { color: var(--info); font-weight: 700; white-space: nowrap; }

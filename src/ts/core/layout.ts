@@ -1,5 +1,5 @@
 import { signOut } from "../api/auth";
-import { markNoticesRead, notices } from "../api/content";
+import { markNoticeRead, markNoticesRead, notices } from "../api/content";
 import { html, icon, qs, actions, maybe, mount, raw, escapeHtml } from "./dom";
 import { fail } from "./toast";
 import { initials, relative } from "./format";
@@ -45,7 +45,10 @@ async function refreshNotices(): Promise<void> {
 }
 
 const widget = (): HTMLElement | null => maybe("#userWidget");
-const closeMenus = (): void => document.querySelectorAll("#userWidget .menu").forEach((m) => m.remove());
+const closeMenus = (): void => {
+  document.querySelectorAll("#userWidget .menu").forEach((m) => m.remove());
+  document.querySelector("#userWidget .bell")?.setAttribute("aria-expanded", "false");
+};
 
 // the unread count on the sidebar's Notifications link too (a dot over the icon when the rail is collapsed)
 function drawNavBadge(): void {
@@ -79,27 +82,133 @@ function openAccountMenu(): void {
   widget()?.appendChild(menu);
 }
 
+// ---------------------------------------------------------------- the bell's panel
+// Each notification gets an icon and a colour for its kind, and a page it leads to when clicked.
+type NoticeKind = { icon: string; tone: "info" | "success" | "warning" | "danger" | "accent" };
+function kindOf(n: Notice): NoticeKind {
+  const text = `${n.type} ${n.title}`.toLowerCase();
+  if (/overdue|fine|late/.test(text)) return { icon: "clock", tone: "danger" };
+  if (/reject|declin|cancel/.test(text)) return { icon: "cross", tone: "danger" };
+  if (/due|remind/.test(text)) return { icon: "calendar", tone: "warning" };
+  if (/approv|ready|pick|borrow|checkout/.test(text)) return { icon: "check", tone: "success" };
+  if (/return/.test(text)) return { icon: "refresh", tone: "success" };
+  if (/request|reserv/.test(text)) return { icon: "bell", tone: "accent" };
+  if (/announce|news/.test(text)) return { icon: "news", tone: "info" };
+  return { icon: "mail", tone: "info" };
+}
+function linkOf(n: Notice): string {
+  const text = `${n.type} ${n.title}`.toLowerCase();
+  const staff = current().profile?.role !== "student";
+  if (/announce|news/.test(text)) return "/announcements";
+  if (/request|reserv|overdue|due|return|borrow|pick|approv|reject|declin|cancel|checkout|fine/.test(text)) return staff ? "/panel?tab=circulation" : "/borrowing";
+  return "/notifications";
+}
+
+let bellFilter: "all" | "unread" = "all";
+
+function bellPanelBody(): string {
+  const shown = bellFilter === "unread" ? list.filter((n) => !n.is_read) : list;
+  const today = new Date().toDateString();
+  const groups: [string, Notice[]][] = [["Today", shown.filter((n) => new Date(n.created_at).toDateString() === today)], ["Earlier", shown.filter((n) => new Date(n.created_at).toDateString() !== today)]];
+  const item = (n: Notice) => {
+    const kind = kindOf(n);
+    return html`<li class="notice ${n.is_read ? "" : "is-unread"}" data-id="${n.id}">
+      <a class="notice__link" href="${linkOf(n)}" data-action="open-notice" data-id="${n.id}">
+        <span class="notice__icon notice__icon--${kind.tone}">${icon(kind.icon)}</span>
+        <span class="notice__body"><strong class="notice__title">${n.title}</strong><span class="notice__text">${n.message}</span><span class="notice__time">${relative(n.created_at)}</span></span>
+      </a>
+      <button class="notice__toggle" type="button" data-action="toggle-notice" data-id="${n.id}" title="${n.is_read ? "Mark as unread" : "Mark as read"}" aria-label="${n.is_read ? "Mark as unread" : "Mark as read"}">${n.is_read ? html`<span class="notice__ring"></span>` : html`<span class="notice__dot"></span>`}</button>
+    </li>`;
+  };
+  return html`
+    <div class="bell__head">
+      <div><strong>Notifications</strong>${unread ? html`<span class="bell__new">${unread} new</span>` : ""}</div>
+      <button class="link-button" type="button" data-action="read-all" ${unread ? "" : raw("disabled")}>${icon("check")} Mark all read</button>
+    </div>
+    <div class="bell__tabs" role="tablist">
+      <button type="button" role="tab" data-action="bell-filter" data-filter="all" aria-selected="${String(bellFilter === "all")}">All</button>
+      <button type="button" role="tab" data-action="bell-filter" data-filter="unread" aria-selected="${String(bellFilter === "unread")}">Unread${unread ? ` (${unread})` : ""}</button>
+    </div>
+    <div class="bell__list">${shown.length
+      ? html`${groups.filter(([, items]) => items.length).map(([label, items]) => html`<p class="bell__group">${label}</p><ul class="bell__items">${items.map(item)}</ul>`)}`
+      : html`<div class="bell__empty">${icon(bellFilter === "unread" ? "check" : "bell", "icon--lg")}<p>${bellFilter === "unread" ? "You are all caught up." : "No notifications yet. Nice and quiet."}</p></div>`}</div>
+    <a class="bell__foot" href="/notifications">See all notifications ${icon("chevron-right", "icon--sm")}</a>`.value;
+}
+
+function redrawBell(): void {
+  const panel = maybe("#userWidget .bell__panel");
+  if (panel) {
+    const scroll = panel.querySelector(".bell__list")?.scrollTop ?? 0;
+    panel.innerHTML = bellPanelBody();
+    const listBox = panel.querySelector(".bell__list");
+    if (listBox) listBox.scrollTop = scroll;
+  }
+  drawNavBadge();
+  const count = maybe(".bell__count", widget() ?? document);
+  if (!unread) count?.remove();
+  else if (count) count.textContent = unread > 9 ? "9+" : String(unread);
+}
+
+// read or unread, here and in the database (put back if the database says no)
+async function setRead(id: number, read: boolean): Promise<void> {
+  const notice = list.find((n) => n.id === id);
+  if (!notice || notice.is_read === read) return;
+  notice.is_read = read;
+  unread += read ? -1 : 1;
+  redrawBell();
+  try { await markNoticeRead(id, read); } catch { notice.is_read = !read; unread += read ? 1 : -1; redrawBell(); }
+}
+
 function openBellPanel(): void {
   const wasOpen = maybe("#userWidget .bell__panel");
   closeMenus();
   if (wasOpen) return;
   const panel = document.createElement("div");
   panel.className = "menu bell__panel px";
-  panel.innerHTML = (list.length
-    ? html`<ul class="list">${list.map((n) => html`
-        <li class="list__item ${n.is_read ? "" : "is-unread"}">
-          <div class="list__body"><p class="list__title">${n.title}</p><p class="list__meta">${n.message}</p><p class="list__meta">${relative(n.created_at)}</p></div>
-        </li>`)}</ul>`
-    : html`<div class="empty"><p>No news yet. Nice and quiet.</p></div>`).value;
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-label", "Notifications");
+  panel.innerHTML = bellPanelBody();
   widget()?.appendChild(panel);
+  maybe<HTMLButtonElement>(".bell", widget() ?? document)?.setAttribute("aria-expanded", "true");
+  // the list may have changed since the page opened: update the panel in place (drawWidget would close it)
   const profile = current().profile;
-  if (profile && unread > 0) {
-    void markNoticesRead(profile.id).then(() => {
-      list = list.map((n) => ({ ...n, is_read: true }));
-      unread = 0;
-      maybe(".bell__count", widget() ?? document)?.remove();
-    });
-  }
+  if (profile) void notices(profile.id, 15).then((fresh) => { list = fresh; unread = fresh.filter((n) => !n.is_read).length; redrawBell(); }).catch(() => undefined);
+
+  panel.addEventListener("click", async (event) => {
+    event.stopPropagation();
+    const el = (event.target as Element).closest<HTMLElement>("[data-action]");
+    if (!el) return;
+    const id = Number(el.dataset.id);
+    switch (el.dataset.action) {
+      case "bell-filter":
+        bellFilter = el.dataset.filter === "unread" ? "unread" : "all";
+        redrawBell();
+        break;
+      case "toggle-notice": {
+        const notice = list.find((n) => n.id === id);
+        if (notice) await setRead(id, !notice.is_read);
+        break;
+      }
+      case "read-all": {
+        const profile = current().profile;
+        if (!profile || !unread) break;
+        const before = list.map((n) => n.is_read);
+        list = list.map((n) => ({ ...n, is_read: true }));
+        unread = 0;
+        redrawBell();
+        try { await markNoticesRead(profile.id); } catch { list = list.map((n, i) => ({ ...n, is_read: before[i] })); unread = list.filter((n) => !n.is_read).length; redrawBell(); }
+        break;
+      }
+      case "open-notice": {
+        // mark it read first, then follow the link
+        event.preventDefault();
+        const href = (el as HTMLAnchorElement).href;
+        await setRead(id, true).catch(() => undefined);
+        location.href = href;
+        break;
+      }
+    }
+  });
 }
 
 // ---------------------------------------------------------------- sidebar (phones: slides in over the page)

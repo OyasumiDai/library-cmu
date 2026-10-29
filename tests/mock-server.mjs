@@ -178,6 +178,15 @@ const rpc = {
   },
 };
 
+// MOCK_DEMO=1 also gives the admin a few notifications of every kind, to see the bell panel
+if (process.env.MOCK_DEMO) {
+  const ago = (m) => new Date(Date.now() - m * 60000).toISOString();
+  [["New book request", "Cyrus Reyes requested \"The Quiet Shelf 1\".", "request", 12, false], ["New book request", "Mia Reyes requested \"Pixel Gardens 1\".", "request", 95, false],
+   ["Book overdue", "Joy Reyes has not returned \"Maps of Malabon 2\" (2 days late).", "overdue", 240, false], ["Book returned", "Leo Reyes returned \"Blue Hour 3\".", "returned", 60 * 26, true],
+   ["Request cancelled", "Ana Reyes did not pick up \"Night Reading 4\" within 2 days.", "cancelled", 60 * 30, true], ["New announcement", "Library hours change next week.", "announcement", 60 * 50, true]]
+    .forEach(([title, message, type, m, read], i) => db.notifications.push({ id: 900 + i, user_id: uid.admin, title, message, type, is_read: read, created_at: ago(m) }));
+}
+
 // MOCK_DEMO=1 fills in two months of loans, so the dashboard, analytics and reports have something to draw
 if (process.env.MOCK_DEMO) {
   const students = db.profiles.filter((p) => p.role === "student");

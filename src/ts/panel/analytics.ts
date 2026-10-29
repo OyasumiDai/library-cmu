@@ -99,7 +99,7 @@ export const analytics: PanelTab = {
           <header class="dash-hero dash-hero--slim card px">
             <div class="dash-hero__text"><span class="eyebrow">Analytics</span><h2>How the library is used</h2>
               <p class="text-soft">${range === "all" ? "Every loan request on record." : `The last ${periodLabel}, compared with the ${periodLabel} before.`}</p></div>
-            <div class="seg seg--scroll" role="tablist" aria-label="Period">${RANGES.map((r) => html`<button class="seg__btn" role="tab" type="button" data-action="range" data-range="${r.id}" aria-pressed="${r.id === range}" aria-selected="${r.id === range}">${r.label}</button>`)}</div>
+            <div class="seg seg--scroll" role="tablist" aria-label="Period">${RANGES.map((r) => html`<button class="seg__btn" role="tab" type="button" data-action="range" data-range="${r.id}" aria-pressed="${String(r.id === range)}" aria-selected="${String(r.id === range)}">${r.label}</button>`)}</div>
           </header>
 
           <div class="kpi-grid">

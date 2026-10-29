@@ -1,10 +1,10 @@
 // The four things staff do to a loan, shared by the dashboard, circulation and the student profile.
 import { checkout, giveBack, loanFines, reject } from "../api/loans";
 import { publicSettings, settingNumber } from "../api/content";
-import { sendNotice } from "../api/staff";
+import { logLoanEmail, sendNotice, type LoanEmail } from "../api/staff";
 import { html } from "../core/dom";
 import { friendly } from "../core/errors";
-import { formatDate, peso, plural } from "../core/format";
+import { formatDate, formatDateTime, peso, plural } from "../core/format";
 import { confirmBox, openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
 import type { Loan } from "../types";
@@ -71,7 +71,17 @@ export async function recordReturn(loan: Loan): Promise<boolean> {
   return attempt(() => giveBack(loan.id), fine?.amount ? `Return recorded. Collect ${peso(fine.amount)}.` : "Return recorded.");
 }
 
-export async function emailBorrower(loan: Loan): Promise<boolean> {
+// sends the reminder or overdue email and logs it on the loan; if it was emailed before, says so and asks first
+export async function emailBorrower(loan: Loan, sent: LoanEmail[] = []): Promise<boolean> {
   const overdue = loan.due_at ? new Date(loan.due_at).getTime() < Date.now() : false;
-  return attempt(() => sendNotice({ kind: overdue ? "overdue" : "due_soon", loan_id: loan.id }), `Email sent to ${loan.profile?.username}.`);
+  const kind = overdue ? "overdue" : "due_soon";
+  if (sent.length) {
+    const last = sent[0];
+    const by = last.sender ? ` by ${last.sender.full_name || last.sender.username}` : "";
+    if (!(await confirmBox("Email this student again?", `${loan.profile?.username} was already emailed about "${loan.book?.title}" ${plural(sent.length, "time")}, last on ${formatDateTime(last.sent_at)}${by}.`, "Send again"))) return false;
+  }
+  return attempt(async () => {
+    await sendNotice({ kind, loan_id: loan.id });
+    await logLoanEmail(loan.id, kind).catch(() => undefined); // the email is out either way
+  }, `Email sent to ${loan.profile?.username}.`);
 }
