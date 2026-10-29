@@ -107,6 +107,40 @@ export async function giveBack(loanId: number): Promise<void> {
   void mailLoan(loanId, "returned");
 }
 
+// ---------------------------------------------------------------- borrowing rules (tools/borrowing-rules.sql)
+// per loan: the book's material, its loan period and daily fine, the fine so far, and (while reserved) the pickup deadline
+export interface LoanFine {
+  loan_id: number; material: "circulation" | "fiction"; label: string; loan_days: number; rate: number; fine_days: number; amount: number; pickup_by: string | null;
+}
+
+// before the SQL is run the function does not exist: the pages then simply show no fines
+const missing = (error: { message?: string; code?: string } | null) => !!error && (error.code === "PGRST202" || /could not find the function|does not exist/i.test(error.message ?? ""));
+
+export async function loanFines(ids: number[]): Promise<Map<number, LoanFine>> {
+  const out = new Map<number, LoanFine>();
+  const unique = [...new Set(ids)].filter(Number.isFinite);
+  for (let i = 0; i < unique.length; i += 500) {
+    const { data, error } = await db().rpc("loan_fines", { p_ids: unique.slice(i, i + 500) });
+    if (missing(error)) return out;
+    if (error) throw error;
+    for (const r of (data ?? []) as LoanFine[]) out.set(Number(r.loan_id), { ...r, loan_id: Number(r.loan_id), rate: Number(r.rate), amount: Number(r.amount), fine_days: Number(r.fine_days), loan_days: Number(r.loan_days) });
+  }
+  return out;
+}
+
+// Cancels requests not picked up within the pickup window (2 days) and emails the students.
+// The database also does this every 15 minutes (pg_cron); running it when a page opens keeps it on time without that.
+// Students get back only their own; staff get everyone's and send one email per student.
+export async function expireUnclaimed(): Promise<number> {
+  const { data, error } = await db().rpc("expire_unclaimed_requests");
+  if (error) return 0;
+  const rows = (data ?? []) as { loan_id: number; user_id: string }[];
+  const byStudent = new Map<string, number[]>();
+  for (const r of rows) byStudent.set(r.user_id, [...(byStudent.get(r.user_id) ?? []), Number(r.loan_id)]);
+  for (const ids of byStudent.values()) void mailLoan(ids, "cancelled");
+  return rows.length;
+}
+
 export async function myActivity(userId: string, limit = 25): Promise<Activity[]> {
   const { data, error } = await db().from("user_activity").select("*, book:books(title)").eq("user_id", userId).order("created_at", { ascending: false }).limit(limit);
   if (error) throw error;

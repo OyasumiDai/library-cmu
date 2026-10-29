@@ -40,6 +40,7 @@ export interface Book {
   cover_url: string | null;
   archived?: boolean;
   created_at?: string;
+  material?: "circulation" | "fiction"; // sets the loan period and the overdue fine (tools/borrowing-rules.sql)
 }
 
 export interface CatalogBook extends Book {

@@ -190,3 +190,10 @@ button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border
   .ranking__row { grid-template-columns: 1.25rem minmax(0, 1fr) 2rem; }
   .ranking__track { grid-column: 2 / -1; grid-row: 2; }
 }
+
+/* the library ticket: who it belongs to, the QR, and each book's state (pickup deadline, due date, fine) */
+.ticket { gap: var(--space-2); }
+.ticket__who { margin: 0; font-size: var(--fs-sm); color: var(--text-soft); }
+.ticket__who strong { color: var(--ink); font-size: var(--fs-md, 1.05rem); }
+.ticket__books { width: 100%; text-align: left; }
+.ticket__books .badge { white-space: normal; text-align: left; }

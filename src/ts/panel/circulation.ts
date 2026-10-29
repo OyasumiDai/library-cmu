@@ -1,7 +1,7 @@
-import { loansByStatus } from "../api/loans";
+import { expireUnclaimed, loanFines, loansByStatus, type LoanFine } from "../api/loans";
 import { movements, type Movement } from "../api/staff";
 import { actions, debounce, html, icon, mount } from "../core/dom";
-import { csvDateTime, daysUntil, downloadCsv, formatDate, formatDateTime, plural } from "../core/format";
+import { csvDateTime, daysUntil, downloadCsv, formatDate, formatDateTime, peso, plural } from "../core/format";
 import { who } from "./reports";
 import { reveal } from "../core/motion";
 import { empty, loading, statusBadge } from "../ui/components";
@@ -35,6 +35,7 @@ export const circulation: PanelTab = {
   async render(root, query = "") {
     let view: View = "attention";
     let loans: Loan[] = [];
+    let fines = new Map<number, LoanFine>();
     let moves: Movement[] = [];
     let search = query;
     let type = "";
@@ -51,7 +52,8 @@ export const circulation: PanelTab = {
       <tbody>${rows.map((l) => { const info = dueInfo(l); return html`<tr>
         <td><span class="table__title">${l.book?.title}</span><br><span class="table__sub">Loan #${l.id} · ${l.book?.author}</span></td>
         <td>${l.profile?.username}<br><span class="table__sub">${l.profile?.full_name}${l.profile?.student_id ? ` · ${l.profile.student_id}` : ""}</span></td>
-        <td>${l.status === "requested" || l.status === "borrowed" ? html`<span class="badge badge--${info.tone}">${info.text}</span>` : statusBadge(l.status)}<br><span class="table__sub">${l.returned_at ? `returned ${formatDate(l.returned_at)}` : `requested ${formatDate(l.requested_at)}`}</span></td>
+        <td>${l.status === "requested" || l.status === "borrowed" ? html`<span class="badge badge--${info.tone}">${info.text}</span>` : statusBadge(l.status)}<br><span class="table__sub">${l.returned_at ? `returned ${formatDate(l.returned_at)}` : l.status === "requested" && fines.get(l.id)?.pickup_by ? `pick up by ${formatDateTime(fines.get(l.id)!.pickup_by)}` : `requested ${formatDate(l.requested_at)}`}</span>
+        ${fines.get(l.id)?.amount ? html`<br><span class="badge badge--danger">Fine ${peso(fines.get(l.id)!.amount)}</span>` : ""}</td>
         <td><div class="table__actions">${l.status === "requested"
           ? html`<button class="btn btn--sm" data-action="checkout" data-id="${l.id}">${icon("check")} Check out</button><button class="btn btn--sm btn--danger" data-action="reject" data-id="${l.id}">${icon("cross")} Reject</button>`
           : l.status === "borrowed"
@@ -82,7 +84,11 @@ export const circulation: PanelTab = {
       reveal(body);
     };
 
-    const loadLoans = async () => { loans = await loansByStatus(["requested", "borrowed", "returned", "rejected", "cancelled"], 1500); };
+    const loadLoans = async () => {
+      await expireUnclaimed().catch(() => 0); // requests past the 2-day pickup window are cancelled and emailed first
+      loans = await loansByStatus(["requested", "borrowed", "returned", "rejected", "cancelled"], 1500);
+      fines = await loanFines(loans.filter((l) => l.status !== "rejected" && l.status !== "cancelled").map((l) => l.id)).catch(() => new Map());
+    };
     const loadMoves = async () => { moves = await movements({ type, from, to, limit: 400 }); };
     const reload = async () => { const body = root.querySelector<HTMLElement>("[data-body]")!; mount(body, loading("Loading")); await (view === "movements" ? loadMoves() : loadLoans()); draw(); };
 

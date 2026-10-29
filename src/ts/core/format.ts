@@ -23,6 +23,9 @@ export function relative(iso: string): string {
 
 export const plural = (count: number, word: string): string => `${count} ${word}${count === 1 ? "" : "s"}`;
 
+// money in pesos: ₱120.00
+export const peso = (amount: number): string => `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
 // whole days from now until the date (negative when it has passed)
 export function daysUntil(iso: string): number {
   return Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);

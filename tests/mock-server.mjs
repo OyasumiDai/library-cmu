@@ -147,6 +147,19 @@ const rpc = {
   archive_book: (a, me) => { staffOnly(me); db.books.find((b) => b.id === a.p_book_id).archived = a.p_archived; },
   set_user_role: (a, me) => { if (me?.role !== "admin") throw new Error("Admins only."); db.profiles.find((p) => p.id === a.p_user).role = a.p_role; },
   set_user_active: (a, me) => { if (!(me?.role === "admin" || me?.permissions?.includes("students"))) throw new Error("You need the Student Profiles permission."); db.profiles.find((p) => p.id === a.p_user).active = a.p_active; },
+  // tools/borrowing-rules.sql, roughly: even-numbered books are Fiction (5 days, Php 10), the rest Circulation (3 days, Php 20)
+  loan_fines: (a, me) => {
+    const rule = (b) => (Number(b.id.replace(/\D/g, "")) % 2 ? { material: "circulation", label: "Circulation / Reserve", loan_days: 3, rate: 20 } : { material: "fiction", label: "Fiction", loan_days: 5, rate: 10 });
+    const weekdays = (from, to) => { let n = 0; const d = new Date(from); d.setUTCHours(12); d.setUTCDate(d.getUTCDate() + 1); while (d <= to) { if (d.getUTCDay() % 6) n++; d.setUTCDate(d.getUTCDate() + 1); } return n; };
+    return db.loans.filter((l) => (a.p_ids ?? []).includes(l.id) && (l.user_id === me?.id || me?.role !== "student")).map((l) => {
+      const r = rule(db.books.find((b) => b.id === l.book_id));
+      const days = l.due_at && ["borrowed", "returned"].includes(l.status) ? weekdays(new Date(l.due_at), l.returned_at ? new Date(l.returned_at) : new Date()) : 0;
+      return { loan_id: l.id, ...r, fine_days: days, amount: days * r.rate, pickup_by: l.status === "requested" ? new Date(new Date(l.requested_at).getTime() + 48 * 3600000).toISOString() : null };
+    });
+  },
+  expire_unclaimed_requests: (_a, me) => db.loans.filter((l) => l.status === "requested" && Date.now() - new Date(l.requested_at).getTime() > 48 * 3600000)
+    .map((l) => { Object.assign(l, { status: "cancelled", note: "Not picked up within 2 days" }); return { loan_id: l.id, user_id: l.user_id }; })
+    .filter((r) => me?.role !== "student" || r.user_id === me.id),
   dashboard_stats: (_a, me) => {
     staffOnly(me);
     const count = (st) => db.loans.filter((l) => l.status === st).length;
@@ -169,7 +182,7 @@ if (process.env.MOCK_DEMO) {
     const person = students[i % students.length];
     const ago = (i * 37) % 60;
     const status = ago < 3 ? "requested" : i % 9 === 0 ? "rejected" : ago < 14 ? "borrowed" : "returned";
-    const loan = { id: ++seq, pickup_code: `DEMO${i}`, book_id: book.id, user_id: person.id, status, requested_at: at(ago, i % 9), borrowed_at: null, due_at: null, returned_at: null, note: null };
+    const loan = { id: ++seq, pickup_code: `DE40${String(i).padStart(4, "0")}`, book_id: book.id, user_id: person.id, status, requested_at: at(ago, i % 9), borrowed_at: null, due_at: null, returned_at: null, note: null };
     if (status === "borrowed" || status === "returned") Object.assign(loan, { borrowed_at: at(ago - 0.5, 0), due_at: at(ago - 7.5, 0) });
     if (status === "returned") loan.returned_at = at(Math.max(ago - 6 - (i % 4), 0.2), 0);
     db.loans.push(loan);

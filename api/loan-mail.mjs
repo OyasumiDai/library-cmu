@@ -12,6 +12,24 @@ import { buildLoanEmail } from "./_mail.mjs";
 
 const EVENTS = ["requested", "borrowed", "returned", "rejected", "cancelled"];
 
+// The borrowing rules (tools/borrowing-rules.sql) for each book in the email: its material's loan days and daily fine,
+// and the pickup window. Books and settings are public, so the anon key reads them. Without the SQL, emails keep the old wording.
+async function addRules(list, base, anon) {
+  try {
+    const get = (path) => fetch(`${base}/rest/v1/${path}`, { headers: { apikey: anon, Authorization: `Bearer ${anon}` } }).then((r) => (r.ok ? r.json() : []));
+    const settings = Object.fromEntries((await get("site_settings?select=key,value&key=in.(loan_rules,pickup_hours)")).map((s) => [s.key, s.value]));
+    if (!settings.loan_rules) return;
+    for (const ctx of list) {
+      const book = ctx.book ?? {};
+      const query = book.id ? `id=eq.${encodeURIComponent(book.id)}` : `title=eq.${encodeURIComponent(book.title ?? "")}`;
+      const [row] = await get(`books?select=material&${query}&limit=1`);
+      const material = row?.material === "fiction" ? "fiction" : "circulation";
+      const rule = settings.loan_rules[material];
+      if (rule) ctx.rules = { ...rule, material, pickup_hours: Number(settings.pickup_hours) || 48 };
+    }
+  } catch { /* the email still goes out with the general wording */ }
+}
+
 export function createHandler({ transport } = {}) {
   return async function handler(req, res) {
     res.setHeader("Cache-Control", "no-store");
@@ -49,6 +67,7 @@ export function createHandler({ transport } = {}) {
     const siteUrl = siteUrlFor(req);
     const first = claimed[0];
     try {
+      await addRules(claimed, base, anon);
       const mail = await buildLoanEmail(claimed, siteUrl);
       await mailer.sendMail({ from: `"${first.library.name || "CMU Library"}" <${process.env.GMAIL_USER ?? "library@localhost"}>`, to: first.student.email, subject: mail.subject, text: mail.text, html: mail.html, attachments: mail.attachments });
       return res.status(200).json({ ok: true, books: claimed.length });

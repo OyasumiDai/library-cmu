@@ -1,10 +1,10 @@
 // The four things staff do to a loan, shared by the dashboard, circulation and the student profile.
-import { checkout, giveBack, reject } from "../api/loans";
+import { checkout, giveBack, loanFines, reject } from "../api/loans";
 import { publicSettings, settingNumber } from "../api/content";
 import { sendNotice } from "../api/staff";
 import { html } from "../core/dom";
 import { friendly } from "../core/errors";
-import { formatDate } from "../core/format";
+import { formatDate, peso, plural } from "../core/format";
 import { confirmBox, openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
 import type { Loan } from "../types";
@@ -20,12 +20,24 @@ async function attempt(work: () => Promise<void>, done: string): Promise<boolean
   }
 }
 
-// shows the due date before the book leaves the desk
+// the due date the database will set: the book's loan period, moved past weekends and listed holidays (Philippine time)
+function previewDue(days: number, holidays: string[]): string {
+  const manila = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(d);
+  const day = new Date(`${manila(new Date())}T12:00:00+08:00`);
+  day.setUTCDate(day.getUTCDate() + Math.max(days, 1));
+  while ([0, 6].includes(day.getUTCDay()) || holidays.includes(manila(day))) day.setUTCDate(day.getUTCDate() + 1);
+  return formatDate(day.toISOString());
+}
+
+// shows the due date (by the book's material) before the book leaves the desk
 export async function checkOut(loan: Loan, skipConfirm = false): Promise<boolean> {
   if (!skipConfirm) {
-    const days = settingNumber(await publicSettings(), "loan_days", 7);
-    const due = formatDate(new Date(Date.now() + days * 86400000).toISOString());
-    const yes = await confirmBox("Check out this book?", `"${loan.book?.title}" goes to ${loan.profile?.username} and is due on ${due}.`, "Check out");
+    const settings = await publicSettings();
+    const rule = (await loanFines([loan.id]).catch(() => new Map())).get(loan.id);
+    const days = rule?.loan_days ?? settingNumber(settings, "loan_days", 7);
+    const due = previewDue(days, Array.isArray(settings.holidays) ? (settings.holidays as string[]) : []);
+    const terms = rule ? ` ${rule.label}: ${plural(days, "day")}, ${peso(rule.rate)} a day if late.` : "";
+    const yes = await confirmBox("Check out this book?", `"${loan.book?.title}" goes to ${loan.profile?.username} and is due on ${due}.${terms}`, "Check out");
     if (!yes) return false;
   }
   return attempt(() => checkout(loan.id), "Checked out. The student was notified.");
@@ -52,8 +64,11 @@ export function rejectLoan(loan: Loan): Promise<boolean> {
 }
 
 export async function recordReturn(loan: Loan): Promise<boolean> {
-  if (!(await confirmBox("Record the return?", `"${loan.book?.title}" from ${loan.profile?.username} goes back on the shelf.`, "Record return"))) return false;
-  return attempt(() => giveBack(loan.id), "Return recorded.");
+  // the fine stops at the return: tell the desk what to collect before confirming
+  const fine = (await loanFines([loan.id]).catch(() => new Map())).get(loan.id);
+  const owed = fine?.amount ? ` Overdue fine to collect: ${peso(fine.amount)} (${plural(fine.fine_days, "weekday")} at ${peso(fine.rate)}).` : "";
+  if (!(await confirmBox("Record the return?", `"${loan.book?.title}" from ${loan.profile?.username} goes back on the shelf.${owed}`, "Record return"))) return false;
+  return attempt(() => giveBack(loan.id), fine?.amount ? `Return recorded. Collect ${peso(fine.amount)}.` : "Return recorded.");
 }
 
 export async function emailBorrower(loan: Loan): Promise<boolean> {

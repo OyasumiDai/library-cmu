@@ -1,8 +1,8 @@
 import { publicSettings, registrationInfo, settingText } from "../api/content";
 import { allBooks, people, refreshOverdue, stats } from "../api/staff";
-import { loansByStatus } from "../api/loans";
+import { expireUnclaimed, loanFines, loansByStatus, type LoanFine } from "../api/loans";
 import { actions, debounce, html, icon, mount } from "../core/dom";
-import { dueLabel, formatDateTime, plural, relative } from "../core/format";
+import { dueLabel, formatDateTime, peso, plural, relative } from "../core/format";
 import { reveal } from "../core/motion";
 import { current, hasPerm } from "../core/session";
 import { chartToggle, chartCard, columns, dataTable, kpi, percentChange, ranking } from "../ui/charts";
@@ -32,11 +32,14 @@ export const dashboard: PanelTab = {
     let index: { books: Book[]; loans: Loan[]; students: Profile[] } | null = null;
 
     const draw = async () => {
+      await expireUnclaimed().catch(() => 0); // requests past the 2-day pickup window are cancelled and emailed
       const [s, open, settings, registration] = await Promise.all([stats(), loansByStatus(["requested", "borrowed"]), publicSettings(), registrationInfo().catch(() => null)]);
-      return paint(s, open, settings, registration?.open ?? true);
+      const fines = await loanFines(open.filter((l) => l.status === "borrowed").map((l) => l.id)).catch(() => new Map<number, LoanFine>());
+      return paint(s, open, settings, registration?.open ?? true, fines);
     };
 
-    const paint = (s: DashboardStats, open: Loan[], settings: Record<string, unknown>, registrationOpen: boolean) => {
+    const paint = (s: DashboardStats, open: Loan[], settings: Record<string, unknown>, registrationOpen: boolean, fines: Map<number, LoanFine>) => {
+      const owed = [...fines.values()].reduce((sum, f) => sum + f.amount, 0);
       const waiting = open.filter((l) => l.status === "requested");
       const overdue = open.filter((l) => l.status === "borrowed" && l.due_at && new Date(l.due_at).getTime() < Date.now());
       const change = percentChange(s.requests_now, s.requests_before);
@@ -72,7 +75,7 @@ export const dashboard: PanelTab = {
           <div class="kpi-grid">
             ${kpi({ label: "Requests", value: s.requested, icon: "bell", tone: 2, tab: "circulation", note: waiting.length ? "waiting to check out" : "all caught up", trend: waiting.length ? "" : "up" })}
             ${kpi({ label: "On loan", value: s.borrowed, icon: "shelf", tone: 1, tab: "circulation", note: `${s.due_soon} due soon` })}
-            ${kpi({ label: "Overdue", value: s.overdue, icon: "clock", tone: 4, tab: "circulation", note: s.overdue ? "needs follow-up" : "all on time", trend: s.overdue ? "down" : "up" })}
+            ${kpi({ label: "Overdue", value: s.overdue, icon: "clock", tone: 4, tab: "circulation", note: s.overdue ? (owed ? `${peso(owed)} in fines` : "needs follow-up") : "all on time", trend: s.overdue ? "down" : "up" })}
             ${kpi({ label: "Titles", value: s.titles, icon: "book", tone: 3, tab: "books", note: `${s.copies} copies` })}
             ${kpi({ label: "Students", value: s.students, icon: "users", tone: 5, tab: hasPerm("students") ? "students" : undefined, note: s.new_students ? `+${s.new_students} new this month` : "no new sign-ups", trend: s.new_students ? "up" : "" })}
           </div>
@@ -99,7 +102,7 @@ export const dashboard: PanelTab = {
             <aside class="dash-grid__side">
               <section class="card px" data-reveal>
                 <div class="card__head"><h3>${icon("clock")} Overdue</h3>${overdue.length ? html`<span class="chip chip--down">${overdue.length}</span>` : ""}</div>
-                ${overdue.length ? html`<ul class="list">${overdue.slice(0, 5).map((l) => html`<li class="list__item dash-row"><div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.username} · <span class="text-danger">${dueLabel(l.due_at).text}</span></p></div>
+                ${overdue.length ? html`<ul class="list">${overdue.slice(0, 5).map((l) => html`<li class="list__item dash-row"><div class="list__body"><p class="list__title">${l.book?.title}</p><p class="list__meta">${l.profile?.username} · <span class="text-danger">${dueLabel(l.due_at).text}${fines.get(l.id)?.amount ? ` · fine ${peso(fines.get(l.id)!.amount)}` : ""}</span></p></div>
                   <button class="btn btn--sm btn--secondary" type="button" data-action="email" data-id="${l.id}" aria-label="Email the borrower">${icon("mail")}</button></li>`)}</ul>`
                   : empty("Nothing overdue", "Every loan is on time.", "check")}
                 ${s.full_titles.length ? html`<h4 class="dash-sub">Every copy on loan</h4><ul class="chips">${s.full_titles.map((t) => html`<li class="chip">${t.title}</li>`)}</ul>` : ""}

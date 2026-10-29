@@ -1,10 +1,10 @@
 // Four reports in tabs. Each shows a summary of its numbers; "Preview" opens the CSV exactly as it will download
 // (title block, every row, file name), and the download is logged. Needs the "Reports" permission.
 import { allBooks, logReportDownload, movements } from "../api/staff";
-import { loansByStatus } from "../api/loans";
+import { loanFines, loansByStatus, type LoanFine } from "../api/loans";
 import { actions, debounce, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
-import { csvDateTime, csvSheet, daysUntil, downloadCsv, plural, type CsvReport } from "../core/format";
+import { csvDateTime, csvSheet, daysUntil, downloadCsv, peso, plural, type CsvReport } from "../core/format";
 import { formatIsbn } from "../core/isbn";
 import { openModal } from "../core/modal";
 import { current } from "../core/session";
@@ -20,6 +20,7 @@ type Result = { header: string[]; rows: (string | number)[][] };
 interface Data {
   books(): Promise<Book[]>;
   loans(): Promise<Loan[]>;
+  fines(): Promise<Map<number, LoanFine>>;
 }
 
 interface Report {
@@ -77,37 +78,37 @@ const REPORTS: Report[] = [
     id: "loans", title: "Loans", icon: "shelf", filters: "loans",
     text: "Requests, checkouts and returns with the date and time of each step. Filter by request date and status.",
     async build(f, data) {
-      const [loans, books] = await Promise.all([data.loans(), data.books()]);
+      const [loans, books, fines] = await Promise.all([data.loans(), data.books(), data.fines()]);
       const isbn = isbnOf(books);
       return {
-        header: ["Loan no.", "ISBN", "Book", "Author", "Student", "Username", "Student ID", "Status", "Requested", "Borrowed", "Due", "Returned", "Days overdue"],
+        header: ["Loan no.", "ISBN", "Book", "Author", "Student", "Username", "Student ID", "Status", "Requested", "Borrowed", "Due", "Returned", "Days overdue", "Fine (Php)"],
         rows: loans.filter((l) => (!f.status || l.status === f.status) && within(l.requested_at, f.from, f.to)).map((l) => [l.id, isbn.get(l.book_id) ?? "", l.book?.title ?? "", l.book?.author ?? "",
           l.profile?.full_name ?? "", l.profile?.username ?? "", l.profile?.student_id ?? "", l.status, csvDateTime(l.requested_at), csvDateTime(l.borrowed_at), csvDateTime(l.due_at),
-          csvDateTime(l.returned_at), l.status === "borrowed" ? overdueDays(l.due_at) : ""]),
+          csvDateTime(l.returned_at), l.status === "borrowed" ? overdueDays(l.due_at) : "", fines.get(l.id)?.amount ? fines.get(l.id)!.amount.toFixed(2) : ""]),
       };
     },
     summary: (res) => {
       const status = column(res, "Status");
       return [["Loans", res.rows.length], ["Requested", count(status, "requested")], ["Borrowed now", count(status, "borrowed")], ["Returned", count(status, "returned")],
-        ["Rejected", count(status, "rejected")], ["Cancelled", count(status, "cancelled")], ["Overdue now", column(res, "Days overdue").filter((d) => d !== "").length]];
+        ["Rejected", count(status, "rejected")], ["Cancelled", count(status, "cancelled")], ["Overdue now", column(res, "Days overdue").filter((d) => d !== "").length], ["Fines", peso(sum(column(res, "Fine (Php)")))]];
     },
   },
   {
     id: "overdue", title: "Overdue follow-up", icon: "clock", filters: "none",
     text: "Borrowed books past their due date, longest overdue first.",
     async build(_f, data) {
-      const [all, books] = await Promise.all([data.loans(), data.books()]);
+      const [all, books, fines] = await Promise.all([data.loans(), data.books(), data.fines()]);
       const isbn = isbnOf(books);
       const loans = all.filter((l) => l.status === "borrowed" && l.due_at && daysUntil(l.due_at) < 0).sort((a, b) => String(a.due_at).localeCompare(String(b.due_at)));
       return {
-        header: ["Student", "Username", "Student ID", "ISBN", "Book", "Borrowed", "Due", "Days overdue"],
-        rows: loans.map((l) => [l.profile?.full_name ?? "", l.profile?.username ?? "", l.profile?.student_id ?? "", isbn.get(l.book_id) ?? "", l.book?.title ?? "", csvDateTime(l.borrowed_at), csvDateTime(l.due_at), overdueDays(l.due_at)]),
+        header: ["Student", "Username", "Student ID", "ISBN", "Book", "Material", "Borrowed", "Due", "Days overdue", "Weekdays fined", "Fine (Php)"],
+        rows: loans.map((l) => { const f = fines.get(l.id); return [l.profile?.full_name ?? "", l.profile?.username ?? "", l.profile?.student_id ?? "", isbn.get(l.book_id) ?? "", l.book?.title ?? "", f?.label ?? "", csvDateTime(l.borrowed_at), csvDateTime(l.due_at), overdueDays(l.due_at), f?.fine_days ?? "", f ? f.amount.toFixed(2) : ""]; }),
       };
     },
     summary: (res) => {
       const days = column(res, "Days overdue").map(Number);
       return [["Overdue books", res.rows.length], ["Students", new Set(column(res, "Username")).size],
-        ["Longest overdue", days.length ? plural(Math.max(...days), "day") : "-"], ["Average overdue", days.length ? plural(Math.round(sum(days) / days.length), "day") : "-"]];
+        ["Longest overdue", days.length ? plural(Math.max(...days), "day") : "-"], ["Average overdue", days.length ? plural(Math.round(sum(days) / days.length), "day") : "-"], ["Fines to collect", peso(sum(column(res, "Fine (Php)")))]];
     },
   },
   {
@@ -135,10 +136,11 @@ export const reports: PanelTab = {
   icon: "download",
   need: "reports",
   render(root) {
-    let shared: { books?: Promise<Book[]>; loans?: Promise<Loan[]> } = {};
+    let shared: { books?: Promise<Book[]>; loans?: Promise<Loan[]>; fines?: Promise<Map<number, LoanFine>> } = {};
     const data: Data = {
       books: () => (shared.books ??= allBooks()),
       loans: () => (shared.loans ??= loansByStatus(ALL_STATUSES, 5000)),
+      fines: () => (shared.fines ??= data.loans().then((all) => loanFines(all.filter((l) => l.status === "borrowed" || l.status === "returned").map((l) => l.id))).catch(() => new Map())),
     };
     const filters = new Map<string, Filters>(REPORTS.map((r) => [r.id, { from: "", to: "", status: "" }]));
     const results = new Map<string, Result>();

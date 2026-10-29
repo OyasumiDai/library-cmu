@@ -16,7 +16,8 @@
     "test:notice": "node tests/notice-api.test.mjs",
     "test:loan-mail": "node tests/loan-mail.test.mjs && node tests/loan-mail-many.test.mjs",
     "test:tools": "node tests/assistant-tools.test.mjs",
-    "test": "npm run typecheck && npm run test:sql && npm run test:lockout && npm run test:assistant && npm run test:notice && npm run test:loan-mail && npm run test:tools && npm run test:css && npm run build && npm run test:links"
+    "test:borrowing": "node tests/borrowing-rules.test.mjs",
+    "test": "npm run typecheck && npm run test:sql && npm run test:lockout && npm run test:assistant && npm run test:notice && npm run test:loan-mail && npm run test:tools && npm run test:borrowing && npm run test:css && npm run build && npm run test:links"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0",

@@ -5,7 +5,7 @@ import { friendly } from "../core/errors";
 import { formatIsbn, isValidIsbn, normalizeIsbn } from "../core/isbn";
 import { openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
-import { cover, empty, field, loading } from "../ui/components";
+import { cover, empty, field, loading, selectField } from "../ui/components";
 import type { Book } from "../types";
 import type { PanelTab } from "./tab";
 
@@ -84,6 +84,7 @@ export const books: PanelTab = {
           <div class="field" data-field="author"><label class="field__label" for="f-author">Author</label><input class="input" id="f-author" name="author" list="authorList" value="${book?.author ?? ""}"><datalist id="authorList">${unique((b) => b.author).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
           <div class="field" data-field="category"><label class="field__label" for="f-category">Subject</label><input class="input" id="f-category" name="category" list="categoryList" value="${book?.category ?? ""}"><datalist id="categoryList">${unique((b) => b.category).map((v) => html`<option value="${v}"></option>`)}</datalist></div>
         </div>
+        ${selectField("material", "Material (sets the loan period and overdue fine)", [{ value: "fiction", label: "Fiction" }, { value: "circulation", label: "Circulation / Reserve" }], book?.material ?? "circulation", true, "")}
         <div class="form__row">${field("genre", "Genre", { value: book?.genre ?? "" })}${field("publisher", "Publisher", { value: book?.publisher ?? "" })}</div>
         <div class="form__row">${field("published", "First published", { value: book?.published ?? "" })}${field("language", "Language", { value: book?.language ?? "English" })}</div>
         <div class="form__row">
@@ -156,6 +157,7 @@ export const books: PanelTab = {
             id, isbn: isbn || null, title: d.title, author: d.author ?? "", category: d.category ?? "", genre: d.genre ?? "", published: d.published ?? "",
             publication_label: book?.publication_label ?? "FIRST PUBLISHED", publisher: d.publisher ?? "", language: d.language || "English",
             synopsis: d.synopsis ?? "", copies: wanted, shelf: d.shelf || "Main Library", cover_url,
+            ...("material" in (all[0] ?? {}) ? { material: d.material === "fiction" ? "fiction" as const : "circulation" as const } : {}),
           };
           if (book && wanted !== book.copies) {
             await saveBook({ ...input, copies: book.copies }, false);

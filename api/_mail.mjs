@@ -15,6 +15,15 @@ const FONT = "'Trebuchet MS','Segoe UI',Verdana,Arial,sans-serif";
 
 export const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const formatDate = (iso) => (iso ? new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", year: "numeric", month: "long", day: "numeric" }).format(new Date(iso)) : "");
+export const formatDateTime = (iso) => (iso ? new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso)) : "");
+const peso = (n) => `Php ${Number(n).toFixed(2)}`;
+
+// the borrowing rules of a loan (ctx.rules, added by api/loan-mail from tools/borrowing-rules.sql); older setups fall back to library.loan_days
+const rulesOf = (ctx) => ctx.rules ?? null;
+const pickupBy = (ctx) => (ctx.rules?.pickup_hours && ctx.loan?.requested_at ? new Date(new Date(ctx.loan.requested_at).getTime() + ctx.rules.pickup_hours * 3600000).toISOString() : null);
+const loanLength = (ctx, days) => (ctx.rules ? `${ctx.rules.days} days from pickup (${ctx.rules.label})` : `${days} days from pickup`);
+const fineRow = (ctx) => (ctx.rules ? ["Overdue fine", `${peso(ctx.rules.fine)} per weekday late, until returned`] : null);
+const notPickedUp = (note) => /not picked up/i.test(String(note ?? ""));
 
 const PILLS = { success: [C.successBg, C.success], warning: [C.warningBg, C.warning], danger: [C.dangerBg, C.danger], info: [C.infoBg, C.info] };
 
@@ -95,7 +104,7 @@ export async function qrPng(text) {
 // small QR card per book. The cards sit side by side on a desktop and stack on a phone, so the email stays short.
 const MANY = {
   requested: { pill: "Reserved for you", tone: "info", title: (n) => `${n} books reserved for you`, subject: (n) => `${n} books reserved`, qr: true,
-    lead: (n, f) => `Hi ${f}, these ${n} books are reserved for you. Show the ONE QR code below at the library desk. Staff scan it once and confirm all of them.`, status: "Reserved" },
+    lead: (n, f, by) => `Hi ${f}, these ${n} books are reserved for you. Walk in to the library and show the ONE QR code below at the desk${by ? ` by ${by}` : ""}. Staff scan it once and confirm all of them.${by ? " Requests not picked up by then are cancelled." : ""}`, status: "Reserved" },
   borrowed: { pill: "Pickup confirmed", tone: "success", title: (n) => `${n} books picked up`, subject: (n) => `Pickup confirmed: ${n} books`, qr: true,
     lead: (n, f) => `Hi ${f}, the library confirmed your pickup of ${n} books. Keep the QR code, staff may scan it again when you return them.`, status: "Borrowed" },
   returned: { pill: "Returned", tone: "success", title: (n) => `${n} books returned`, subject: (n) => `Returned: ${n} books`, qr: false,
@@ -103,7 +112,7 @@ const MANY = {
   rejected: { pill: "Request declined", tone: "danger", title: (n) => `${n} requests declined`, subject: (n) => `${n} requests declined`, qr: false,
     lead: (n, f) => `Hi ${f}, the library could not lend these ${n} books.`, status: "Declined" },
   cancelled: { pill: "Request cancelled", tone: "warning", title: (n) => `${n} requests cancelled`, subject: (n) => `${n} requests cancelled`, qr: false,
-    lead: (n, f) => `Hi ${f}, these ${n} requests were cancelled and the copies are back on the shelf.`, status: "Cancelled" },
+    lead: (n, f, _by, note) => `Hi ${f}, these ${n} requests were cancelled${notPickedUp(note) ? " because they were not picked up within 2 days" : ""} and the copies are back on the shelf.`, status: "Cancelled" },
 };
 
 function bookLine(book, right) {
@@ -119,6 +128,7 @@ async function buildManyLoansEmail(list, siteUrl) {
   const n = list.length;
   const first = (student.name || student.username || "reader").split(" ")[0];
   const days = library.loan_days ?? 7;
+  const by = event === "requested" ? formatDateTime(pickupBy(list[0])) : "";
   const right = (c) => (event === "borrowed" ? `Due ${formatDate(c.loan.due_at)}` : copy.status);
   const attachments = [{ filename: "logo.png", content: logoBuffer(), cid: "logo", contentType: "image/png" }];
   let qr = "";
@@ -128,10 +138,11 @@ async function buildManyLoansEmail(list, siteUrl) {
     qr = qrBlock({ cid: "qr", code, caption: `One QR code for all ${n} books. Staff scan it once at the desk to confirm everything.` });
   }
   const lines = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:16px 0;border:1px solid ${C.line};border-radius:10px;background:${C.page}">${list.map((c) => bookLine(c.book, right(c))).join("")}</table>`;
-  const rows = [["Books", String(n)], ["Status", copy.status], event === "requested" ? ["Loan length", `${days} days from pickup`] : null].filter(Boolean);
-  const bodyHtml = `<p style="margin:0 0 4px">${esc(copy.lead(n, first))}</p>${lines}${qr}${detailsTable(rows)}${button("View my books", `${siteUrl}/borrowing`)}`;
+  const rows = [["Books", String(n)], ["Status", copy.status], by ? ["Pick up by", by] : null, event === "requested" ? ["Loan length", rulesOf(list[0]) ? "Fiction 5 days, Circulation / Reserve 3 days, from pickup" : `${days} days from pickup`] : null, event === "borrowed" || event === "requested" ? fineRow(list[0]) : null].filter(Boolean);
+  const lead = copy.lead(n, first, by, list[0].loan?.note);
+  const bodyHtml = `<p style="margin:0 0 4px">${esc(lead)}</p>${lines}${qr}${detailsTable(rows)}${button("View my books", `${siteUrl}/borrowing`)}`;
   const html = layout({ title: copy.title(n), pill: copy.pill, tone: copy.tone, preheader: copy.subject(n), bodyHtml, library, siteUrl });
-  const text = [copy.title(n), "", copy.lead(n, first), "", ...list.map((c) => `- ${c.book.title} (${right(c)})`), ...(copy.qr ? ["", `Pickup code (one for all books): ${list[0].loan.pickup_code}`, `Pickup link: ${siteUrl}/pickup?c=${encodeURIComponent(list[0].loan.pickup_code)}`] : []), "", `View my books: ${siteUrl}/borrowing`, "", library.name || "CMU Library"].join("\n");
+  const text = [copy.title(n), "", lead, "", ...list.map((c) => `- ${c.book.title} (${right(c)})`), ...(copy.qr ? ["", `Pickup code (one for all books): ${list[0].loan.pickup_code}`, `Pickup link: ${siteUrl}/pickup?c=${encodeURIComponent(list[0].loan.pickup_code)}`] : []), "", `View my books: ${siteUrl}/borrowing`, "", library.name || "CMU Library"].join("\n");
   return { subject: copy.subject(n), html, text, attachments };
 }
 
@@ -152,15 +163,16 @@ export async function buildLoanEmail(input, siteUrl) {
   const pickupUrl = `${siteUrl}/pickup?c=${encodeURIComponent(loan.pickup_code)}`;
   const link = `${siteUrl}/borrowing`;
   const days = library.loan_days ?? 7;
+  const by = formatDateTime(pickupBy(ctx));
   const copy = {
     requested: { pill: "Reserved for you", tone: "info", title: "We received your request", subject: `Request received: ${book.title}`, qr: true,
-      lead: `Hi ${first}, <strong>${esc(book.title)}</strong> is reserved for you. Show the QR code below at the library desk. Staff will scan it to confirm your pickup.`,
+      lead: `Hi ${first}, <strong>${esc(book.title)}</strong> is reserved for you. Walk in to the library and show the QR code below at the desk${by ? ` by <strong>${esc(by)}</strong>` : ""}. Staff will scan it to confirm your pickup.${by ? " If it is not picked up by then, the request is cancelled." : ""}`,
       caption: "Staff scan this at the desk to hand over your book. You can also find it any time under My books on the website.",
-      rows: [["Status", "Reserved, waiting for pickup"], ["Requested on", formatDate(loan.requested_at)], ["Loan length", `${days} days from pickup`]], cta: ["View my books", link] },
+      rows: [["Status", "Reserved, waiting for pickup"], ["Requested on", formatDateTime(loan.requested_at)], by ? ["Pick up by", by] : null, ["Loan length", loanLength(ctx, days)], fineRow(ctx)].filter(Boolean), cta: ["View my books", link] },
     borrowed: { pill: "Pickup confirmed", tone: "success", title: "Enjoy your book", subject: `Pickup confirmed: ${book.title}`, qr: true,
       lead: `Hi ${first}, the library confirmed that you picked up <strong>${esc(book.title)}</strong>. Please return it by <strong>${esc(formatDate(loan.due_at))}</strong>.`,
       caption: "Keep this QR code. Staff may scan it again when you return the book.",
-      rows: [["Status", "Borrowed"], ["Picked up on", formatDate(loan.borrowed_at)], ["Due date", formatDate(loan.due_at)], ["Loan length", `${days} days`]], cta: ["View my books", link] },
+      rows: [["Status", "Borrowed"], ["Picked up on", formatDateTime(loan.borrowed_at)], ["Due date", formatDateTime(loan.due_at)], ["Loan length", ctx.rules ? `${ctx.rules.days} days (${ctx.rules.label})` : `${days} days`], fineRow(ctx)].filter(Boolean), cta: ["View my books", link] },
     returned: { pill: "Returned", tone: "success", title: "Thank you for returning your book", subject: `Returned: ${book.title}`, qr: false,
       lead: `Hi ${first}, the library recorded the return of <strong>${esc(book.title)}</strong>. We hope you enjoyed it.`,
       rows: [["Status", "Returned"], ["Returned on", formatDate(loan.returned_at)]], cta: ["Find your next book", `${siteUrl}/catalog`] },
@@ -168,7 +180,9 @@ export async function buildLoanEmail(input, siteUrl) {
       lead: `Hi ${first}, your request for <strong>${esc(book.title)}</strong> was declined.${loan.note ? ` Reason from the library: <em>${esc(loan.note)}</em>` : ""}`,
       rows: [["Status", "Declined"]], cta: ["Browse the catalog", `${siteUrl}/catalog`] },
     cancelled: { pill: "Request cancelled", tone: "warning", title: "Your request was cancelled", subject: `Request cancelled: ${book.title}`, qr: false,
-      lead: `Hi ${first}, your request for <strong>${esc(book.title)}</strong> was cancelled and the copy is back on the shelf.`,
+      lead: notPickedUp(loan.note)
+        ? `Hi ${first}, your request for <strong>${esc(book.title)}</strong> was cancelled because it was not picked up within 2 days. The copy is back on the shelf; you can request it again from the catalog.`
+        : `Hi ${first}, your request for <strong>${esc(book.title)}</strong> was cancelled and the copy is back on the shelf.`,
       rows: [["Status", "Cancelled"]], cta: ["Browse the catalog", `${siteUrl}/catalog`] },
   }[event];
   if (!copy) throw new Error("unknown_event");

@@ -74,7 +74,7 @@ async function load(): Promise<void> {
 }
 
 function showBook(book: CatalogBook): void {
-  const facts: [string, string][] = [["Author", book.author], ["Subject", book.category], ["Genre", book.genre], [book.publication_label || "Published", book.published], ["Publisher", book.publisher], ["Language", book.language], ["Shelf", book.shelf], ["ISBN", formatIsbn(book.isbn)]];
+  const facts: [string, string][] = [["Author", book.author], ["Subject", book.category], ["Genre", book.genre], [book.publication_label || "Published", book.published], ["Publisher", book.publisher], ["Language", book.language], ["Shelf", book.shelf], ["ISBN", formatIsbn(book.isbn)], ["Loan period", book.material === "fiction" ? "5 days (Fiction)" : book.material === "circulation" ? "3 days (Circulation / Reserve)" : ""]];
   const modal = openModal(book.title, html`
     <div class="book-detail">
       ${cover(book)}
@@ -92,9 +92,9 @@ function showBook(book: CatalogBook): void {
   });
   maybe<HTMLButtonElement>("[data-request]", modal.root)?.addEventListener("click", (e) => busy(e.currentTarget as HTMLElement, async () => {
     try {
-      if (!(await confirmBox("Request this book?", `"${book.title}" will be reserved for you right away. Staff confirm the pickup and you will get a notification.`, "Yes, request it"))) return;
+      if (!(await confirmBox("Request this book?", `"${book.title}" will be reserved for you. You get a ticket with a QR code here under My books and in your email. Walk in to the library within 2 days and show it at the desk, or the request is cancelled.`, "Yes, request it"))) return;
       await requestBook(book.id);
-      ok("Requested! It is now reserved for you. Watch the bell.");
+      ok("Reserved! Your ticket is under My books and in your email. Pick it up within 2 days.");
       modal.close();
     } catch (error) {
       fail(friendly(error));

@@ -16,7 +16,7 @@ const asText: Pick = (v) => v;
 const asNumber: Pick = (v) => Number(v) || 0;
 const asBool: Pick = (v) => v === "true";
 const FIELDS: { key: string; pick: Pick }[] = [
-  { key: "library_name", pick: asText }, { key: "loan_days", pick: asNumber }, { key: "max_loans", pick: asNumber }, { key: "registration_open", pick: asBool },
+  { key: "library_name", pick: asText }, { key: "max_loans", pick: asNumber }, { key: "registration_open", pick: asBool },
   { key: "registration_domains", pick: asText }, { key: "terms_version", pick: asText }, { key: "site_notice", pick: asText }, { key: "site_notice_tone", pick: asText },
   { key: "library_hours", pick: asText }, { key: "library_contact", pick: asText },
 ];
@@ -31,6 +31,10 @@ export const settingsTab: PanelTab = {
     const { data } = await db().from("site_settings").select("key,value");
     const s: Record<string, unknown> = Object.fromEntries((data ?? []).map((r: { key: string; value: unknown }) => [r.key, r.value]));
     const text = (key: string) => String(s[key] ?? "");
+    // the borrowing rules (tools/borrowing-rules.sql): loan days and daily fine per material, the pickup window, holidays
+    type Rule = { label: string; days: number; fine: number };
+    const rules = (s.loan_rules ?? { circulation: { label: "Circulation / Reserve", days: 3, fine: 20 }, fiction: { label: "Fiction", days: 5, fine: 10 } }) as Record<string, Rule>;
+    const holidays = Array.isArray(s.holidays) ? (s.holidays as string[]) : [];
     const admin = isAdmin();
     const pages = admin ? (await allPages()).filter((p) => p.slug !== "about") : [];
     let catalog: Course[] = admin ? await courses() : [];
@@ -45,7 +49,12 @@ export const settingsTab: PanelTab = {
         ${field("library_name", "Library name", { value: text("library_name") })}
         <div class="form__row">${field("library_hours", "Opening hours", { value: text("library_hours"), hint: "Shown in the footer of the public pages." })}${field("library_contact", "Contact details", { value: text("library_contact"), hint: "Email or phone, shown in the footer." })}</div>
         <h3>Borrowing</h3>
-        <div class="form__row">${field("loan_days", "Loan length (days)", { type: "number", value: text("loan_days"), attrs: 'min="1" max="60"' })}${field("max_loans", "Books per student", { type: "number", value: text("max_loans"), attrs: 'min="1" max="20"' })}</div>
+        <p class="field__hint">From the Library Operational Manual. Fines count weekdays after the due date (not weekends or the holidays below) until the book is returned. Changing them applies to every loan, including books already out.</p>
+        ${Object.entries(rules).map(([id, rule]) => html`<div class="form__row">${field(`rule_${id}_days`, `${rule.label}: loan days`, { type: "number", value: String(rule.days), attrs: 'min="1" max="60"' })}${field(`rule_${id}_fine`, `${rule.label}: fine per day (Php)`, { type: "number", value: String(rule.fine), attrs: 'min="0" max="1000" step="0.5"' })}</div>`)}
+        <div class="form__row">${field("pickup_hours", "Pickup window (hours)", { type: "number", value: text("pickup_hours") || "48", attrs: 'min="1" max="336"', hint: "A request not picked up in time is cancelled and the student is emailed. 48 = 2 days." })}${field("max_loans", "Books per student", { type: "number", value: text("max_loans"), attrs: 'min="1" max="20"' })}</div>
+        <div class="field" data-field="holidays"><label class="field__label" for="f-holidays">Holidays (no fines, no due dates)</label>
+          <textarea class="textarea" id="f-holidays" name="holidays" rows="4" placeholder="2026-12-25">${holidays.join("\n")}</textarea>
+          <span class="field__hint">One date per line (YYYY-MM-DD), from the official proclamation. Weekends are always excluded.</span></div>
         <h3>Sign up</h3>
         <div class="form__row">${selectField("registration_open", "Registration", [{ value: "true", label: "Open" }, { value: "false", label: "Closed" }], text("registration_open"))}${field("terms_version", "Terms version", { value: text("terms_version"), hint: "Raising it asks everyone to accept the terms again." })}</div>
         ${field("registration_domains", "Allowed email domains", { value: text("registration_domains"), hint: "Comma separated, for example cityofuniversity.edu.ph. Empty means any email." })}
@@ -72,6 +81,13 @@ export const settingsTab: PanelTab = {
       const keys = admin ? [...FIELDS, { key: "assistant_enabled", pick: asBool }, { key: "mail_hook_url", pick: asText }, { key: "mail_hook_secret", pick: asText }] : FIELDS;
       try {
         for (const f of keys) if (d[f.key] !== undefined) await saveSetting(f.key, f.pick(d[f.key]));
+        const nextRules = Object.fromEntries(Object.entries(rules).map(([id, rule]) => [id, { ...rule, days: Math.max(1, Number(d[`rule_${id}_days`]) || rule.days), fine: Math.max(0, Number(d[`rule_${id}_fine`]) || 0) }]));
+        const dates = (d.holidays ?? "").split(/[\s,]+/).map((x) => x.trim()).filter(Boolean);
+        const wrong = dates.find((x) => !/^\d{4}-\d{2}-\d{2}$/.test(x) || Number.isNaN(Date.parse(x)));
+        if (wrong) throw new Error(`"${wrong}" is not a date. Write holidays as YYYY-MM-DD, one per line.`);
+        await saveSetting("loan_rules", nextRules);
+        await saveSetting("pickup_hours", Math.max(1, Number(d.pickup_hours) || 48));
+        await saveSetting("holidays", [...new Set(dates)].sort());
         ok("Settings saved.");
       } catch (error) { fail(friendly(error)); }
     });
