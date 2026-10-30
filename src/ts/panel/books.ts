@@ -58,6 +58,9 @@ function reviewChanges(title: string, changes: [string, string, string][]): Prom
   });
 }
 type Sort = "title" | "category" | "copies" | "newest";
+type Quick = "" | "free" | "full" | "nocover" | "noisbn";
+// the "/" shortcut of the Books tab currently on screen; replaced each time the tab is drawn again
+let slashKey: AbortController | null = null;
 
 export const books: PanelTab = {
   id: "books",
@@ -71,6 +74,10 @@ export const books: PanelTab = {
     let sort: Sort = "title";
     let viewMode: "table" | "covers" = "table";
     let show: "active" | "archived" | "all" | "review" = "active";
+    // the tiles double as quick filters: free copies, fully borrowed, missing cover, missing ISBN
+    let quick: Quick = "";
+    let desc = false;
+    let limit = MAX_ROWS;
     // a book a staff member added waits for an admin (tools/book-approval.sql); it is kept out of the catalog until approved
     const waiting = (b: Book) => b.approval_status === "pending" || b.approval_status === "revision";
     const shelved = (b: Book) => !!b.archived && !waiting(b);
@@ -92,6 +99,20 @@ export const books: PanelTab = {
     const obsoleteNote = (b: Book) => !b.obsolete_year ? ""
       : !b.archived && b.obsolete_year <= THIS_YEAR + 1 ? html` · <span class="text-danger">obsolete ${b.obsolete_year}</span>` : ` · obsolete ${b.obsolete_year}`;
 
+    const free = (b: Book) => Math.max(b.copies - inUse(b), 0);
+    const quickTest: Record<Exclude<Quick, "">, (b: Book) => boolean> = {
+      free: (b) => free(b) > 0, full: (b) => b.copies > 0 && inUse(b) >= b.copies, nocover: (b) => !b.cover_url, noisbn: (b) => !b.isbn,
+    };
+    const QUICK_LABEL = { free: "Copies on the shelf", full: "Fully borrowed", nocover: "Missing cover", noisbn: "Missing ISBN" };
+    const SHOW_LABEL = { active: "Active", review: "Waiting for approval", archived: "Archive", all: "All books" };
+    const setShow = (value: typeof show) => {
+      show = value;
+      limit = MAX_ROWS;
+      root.querySelectorAll<HTMLElement>("[data-show]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.show === value)));
+    };
+    // a column header sorts by it; pressing the same one again flips the order
+    const sortHead = (key: Sort, label: string) => html`<th aria-sort="${sort === key ? (desc ? "descending" : "ascending") : "none"}"><button class="th-sort" type="button" data-action="sort" data-sort="${key}">${label}<span class="th-sort__arrow" aria-hidden="true">${sort === key ? (desc ? "▼" : "▲") : "↕"}</span></button></th>`;
+
     const draw = () => {
       const active = all.filter((b) => !b.archived);
       // archived books nobody has given a place yet (usually ones that just reached their obsolete year)
@@ -106,37 +127,49 @@ export const books: PanelTab = {
           : "");
       mount(root.querySelector<HTMLElement>("#archiveNotice")!, homeless.length ? html`<div class="alert alert--warning px px--warning" role="status">${icon("archive")}<span class="grow"><strong>${homeless.length === 1 ? "1 archived book has" : `${homeless.length} archived books have`} no location yet.</strong> Choose where ${homeless.length === 1 ? "it is" : "each one is"} kept.</span><button class="btn btn--sm" type="button" data-action="locate">Choose locations</button></div>` : "");
       const counts = { active: active.length, archived: all.filter(shelved).length, all: all.length, review: all.filter(waiting).length };
-      root.querySelectorAll<HTMLOptionElement>("#bookShow option").forEach((o) => { o.textContent = `${o.dataset.label} (${counts[o.value as keyof typeof counts]})`; });
-      const tiles = root.querySelector<HTMLElement>("#bookTiles")!;
-      mount(tiles, html`
-        <div class="tile"><span class="tile__label">Titles</span><span class="tile__value">${active.length}</span></div>
-        <div class="tile"><span class="tile__label">On the shelf</span><span class="tile__value">${active.reduce((s, b) => s + Math.max(b.copies - inUse(b), 0), 0)}</span></div>
-        <div class="tile"><span class="tile__label">Fully borrowed</span><span class="tile__value">${active.filter((b) => b.copies > 0 && inUse(b) >= b.copies).length}</span></div>
-        <div class="tile"><span class="tile__label">Missing cover</span><span class="tile__value">${active.filter((b) => !b.cover_url).length}</span></div>
-        <div class="tile"><span class="tile__label">Missing ISBN</span><span class="tile__value">${active.filter((b) => !b.isbn).length}</span></div>`);
+      root.querySelectorAll<HTMLElement>("[data-show-count]").forEach((c) => { c.textContent = String(counts[c.dataset.showCount as keyof typeof counts]); });
+      const totalCopies = active.reduce((sum, b) => sum + b.copies, 0);
+      const onShelf = active.reduce((sum, b) => sum + free(b), 0);
+      const fullCount = active.filter(quickTest.full).length;
+      const noCover = active.filter(quickTest.nocover).length;
+      const noIsbn = active.filter(quickTest.noisbn).length;
+      const tile = (key: Quick, label: string, value: number, iconName: string, note: string, tone = "") => html`
+        <button class="tile book-tile" type="button" data-action="quick" data-quick="${key}" data-tone="${tone}" aria-pressed="${String(quick === key)}">
+          <span class="book-tile__icon">${icon(iconName)}</span><span class="tile__label">${label}</span><span class="tile__value">${value}</span><span class="tile__note">${note}</span></button>`;
+      mount(root.querySelector<HTMLElement>("#bookTiles")!, html`
+        ${tile("", "Titles", active.length, "book", `${totalCopies} copies in all`)}
+        ${tile("free", "On the shelf", onShelf, "shelf", totalCopies ? `${Math.round((onShelf / totalCopies) * 100)}% of copies free` : "No copies yet", "success")}
+        ${tile("full", "Fully borrowed", fullCount, "clock", fullCount ? "Every copy is out" : "None right now", fullCount ? "warning" : "")}
+        ${tile("nocover", "Missing cover", noCover, "image", noCover ? "Add a picture" : "All have covers", noCover ? "warning" : "success")}
+        ${tile("noisbn", "Missing ISBN", noIsbn, "tag", noIsbn ? "Find them online" : "All have ISBNs", noIsbn ? "danger" : "success")}`);
       const needle = term.toLowerCase();
       // an ISBN matches with or without its dashes
       const isbnNeedle = normalizeIsbn(term);
       const matches = (b: Book) => `${b.title} ${b.author} ${b.category}`.toLowerCase().includes(needle) || (!!isbnNeedle && !!b.isbn?.includes(isbnNeedle));
-      let rows = all.filter((b) => (!needle || matches(b)) && (!category || b.category === category) && (show === "all" || (show === "review" ? waiting(b) : show === "archived" ? shelved(b) : !b.archived)));
+      let rows = all.filter((b) => (!needle || matches(b)) && (!category || b.category === category) && (!quick || quickTest[quick](b)) && (show === "all" || (show === "review" ? waiting(b) : show === "archived" ? shelved(b) : !b.archived)));
       rows = [...rows].sort((a, b) => sort === "title" ? a.title.localeCompare(b.title) : sort === "category" ? a.category.localeCompare(b.category) || a.title.localeCompare(b.title) : sort === "copies" ? b.copies - a.copies : String((b as Book & { created_at?: string }).created_at ?? "").localeCompare(String((a as Book & { created_at?: string }).created_at ?? "")));
+      if (desc) rows.reverse();
+      const filters = [quick && QUICK_LABEL[quick], category, term && `“${term}”`].filter(Boolean) as string[];
+      mount(root.querySelector<HTMLElement>("#bookCount")!, html`<strong>${rows.length === 1 ? "1 book" : `${rows.length} books`}</strong> in ${SHOW_LABEL[show]}${filters.map((x) => html`<span class="result-count__tag">${x}</span>`)}${filters.length ? html`<button class="link-button" type="button" data-action="clear-filters">Clear filters</button>` : ""}`);
       const body = root.querySelector<HTMLElement>("[data-body]")!;
       if (!rows.length) { mount(body, show === "archived" ? empty("Nothing in the archive", "Archived books and books past their obsolete year show up here.", "archive") : empty("No books", "Add the first one or change the search.", "book")); return; }
-      const shown = rows.slice(0, MAX_ROWS);
-      mount(body, viewMode === "table"
-        ? html`<div class="table-wrap"><table class="table"><thead><tr><th>Book</th><th>Subject</th><th>Copies</th><th></th></tr></thead><tbody>
-          ${shown.map((b) => html`<tr>
-            <td><span class="table__title">${b.title}</span> ${archiveBadge(b)}<br><span class="table__sub">${b.isbn ? `ISBN ${formatIsbn(b.isbn)}` : html`<span class="badge badge--warning">No ISBN</span>`} · ${b.author}${b.edition ? ` · ${b.edition}` : ""}${obsoleteNote(b)}</span></td>
-            <td>${b.category}</td><td>${bar(b)}</td>
+      const shown = rows.slice(0, limit);
+      mount(body, html`${viewMode === "table"
+        ? html`<div class="table-wrap"><table class="table book-table"><thead><tr>${sortHead("title", "Book")}${sortHead("category", "Subject")}${sortHead("copies", "Copies")}<th><span class="visually-hidden">Actions</span></th></tr></thead><tbody>
+          ${shown.map((b) => html`<tr class="book-row" data-action="edit" data-id="${b.id}" title="Click to edit">
+            <td><div class="book-cell">${cover(b)}<div class="book-cell__text"><span class="table__title">${b.title}</span> ${archiveBadge(b)}<br><span class="table__sub">${b.isbn ? `ISBN ${formatIsbn(b.isbn)}` : html`<span class="badge badge--warning">No ISBN</span>`} · ${b.author}${b.edition ? ` · ${b.edition}` : ""}${obsoleteNote(b)}</span></div></div></td>
+            <td data-label="Subject"><span class="badge">${b.category || "None"}</span></td><td data-label="Copies">${bar(b)}</td>
             <td><div class="table__actions">
               <button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")} Edit</button>
               ${waiting(b)
                 ? (isAdmin() && b.approval_status === "pending" ? html`<button class="btn btn--sm" data-action="review" data-id="${b.id}">${icon("check")} Review</button>` : "")
                 : html`<button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")} ${b.archived ? "Restore" : "Archive"}</button>`}</div>
               ${waiting(b) ? html`<span class="table__sub">added by ${submitterName(b)}${b.review_note && b.approval_status === "revision" ? html` · <em>"${b.review_note}"</em>` : ""}</span>` : ""}</td></tr>`)}</tbody></table></div>`
-        : html`<div class="cover-grid">${shown.map((b) => html`<article class="cover-tile">${cover(b)}<strong>${b.title}</strong><small>${b.author}</small>${bar(b)}
-            <div class="cluster"><button class="btn btn--sm btn--quiet" data-action="edit" data-id="${b.id}">${icon("edit")}</button><button class="btn btn--sm btn--quiet" data-action="archive" data-id="${b.id}">${icon("archive")}</button></div></article>`)}</div>`);
-      if (rows.length > MAX_ROWS) body.append(Object.assign(document.createElement("p"), { className: "result-count", textContent: `Showing ${MAX_ROWS} of ${rows.length}. Search to narrow it down.` }));
+        : html`<div class="cover-grid">${shown.map((b) => html`<article class="cover-tile">
+            <div class="cover-tile__art">${cover(b)}${archiveBadge(b)}
+              <div class="cover-tile__actions"><button class="btn btn--sm" type="button" data-action="edit" data-id="${b.id}">${icon("edit")} Edit</button>${waiting(b) ? "" : html`<button class="btn btn--sm btn--quiet" type="button" data-action="archive" data-id="${b.id}" title="${b.archived ? "Restore" : "Archive"}">${icon("archive")}<span class="visually-hidden">${b.archived ? "Restore" : "Archive"}</span></button>`}</div></div>
+            <strong>${b.title}</strong><small>${b.author}</small>${bar(b)}</article>`)}</div>`}
+        ${rows.length > limit ? html`<div class="book-more"><span>Showing ${shown.length} of ${rows.length}</span><button class="btn btn--quiet btn--sm" type="button" data-action="more">${icon("chevron-down")} Show ${Math.min(MAX_ROWS, rows.length - limit)} more</button></div>` : ""}`);
     };
 
     const reload = async () => {
@@ -446,9 +479,7 @@ export const books: PanelTab = {
       const moved = await archiveObsolete();
       if (!moved.length) return;
       await reload();
-      show = "archived";
-      const select = root.querySelector<HTMLSelectElement>("#bookShow");
-      if (select) select.value = "archived";
+      setShow("archived");
       draw();
       ok(moved.length === 1 ? `"${moved[0].title}" reached its obsolete year and was moved to the archive.` : `${moved.length} books reached their obsolete year and were moved to the archive.`);
       chooseLocations(all.filter((b) => moved.some((m) => m.id === b.id)));
@@ -510,26 +541,54 @@ export const books: PanelTab = {
       <div class="panel__heading"><h2>Books</h2><div class="cluster"><button class="btn btn--secondary" data-action="find-isbns">${icon("search")} Find missing ISBNs</button><button class="btn" data-action="add">${icon("plus")} Add a book</button></div></div>
       <div id="approvalNotice"></div>
       <div id="archiveNotice"></div>
-      <div class="tile-grid" id="bookTiles"></div>
-      <div class="toolbar toolbar--wide px px--soft">
-        <div class="field search"><label class="visually-hidden" for="bookSearch">Search books</label>${icon("search")}<input class="input" id="bookSearch" type="search" placeholder="Title, author, ISBN or subject" value="${term}"></div>
-        <div class="field"><label class="field__label" for="bookShow">Show</label><select class="select" id="bookShow"><option value="active" data-label="Active books">Active books</option><option value="review" data-label="Waiting for approval">Waiting for approval</option><option value="archived" data-label="Archive">Archive</option><option value="all" data-label="All books">All books</option></select></div>
-        <div class="field"><label class="field__label" for="bookCategory">Subject</label><select class="select" id="bookCategory"></select></div>
-        <div class="field"><label class="field__label" for="bookSort">Sort by</label><select class="select" id="bookSort"><option value="title">Title</option><option value="category">Subject</option><option value="copies">Most copies</option><option value="newest">Newest</option></select></div>
-        <div class="seg" role="group" aria-label="View as"><button class="seg__btn" type="button" data-action="mode" data-mode="table" aria-pressed="true">Table</button><button class="seg__btn" type="button" data-action="mode" data-mode="covers" aria-pressed="false">Covers</button></div>
+      <div class="tile-grid book-tiles" id="bookTiles"></div>
+      <div class="book-bar card px">
+        <div class="book-show" role="tablist" aria-label="Show">${(["active", "review", "archived", "all"] as const).map((v) => html`<button class="book-show__tab" type="button" role="tab" data-action="show" data-show="${v}" aria-selected="${String(v === show)}">${SHOW_LABEL[v]}<span class="tab__count" data-show-count="${v}">0</span></button>`)}</div>
+        <div class="book-bar__row">
+          <div class="field search book-bar__search"><label class="visually-hidden" for="bookSearch">Search books</label>${icon("search")}<input class="input" id="bookSearch" type="search" placeholder="Title, author, ISBN or subject" value="${term}" autocomplete="off"><kbd class="finder__key" aria-hidden="true">/</kbd></div>
+          <div class="field"><label class="visually-hidden" for="bookCategory">Subject</label><select class="select" id="bookCategory"></select></div>
+          <div class="field"><label class="visually-hidden" for="bookSort">Sort by</label><select class="select" id="bookSort"><option value="title">Sort: Title</option><option value="category">Sort: Subject</option><option value="copies">Sort: Copies</option><option value="newest">Sort: Newest</option></select></div>
+          <div class="view-toggle" role="group" aria-label="View as"><button class="view-toggle__btn" type="button" data-action="mode" data-mode="table" aria-pressed="true" title="Table">${icon("menu")}<span class="visually-hidden">Table</span></button><button class="view-toggle__btn" type="button" data-action="mode" data-mode="covers" aria-pressed="false" title="Covers">${icon("dashboard")}<span class="visually-hidden">Covers</span></button></div>
+        </div>
       </div>
+      <p class="result-count book-count" id="bookCount" aria-live="polite"></p>
       <div class="card px card--flush" data-body>${loading("Loading books")}</div></div>`);
-    root.querySelector("#bookSearch")!.addEventListener("input", debounce((e) => { term = (e.target as HTMLInputElement).value.trim(); draw(); }, 200));
-    root.querySelector("#bookShow")!.addEventListener("change", (e) => { show = (e.target as HTMLSelectElement).value as typeof show; draw(); });
-    root.querySelector("#bookCategory")!.addEventListener("change", (e) => { category = (e.target as HTMLSelectElement).value; draw(); });
-    root.querySelector("#bookSort")!.addEventListener("change", (e) => { sort = (e.target as HTMLSelectElement).value as Sort; draw(); });
+    const search = root.querySelector<HTMLInputElement>("#bookSearch")!;
+    search.addEventListener("input", debounce(() => { term = search.value.trim(); limit = MAX_ROWS; draw(); }, 200));
+    search.addEventListener("keydown", (e) => { if (e.key === "Escape" && search.value) { search.value = ""; term = ""; draw(); } });
+    root.querySelector("#bookCategory")!.addEventListener("change", (e) => { category = (e.target as HTMLSelectElement).value; limit = MAX_ROWS; draw(); });
+    root.querySelector("#bookSort")!.addEventListener("change", (e) => { sort = (e.target as HTMLSelectElement).value as Sort; desc = false; draw(); });
+    // "/" jumps to the search box while this tab is open
+    slashKey?.abort();
+    slashKey = new AbortController();
+    document.addEventListener("keydown", (e) => {
+      if (!search.isConnected) return slashKey?.abort();
+      const typing = (e.target as Element | null)?.closest("input, textarea, select, [contenteditable]");
+      if (e.key === "/" && !typing && !document.body.classList.contains("has-modal")) { e.preventDefault(); search.focus(); search.select(); }
+    }, { signal: slashKey.signal });
     actions(root, {
       add: () => editor(null),
       "find-isbns": () => finder(),
       edit: (el) => editor(all.find((b) => b.id === el.dataset.id) ?? null),
+      show: (el) => { setShow(el.dataset.show as typeof show); draw(); },
+      quick: (el) => { const key = el.dataset.quick as Quick; quick = quick === key ? "" : key; if (quick && show !== "active") setShow("active"); limit = MAX_ROWS; draw(); },
+      sort: (el) => {
+        const key = el.dataset.sort as Sort;
+        desc = sort === key ? !desc : false;
+        sort = key;
+        root.querySelector<HTMLSelectElement>("#bookSort")!.value = key;
+        draw();
+      },
+      more: () => { limit += MAX_ROWS; draw(); },
+      "clear-filters": () => {
+        quick = ""; category = ""; term = ""; limit = MAX_ROWS;
+        search.value = "";
+        root.querySelector<HTMLSelectElement>("#bookCategory")!.value = "";
+        draw();
+      },
       mode: (el) => { viewMode = el.dataset.mode as typeof viewMode; root.querySelectorAll<HTMLElement>("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); draw(); },
       archive: (el) => { const b = all.find((x) => x.id === el.dataset.id)!; return b.archived ? restore(b) : archive(b); },
-      "show-review": () => { show = "review"; const select = root.querySelector<HTMLSelectElement>("#bookShow"); if (select) select.value = "review"; draw(); },
+      "show-review": () => { setShow("review"); draw(); },
       review: (el) => review(all.find((x) => x.id === el.dataset.id)!),
       locate: () => chooseLocations(all.filter((b) => b.archived && !b.archive_location)),
     });
@@ -539,7 +598,7 @@ export const books: PanelTab = {
     // opened from an approval notification: show the review list and open that book (review for an admin, the fix form for its author)
     // read once: switching to Books again from the sidebar should not reopen it
     const asked = new URLSearchParams(openedWith); openedWith.delete("open"); openedWith.delete("show");
-    if (asked.get("show") === "review") { show = "review"; const select = root.querySelector<HTMLSelectElement>("#bookShow"); if (select) select.value = "review"; draw(); }
+    if (asked.get("show") === "review") { setShow("review"); draw(); }
     if (asked.get("open") === "1" && term) {
       const book = all.find((b) => b.title.toLowerCase() === term.toLowerCase() && waiting(b)) ?? all.find((b) => b.title.toLowerCase() === term.toLowerCase());
       if (!book) ok(`"${term}" is no longer waiting. It may have been approved or removed.`);

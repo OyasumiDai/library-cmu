@@ -353,3 +353,82 @@ body[data-page="panel"] .team-grid { display: grid; grid-template-columns: repea
   .found-row { flex-wrap: wrap; }
   .found-row .btn { width: 100%; justify-content: center; }
 }
+
+/* ------------------------------------------------------------- Books tab */
+/* the tiles are quick filters: pressing one lists just those books, pressing it again clears it */
+.book-tile { --tone: var(--primary); --tone-bg: var(--tint); position: relative; overflow: hidden; align-content: start; font: inherit; color: inherit; cursor: pointer; }
+.book-tile[data-tone="success"] { --tone: var(--success); --tone-bg: var(--success-bg); }
+.book-tile[data-tone="warning"] { --tone: var(--warning); --tone-bg: var(--warning-bg); }
+.book-tile[data-tone="danger"] { --tone: var(--danger); --tone-bg: var(--danger-bg); }
+.book-tile::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--tone); transform: scaleX(0); transform-origin: left; transition: transform var(--dur-2) var(--ease-soft); }
+.book-tile:hover::after, .book-tile[aria-pressed="true"]::after { transform: none; }
+.book-tile:active { transform: scale(0.97); }
+.book-tile[aria-pressed="true"] { border-color: var(--tone); box-shadow: 0 0 0 3px color-mix(in srgb, var(--tone) 20%, transparent); }
+.book-tile__icon { position: absolute; top: var(--space-3); right: var(--space-3); display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: var(--radius-sm); background: var(--tone-bg); color: var(--tone); transition: transform var(--dur-2) var(--ease-bounce); }
+.book-tile:hover .book-tile__icon { transform: rotate(-8deg) scale(1.08); }
+.book-tile .tile__value { font-size: var(--fs-xl); }
+
+/* Show tabs with counts, then search, subject, sort and table/covers in one row */
+.book-bar { display: grid; gap: var(--space-3); padding: var(--space-3); }
+.book-show { display: flex; gap: 2px; padding: 4px; max-width: 100%; overflow-x: auto; scrollbar-width: none; background: var(--surface-3); border-radius: var(--radius); }
+.book-show::-webkit-scrollbar { display: none; }
+.book-show__tab { flex: 1 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); background: transparent; border: 0; border-radius: var(--radius-sm); color: var(--text-soft); font: inherit; font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; cursor: pointer; transition: background-color var(--dur-1) ease, color var(--dur-1) ease; }
+.book-show__tab:hover { color: var(--ink); }
+.book-show__tab[aria-selected="true"] { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px var(--shadow); }
+.book-show__tab[aria-selected="true"] .tab__count { animation: pop var(--dur-2) var(--ease-bounce) both; }
+.book-bar__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.book-bar__row .field { margin: 0; }
+.book-bar__search { flex: 1 1 16rem; }
+.book-bar__search .input { padding-right: 2.6rem; }
+.book-bar__search:focus-within .finder__key { opacity: 0; }
+.book-count { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: calc(var(--space-2) * -1) 0 0; }
+.book-count strong { color: var(--ink); }
+
+/* the table: a cover thumbnail beside each title, sortable headers, the whole row opens the editor */
+.th-sort { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0; background: none; border: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.th-sort:hover { color: var(--ink); }
+.th-sort__arrow { font-size: 0.7em; opacity: 0.5; }
+.book-table th[aria-sort="ascending"], .book-table th[aria-sort="descending"] { color: var(--primary); }
+.book-table th[aria-sort="ascending"] .th-sort__arrow, .book-table th[aria-sort="descending"] .th-sort__arrow { opacity: 1; }
+.book-row { cursor: pointer; animation: fade var(--dur-2) ease both; }
+.book-row:hover .table__title { color: var(--primary); }
+.book-row:hover .cover { transform: rotate(-4deg) scale(1.06); }
+.book-cell { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.book-cell .cover { flex: none; width: 2.6rem; border-radius: 2px 4px 4px 2px; transition: transform var(--dur-2) var(--ease-bounce); }
+.book-cell .cover__title, .book-cell .cover__band { display: none; }
+.book-cell .cover__mark { width: 0.7rem; height: 0.7rem; }
+.book-cell__text { min-width: 0; }
+
+/* covers view: the actions slide up over the cover on hover (always shown on touch screens) */
+.cover-tile { padding: var(--space-2); border-radius: var(--radius-sm); transition: background-color var(--dur-1) ease; }
+.cover-tile:hover { background: var(--surface-2); }
+.cover-tile__art { position: relative; overflow: hidden; border-radius: 3px 8px 8px 3px; }
+.cover-tile__art > .badge { position: absolute; top: var(--space-2); left: var(--space-2); right: var(--space-2); justify-content: center; box-shadow: 0 4px 10px -4px var(--shadow); }
+.cover-tile__actions { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: var(--space-1); justify-content: center; padding: var(--space-4) var(--space-2) var(--space-2); background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent); transform: translateY(100%); transition: transform var(--dur-2) var(--ease-soft); }
+.cover-tile:hover .cover-tile__actions, .cover-tile:focus-within .cover-tile__actions { transform: none; }
+.cover-tile .cover { transition: transform var(--dur-3) var(--ease-soft); }
+.cover-tile:hover .cover { transform: scale(1.04); }
+@media (hover: none) { .cover-tile__actions { transform: none; } }
+
+.book-more { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-3); padding: var(--space-4); border-top: var(--border) solid var(--line); color: var(--text-soft); font-size: var(--fs-sm); }
+
+@media (max-width: 48rem) {
+  /* tiles become a strip that scrolls sideways */
+  .book-tiles { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(10.5rem, 1fr); overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-bottom: var(--space-1); }
+  .book-tiles::-webkit-scrollbar { display: none; }
+  .book-tile { scroll-snap-align: start; }
+  .book-bar__row .field:not(.book-bar__search) { flex: 1 1 8rem; }
+  .book-bar__row .select { width: 100%; }
+  .book-bar__search .finder__key { display: none; }
+  /* each table row becomes a card: the book on top, subject and copies side by side, buttons along the bottom */
+  .book-table thead { display: none; }
+  .book-table, .book-table tbody { display: block; }
+  .book-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); padding: var(--space-4); border-bottom: var(--border) solid var(--line); }
+  .book-table td { display: block; padding: 0; border: 0; }
+  .book-table td:first-child, .book-table td:last-child { grid-column: 1 / -1; }
+  .book-table td[data-label]::before { content: attr(data-label); display: block; margin-bottom: var(--space-1); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-soft); }
+  .book-table .table__actions { justify-content: stretch; }
+  .book-table .table__actions .btn { flex: 1; }
+  .cover-grid { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: var(--space-2); padding: var(--space-3); }
+}
+.book-tile .tile__label { padding-right: 2.6rem; }
