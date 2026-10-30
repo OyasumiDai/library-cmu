@@ -302,9 +302,30 @@ function initFlyouts(sidebar: HTMLElement): void {
   window.addEventListener("resize", closeFlyouts);
 }
 
+// ---------------------------------------------------------------- public pages on phones: the burger menu
+function initLandingMenu(): void {
+  const burger = maybe<HTMLButtonElement>("#landingBurger");
+  const menu = maybe("#landingMenu");
+  if (!burger || !menu) return;
+  const set = (open: boolean) => {
+    menu.classList.toggle("is-open", open);
+    burger.setAttribute("aria-expanded", String(open));
+    burger.setAttribute("aria-label", open ? "Close the menu" : "Open the menu");
+  };
+  burger.addEventListener("click", () => set(!menu.classList.contains("is-open")));
+  // a link was chosen, the person tapped elsewhere, pressed Escape, or the screen got wide again
+  menu.addEventListener("click", (event) => { if ((event.target as Element).closest("a")) set(false); });
+  document.addEventListener("click", (event) => { if (!(event.target as Element).closest(".landing-header__bar")) set(false); });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && menu.classList.contains("is-open")) { set(false); burger.focus(); }
+  });
+  window.matchMedia("(min-width: 48.01rem)").addEventListener("change", (e) => { if (e.matches) set(false); });
+}
+
 export function initLayout(): void {
   initThemePicker();
   initSidebar();
+  initLandingMenu();
   if (current().profile) watchIdle();
   // the sidebar logo leads home: the dashboard for staff and admins, the catalog for students
   const logo = maybe<HTMLAnchorElement>(".sidebar .brand");
