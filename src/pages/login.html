@@ -1,21 +1,28 @@
-<!--page {"shell":"auth","title":"Sign in","description":"Sign in to the library.","entry":"login","access":"guest"} -->
-<div class="container auth" data-page-root>
-  <div class="auth__card card px pop-in">
-    <div class="auth__head">
-      <img class="auth__crest" src="/assets/brand/cmu-library-crest.png" alt="">
-      <h1>Welcome back</h1>
-      <p class="text-soft">Sign in with your library account. The game uses it too.</p>
+<!--page {"shell":"auth","title":"Sign in","description":"Sign in to the library.","entry":"login","access":"guest","body":"auth-fit"} -->
+<div class="auth-split" data-page-root>
+{{authHero}}
+  <section class="auth-panel" aria-labelledby="authTitle">
+    <div class="auth-panel__inner">
+      <nav class="auth-tabs" data-active="login" aria-label="Account"><a class="auth-tabs__tab is-active" href="/login" aria-current="page">Sign in</a><a class="auth-tabs__tab" href="/register">Create account</a></nav>
+      <div class="auth-panel__head">
+        <h1 id="authTitle">Welcome back</h1>
+        <p class="text-soft">Sign in with your library account. The game uses it too.</p>
+      </div>
+      <div id="loginNotice" aria-live="polite"></div>
+      <form class="form auth-form" id="loginForm" novalidate>
+        <div class="field" data-field="email"><label class="field__label" for="f-email">Email</label><input class="input" id="f-email" name="email" type="email" autocomplete="email" required><span class="field__error"></span></div>
+        <div class="field" data-field="password"><label class="field__label" for="f-password">Password</label>
+          <div class="input-reveal"><input class="input" id="f-password" name="password" type="password" autocomplete="current-password" required>
+            <button class="input-reveal__btn" type="button" id="showPassword" aria-label="Show password" aria-pressed="false"><svg class="icon"><use href="/assets/icons/icons.svg#eye"/></svg></button></div>
+          <span class="field__hint field__hint--warn" id="capsHint" hidden>Caps Lock is on.</span>
+          <span class="field__error"></span></div>
+        <div class="cluster cluster--between">
+          <label class="check"><input class="check__box" type="checkbox" id="remember"><span>Remember my email</span></label>
+          <a class="auth-link" href="/reset">Forgot your password?</a>
+        </div>
+        <button class="btn btn--block btn--lg auth-submit" type="submit">Sign in <svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-right"/></svg></button>
+      </form>
+      <p class="auth__foot">New here? <a href="/register">Create an account</a></p>
     </div>
-    <div id="loginNotice" aria-live="polite"></div>
-    <form class="form" id="loginForm" novalidate>
-      <div class="field" data-field="email"><label class="field__label" for="f-email">Email</label><input class="input" id="f-email" name="email" type="email" autocomplete="email" required><span class="field__error"></span></div>
-      <div class="field" data-field="password"><label class="field__label" for="f-password">Password</label>
-        <div class="input-reveal"><input class="input" id="f-password" name="password" type="password" autocomplete="current-password" required>
-          <button class="input-reveal__btn" type="button" id="showPassword" aria-label="Show password"><svg class="icon"><use href="/assets/icons/icons.svg#eye"/></svg></button></div>
-        <span class="field__error"></span></div>
-      <label class="check"><input class="check__box" type="checkbox" id="remember"><span>Remember my email on this device</span></label>
-      <button class="btn btn--block" type="submit">Sign in</button>
-    </form>
-    <p class="auth__foot"><a href="/reset">Forgot your password?</a><br>New here? <a href="/register">Create an account</a></p>
-  </div>
+  </section>
 </div>

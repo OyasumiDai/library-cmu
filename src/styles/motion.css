@@ -10,6 +10,9 @@
 @keyframes pop { 0% { transform: scale(0.85); opacity: 0; } 70% { transform: scale(1.04); } 100% { transform: scale(1); opacity: 1; } }
 @keyframes slide-in { from { transform: translateX(110%); } to { transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes step-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@keyframes tab-to-left { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes tab-to-right { from { transform: translateX(0); } to { transform: translateX(100%); } }
 @keyframes float-z { 0% { opacity: 0; transform: translate(0, 0); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate(10px, -22px); } }
 @keyframes stroll { from { left: -80px; } to { left: calc(100% + 80px); } }
 @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }

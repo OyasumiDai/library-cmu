@@ -127,6 +127,121 @@ body.auth-page::before, body.landing::before, body[data-page="panel"]::before { 
 @keyframes pattern-drift { to { transform: translate(26rem, 26rem); } }
 .auth__card { position: relative; box-shadow: 0 1px 2px var(--shadow), 0 24px 50px -28px var(--shadow); }
 
+/* sign in and join: one landscape card that fits the screen, the blue brand side on the left and the form on the right.
+   On a wide enough screen the page itself never scrolls; if the window is very short the form side scrolls inside the card. */
+body.auth-fit { --auth-pad: clamp(0.75rem, 3vh, 2rem); }
+body.auth-fit .auth-back { display: none; }
+body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
+@media (min-width: 52rem) {
+  body.auth-fit { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
+  body.auth-fit .site-main { min-height: 0; }
+}
+.auth-split {
+  display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  width: min(64rem, 100%); height: min(40rem, calc(100dvh - 2 * var(--auth-pad))); margin: 0 auto; overflow: hidden;
+  background: var(--surface); border: var(--border) solid var(--line); border-radius: calc(var(--radius) * 1.6);
+  box-shadow: 0 1px 2px var(--shadow), 0 30px 70px -34px var(--shadow);
+  animation: pop var(--dur-3) var(--ease-soft) both;
+}
+.auth-split--wide { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); width: min(72rem, 100%); height: min(42rem, calc(100dvh - 2 * var(--auth-pad))); }
+
+.auth-hero {
+  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-5);
+  padding: clamp(1.25rem, 3vw, 2.25rem); color: var(--on-primary);
+  background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 90%, transparent), color-mix(in srgb, var(--primary-edge) 96%, transparent)), url("/assets/brand/campus.webp") center / cover;
+}
+/* the book pattern again, light on blue, drifting slowly */
+.auth-hero::before { content: ""; position: absolute; inset: -26rem; z-index: -1; pointer-events: none; background: var(--on-primary); opacity: 0.07; -webkit-mask: url("/assets/brand/pattern-books.png") 0 0 / 20rem 20rem repeat; mask: url("/assets/brand/pattern-books.png") 0 0 / 20rem 20rem repeat; animation: pattern-drift 160s linear infinite; }
+/* a soft gold glow that follows the corner */
+.auth-hero::after { content: ""; position: absolute; right: -8rem; bottom: -8rem; z-index: -1; width: 20rem; height: 20rem; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 45%, transparent), transparent 70%); animation: pulse-glow 7s ease-in-out infinite; }
+.auth-hero__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.auth-hero__home { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3); border-radius: 999px; color: var(--on-primary); background: color-mix(in srgb, var(--on-primary) 12%, transparent); font-size: var(--fs-sm); font-weight: 700; text-decoration: none; transition: background-color var(--dur-1) ease, transform var(--dur-1) ease; }
+.auth-hero__home:hover { color: var(--on-primary); background: color-mix(in srgb, var(--on-primary) 22%, transparent); transform: translateX(-2px); }
+.auth-hero__brand { display: inline-flex; align-items: center; gap: var(--space-2); white-space: nowrap; font-weight: 700; letter-spacing: 0.04em; }
+.auth-hero__crest { width: 2.6rem; height: 2.6rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.25)); animation: bob 4s ease-in-out infinite; }
+.auth-hero__body { min-height: 0; }
+.auth-hero__kicker { margin: 0 0 var(--space-2); color: var(--accent); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
+.auth-hero__title { margin: 0 0 var(--space-5); color: var(--on-primary); font-size: clamp(1.35rem, 2.3vw, 1.95rem); font-weight: 700; line-height: var(--lh-tight); }
+.auth-hero__list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.auth-hero__list li { display: flex; align-items: center; gap: var(--space-3); margin: 0; font-size: var(--fs-sm); animation: rise var(--dur-3) var(--ease-soft) both; animation-delay: calc(180ms + var(--i) * 110ms); }
+.auth-hero__icon { display: grid; place-items: center; flex: none; width: 2.2rem; height: 2.2rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--on-primary) 14%, transparent); color: var(--accent); transition: transform var(--dur-2) var(--ease-bounce), background-color var(--dur-2) ease; }
+.auth-hero__list li:hover .auth-hero__icon { transform: rotate(-8deg) scale(1.12); background: color-mix(in srgb, var(--on-primary) 24%, transparent); }
+.auth-hero__tips { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); border-radius: var(--radius); background: color-mix(in srgb, var(--primary-edge) 55%, transparent); border: var(--border) solid color-mix(in srgb, var(--on-primary) 16%, transparent); font-size: var(--fs-xs); line-height: var(--lh-body); }
+.auth-hero__deck { display: grid; }
+.auth-hero__tip { grid-area: 1 / 1; margin: 0; opacity: 0; transform: translateY(6px); visibility: hidden; transition: opacity var(--dur-3) ease, transform var(--dur-3) var(--ease-soft), visibility var(--dur-3); }
+.auth-hero__tip.is-current { opacity: 1; transform: none; visibility: visible; }
+.auth-hero__tip strong { color: var(--accent); }
+.auth-hero__dots { display: flex; gap: var(--space-2); }
+.auth-hero__dot { width: 0.5rem; height: 0.5rem; padding: 0; border: 0; border-radius: 999px; background: color-mix(in srgb, var(--on-primary) 35%, transparent); transition: width var(--dur-2) var(--ease-soft), background-color var(--dur-2) ease; }
+.auth-hero__dot:hover { background: color-mix(in srgb, var(--on-primary) 65%, transparent); }
+.auth-hero__dot.is-current { width: 1.4rem; background: var(--accent); }
+
+.auth-panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; padding: clamp(1.25rem, 3.5vw, 2.5rem); overflow-y: auto; overscroll-behavior: contain; }
+.auth-panel__inner { display: grid; gap: var(--space-4); width: min(26rem, 100%); margin: auto; }
+.auth-split--wide .auth-panel__inner { width: min(36rem, 100%); }
+.auth-panel__head h1 { margin: 0 0 var(--space-1); font-size: var(--fs-2xl); }
+.auth-panel__head p { margin: 0; }
+.auth-form { gap: var(--space-3); }
+.auth-link { font-size: var(--fs-sm); }
+.auth-panel .auth__foot { margin: 0; }
+.auth-panel .field.is-valid .input { border-color: var(--success); }
+
+/* Sign in | Create account: the blue pill slides over from the other tab when the page opens */
+.auth-tabs { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 4px; border-radius: 999px; background: var(--surface-3); }
+.auth-tabs::before { content: ""; position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px); border-radius: 999px; background: var(--primary); box-shadow: 0 6px 14px -8px var(--shadow); animation: tab-to-left var(--dur-3) var(--ease-bounce) both; }
+.auth-tabs[data-active="register"]::before { animation-name: tab-to-right; transform: translateX(100%); }
+.auth-tabs__tab { position: relative; z-index: 1; padding: var(--space-2) var(--space-3); border-radius: 999px; color: var(--text-soft); font-size: var(--fs-sm); font-weight: 700; text-align: center; text-decoration: none; transition: color var(--dur-2) ease; }
+.auth-tabs__tab:hover { color: var(--ink); }
+.auth-tabs__tab.is-active, .auth-tabs__tab.is-active:hover { color: var(--on-primary); }
+
+/* join: the progress bar and the two pages of fields */
+.auth-steps { display: flex; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.auth-steps li { flex: 1; display: grid; gap: var(--space-1); margin: 0; color: var(--text-soft); font-size: var(--fs-xs); font-weight: 700; transition: color var(--dur-2) ease; }
+.auth-steps li::before { content: ""; height: 5px; border-radius: 999px; background: var(--line); transition: background-color var(--dur-3) ease; }
+.auth-steps li.is-current { color: var(--primary); }
+.auth-steps li.is-current::before { background: var(--primary); }
+.auth-steps li.is-done { color: var(--success); }
+.auth-steps li.is-done::before { background: var(--success); }
+.auth-step { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-4); min-width: 0; margin: 0; padding: 0; border: 0; animation: step-in var(--dur-3) var(--ease-soft) both; }
+.auth-step[hidden] { display: none; }
+.auth-step__note { grid-column: 1 / -1; margin: 0; }
+.auth-actions { display: flex; gap: var(--space-3); margin-top: var(--space-1); }
+.auth-actions .btn { flex: 1; }
+.auth-actions #stepBack { flex: none; }
+.auth-submit .icon { transition: transform var(--dur-2) var(--ease-bounce); }
+.auth-submit:hover .icon { transform: translateX(4px); }
+.auth-submit.is-loading .icon { display: none; }
+
+/* the eye button gets a slash while the password shows */
+.input-reveal__btn::after { content: ""; position: absolute; left: 50%; top: 50%; width: 1.3rem; height: 2px; background: currentColor; border-radius: 2px; transform: translate(-50%, -50%) rotate(-45deg) scaleX(0); transition: transform var(--dur-2) var(--ease-soft); }
+.input-reveal__btn[aria-pressed="true"]::after { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1); }
+
+/* narrow screens: the brand side shrinks to a banner on top and the page scrolls normally */
+@media (max-width: 51.99rem) {
+  .auth-split, .auth-split--wide { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .auth-hero { gap: var(--space-3); }
+  .auth-hero__list, .auth-hero__tips, .auth-hero__kicker { display: none; }
+  .auth-hero__title { margin: 0; font-size: var(--fs-lg); }
+}
+@media (max-width: 34rem) {
+  .auth-step { grid-template-columns: 1fr; }
+}
+/* wide but short (a laptop with a small window, a phone on its side): keep the card, drop what is only decoration */
+@media (min-width: 52rem) and (max-height: 40rem) {
+  .auth-hero__list li:nth-child(n+3), .auth-hero__tips { display: none; }
+  .auth-hero__title { margin-bottom: var(--space-3); }
+  .auth-panel__head p { display: none; }
+}
+/* a phone on its side: the brand side keeps only its title, the form tightens up, and the tabs replace the footer link */
+@media (min-width: 52rem) and (max-height: 30rem) {
+  .auth-hero__list, .auth-hero__kicker { display: none; }
+  .auth-panel { padding-block: var(--space-4); }
+  .auth-panel__inner, .auth-form { gap: var(--space-2); }
+  .auth-panel__head h1 { font-size: var(--fs-xl); }
+  .auth-panel .auth__foot { display: none; }
+  .auth-panel .btn--lg { min-height: var(--control-h); }
+}
+
 /* the three dots on the forgot-password card */
 .steps-dots { display: flex; justify-content: center; gap: var(--space-3); margin: 0 0 var(--space-3); padding: 0; list-style: none; }
 .steps-dots li { display: grid; place-items: center; width: 1.8rem; height: 1.8rem; margin: 0; border-radius: 50%; background: var(--surface-3); color: var(--text-soft); font-size: var(--fs-sm); font-weight: 700; transition: background-color var(--dur-2) ease, transform var(--dur-2) var(--ease-bounce); }

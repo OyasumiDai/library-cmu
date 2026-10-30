@@ -62,7 +62,7 @@ function renderPage(file) {
     title: meta.title, description: meta.description ?? "", entry: meta.entry ?? page, access: meta.access ?? "all",
     page, version, body: meta.body ?? "", content: raw.slice(match[0].length),
     header: shell === "landing" ? partial("header") : "", footer: shell === "landing" ? partial("footer") : "",
-    nav: renderNav(page), navFoot: renderNav(page, true), footerLinks: renderFooterLinks(), themeCards: renderThemeCards(),
+    nav: renderNav(page), navFoot: renderNav(page, true), footerLinks: renderFooterLinks(), themeCards: renderThemeCards(), authHero: partial("auth-hero"),
   };
   let html = partial(shell === "app" ? "layout-app" : shell === "auth" ? "layout-auth" : "layout");
   for (let pass = 0; pass < 3; pass++) {

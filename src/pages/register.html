@@ -1,47 +1,50 @@
-<!--page {"shell":"auth","title":"Join","description":"Create your library account.","entry":"register","access":"guest"} -->
-<div class="container auth" data-page-root>
-  <div class="auth__card auth__card--wide card px pop-in">
-    <div class="auth__head">
-      <img class="auth__crest" src="/assets/brand/cmu-library-crest.png" alt="">
-      <h1>Join the library</h1>
-      <p class="text-soft">Your username is your name in the game too.</p>
-    </div>
-    <div id="registerNotice" aria-live="polite"></div>
-    <form class="form" id="registerForm" novalidate>
-      <fieldset class="form__group">
-        <legend>Your account</legend>
-        <div class="form__row">
+<!--page {"shell":"auth","title":"Join","description":"Create your library account.","entry":"register","access":"guest","body":"auth-fit"} -->
+<div class="auth-split auth-split--wide" data-page-root>
+{{authHero}}
+  <section class="auth-panel" aria-labelledby="authTitle">
+    <div class="auth-panel__inner">
+      <nav class="auth-tabs" data-active="register" aria-label="Account"><a class="auth-tabs__tab" href="/login">Sign in</a><a class="auth-tabs__tab is-active" href="/register" aria-current="page">Create account</a></nav>
+      <div class="auth-panel__head">
+        <h1 id="authTitle">Join the library</h1>
+        <p class="text-soft">Your username is your name in the game too.</p>
+      </div>
+      <ol class="auth-steps" id="regSteps" aria-label="Progress">
+        <li class="is-current" data-step="1" aria-current="step">1 · Your account</li>
+        <li data-step="2">2 · About you</li>
+        <li data-step="3">3 · Confirm email</li>
+      </ol>
+      <div id="registerNotice" aria-live="polite"></div>
+      <form class="form auth-form" id="registerForm" novalidate>
+        <fieldset class="auth-step" data-step="1">
+          <legend class="visually-hidden">Your account</legend>
           <div class="field" data-field="username"><label class="field__label" for="f-username">Username *</label><input class="input" id="f-username" name="username" autocomplete="username" maxlength="16" required><span class="field__hint" id="usernameHint">3 to 16 letters, numbers, dots, dashes or underscores.</span><span class="field__error"></span></div>
           <div class="field" data-field="email"><label class="field__label" for="f-email">Email *</label><input class="input" id="f-email" name="email" type="email" autocomplete="email" required><span class="field__hint" id="emailHint"></span><span class="field__error"></span></div>
-        </div>
-        <div class="form__row">
-          <div class="field" data-field="password"><label class="field__label" for="f-password">Password *</label><input class="input" id="f-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+          <div class="field" data-field="password"><label class="field__label" for="f-password">Password *</label>
+            <div class="input-reveal"><input class="input" id="f-password" name="password" type="password" autocomplete="new-password" minlength="8" required>
+              <button class="input-reveal__btn" type="button" id="showPassword" aria-label="Show passwords" aria-pressed="false"><svg class="icon"><use href="/assets/icons/icons.svg#eye"/></svg></button></div>
             <div class="meter-row"><div class="meter" id="pwMeter" data-level="0" aria-hidden="true"><i></i><i></i><i></i><i></i></div><span class="meter__label" id="pwMeterLabel" aria-live="polite"></span></div>
+            <span class="field__hint field__hint--warn" id="capsHint" hidden>Caps Lock is on.</span>
             <span class="field__error"></span></div>
           <div class="field" data-field="confirm"><label class="field__label" for="f-confirm">Repeat password *</label><input class="input" id="f-confirm" name="confirm" type="password" autocomplete="new-password" required><span class="field__hint" id="confirmHint">Type it again so we know it is right.</span><span class="field__error"></span></div>
-        </div>
-      </fieldset>
-      <fieldset class="form__group">
-        <legend>About you</legend>
-        <div class="form__row">
+        </fieldset>
+        <fieldset class="auth-step" data-step="2" hidden>
+          <legend class="visually-hidden">About you</legend>
           <div class="field" data-field="full_name"><label class="field__label" for="f-full_name">Full name *</label><input class="input" id="f-full_name" name="full_name" autocomplete="name" required><span class="field__error"></span></div>
           <div class="field" data-field="student_id"><label class="field__label" for="f-student_id">Student ID *</label><input class="input" id="f-student_id" name="student_id" autocomplete="off" required><span class="field__error"></span></div>
-        </div>
-        <div class="form__row">
           <div class="field" data-field="gender"><label class="field__label" for="f-gender">Gender *</label><select class="select" id="f-gender" name="gender" required><option value="">Choose...</option><option>Female</option><option>Male</option></select><span class="field__error"></span></div>
           <div class="field" data-field="phone"><label class="field__label" for="f-phone">Phone *</label><input class="input" id="f-phone" name="phone" type="tel" autocomplete="tel" placeholder="09XX XXX XXXX" required><span class="field__error"></span></div>
-        </div>
-        <div class="form__row">
           <div class="field" data-field="course"><label class="field__label" for="f-course">Course *</label><select class="select" id="f-course" name="course" required><option value="">Choose...</option></select><span class="field__error"></span></div>
           <div class="field" data-field="major"><label class="field__label" for="f-major">Major *</label><select class="select" id="f-major" name="major"><option value="">Choose a course first</option></select><span class="field__error"></span></div>
-        </div>
-        <div class="form__row">
           <div class="field" data-field="year_level"><label class="field__label" for="f-year_level">Year level *</label><select class="select" id="f-year_level" name="year_level" required><option value="">Choose...</option></select><span class="field__error"></span></div>
+          <p class="field__hint auth-step__note">Next you read and agree to the <a href="/terms" target="_blank" rel="noopener">Terms and Conditions</a> (and the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>). Then we email you a code, and your account is ready once you type it in.</p>
+        </fieldset>
+        <div class="auth-actions">
+          <button class="btn btn--secondary btn--lg" type="button" id="stepBack" hidden><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-left"/></svg> Back</button>
+          <button class="btn btn--lg auth-submit" type="button" id="stepNext">Next: about you <svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-right"/></svg></button>
+          <button class="btn btn--lg auth-submit" type="submit" id="stepSubmit" hidden>Continue to the terms <svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#chevron-right"/></svg></button>
         </div>
-      </fieldset>
-      <p class="field__hint">Fields marked * are required. Next you read and agree to the <a href="/terms" target="_blank" rel="noopener">Terms and Conditions</a> (see also the <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a>). Then we email you a code, and your account is only ready once you type it in.</p>
-      <button class="btn btn--block" type="submit">Continue to the terms</button>
-    </form>
-    <p class="auth__foot">Already have one? <a href="/login">Sign in</a></p>
-  </div>
+      </form>
+      <p class="auth__foot">Already have one? <a href="/login">Sign in</a></p>
+    </div>
+  </section>
 </div>

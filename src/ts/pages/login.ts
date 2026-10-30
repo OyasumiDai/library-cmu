@@ -5,6 +5,7 @@ import { friendly } from "../core/errors";
 import { clearFailures, countdown, MAX_TRIES, recordFailure, secondsLocked, triesLeft } from "../core/lockout";
 import { homeFor } from "../core/session";
 import { fail } from "../core/toast";
+import { capsLockHint, heroTips, revealToggle } from "../ui/authSplit";
 import { clearErrors, setFieldError } from "../ui/components";
 
 const REMEMBER = "cmu-remember-email";
@@ -29,9 +30,11 @@ boot(({ params }) => {
   else if (params.get("expired")) mount(notice, html`<div class="alert alert--warning px px--warning" role="alert">Your session ended to keep your account safe. Please sign in again.</div>`);
   else if (params.get("next")) mount(notice, html`<div class="alert px">Please sign in to continue. You will go back to where you were.</div>`);
 
-  qs("#showPassword").addEventListener("click", () => {
-    password.type = password.type === "password" ? "text" : "password";
-  });
+  heroTips();
+  revealToggle(qs<HTMLButtonElement>("#showPassword"), [password]);
+  capsLockHint([password], qs("#capsHint"));
+  // the email field turns green once it looks like an email
+  emailInput.addEventListener("input", () => emailInput.closest(".field")?.classList.toggle("is-valid", /^\S+@\S+\.\S+$/.test(emailInput.value)));
 
   // while locked, the button is off and a live countdown shows how long is left
   let timer: ReturnType<typeof setInterval> | undefined;

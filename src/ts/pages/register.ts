@@ -6,15 +6,29 @@ import { busy, debounce, formData, html, icon, mount, qs } from "../core/dom";
 import { friendly } from "../core/errors";
 import { checkPassword, watchPassword } from "../core/password";
 import { fail, ok } from "../core/toast";
+import { capsLockHint, heroTips, revealToggle } from "../ui/authSplit";
 import { clearErrors, setFieldError } from "../ui/components";
 import { agreeToTerms } from "../ui/terms";
 import type { Course } from "../types";
 
 const USERNAME = /^[A-Za-z0-9][A-Za-z0-9_ .-]{2,15}$/;
 const PH_MOBILE = /^(?:\+?63|0)9\d{9}$/;
+// the fields on the first page of the form; everything else is on "About you"
+const STEP_ONE = ["username", "email", "password", "confirm"];
 
-// step 2 of joining: the 6-digit code that was emailed
+// the progress bar above the form: steps before n are done, n is the one being filled in
+function markStep(n: number): void {
+  qs("#regSteps").querySelectorAll<HTMLElement>("li").forEach((li) => {
+    const step = Number(li.dataset.step);
+    li.classList.toggle("is-current", step === n);
+    li.classList.toggle("is-done", step < n);
+    if (step === n) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
+  });
+}
+
+// step 3 of joining: the 6-digit code that was emailed
 function showConfirm(email: string): void {
+  markStep(3);
   qs("#registerNotice").innerHTML = html`
     <form class="form" id="confirmForm" novalidate>
       <div class="alert alert--success px px--success" role="status">${icon("mail")}<span>We sent a code to <strong>${email}</strong>. It can take a minute. Check your spam folder too.</span></div>
@@ -56,11 +70,13 @@ function showConfirm(email: string): void {
 }
 
 boot(async () => {
+  heroTips();
   const form = qs<HTMLFormElement>("#registerForm");
   const info = await registrationInfo();
   if (!info.open) {
     mount(qs("#registerNotice"), html`<div class="alert alert--warning px px--warning">Registration is closed right now. Please check back later or ask the library.</div>`);
     form.hidden = true;
+    qs("#regSteps").hidden = true;
     return;
   }
   const domains = info.domains ?? [];
@@ -90,6 +106,25 @@ boot(async () => {
   const password = qs<HTMLInputElement>("#f-password");
   const confirm = qs<HTMLInputElement>("#f-confirm");
   const verdict = watchPassword(password, "pwMeter", () => [username.value, email.value.split("@")[0] ?? ""]);
+  revealToggle(qs<HTMLButtonElement>("#showPassword"), [password, confirm]);
+  capsLockHint([password, confirm], qs("#capsHint"));
+
+  // two pages of fields; the second only opens once the first is right
+  const panels = [...form.querySelectorAll<HTMLElement>(".auth-step")];
+  const back = qs<HTMLButtonElement>("#stepBack");
+  const next = qs<HTMLButtonElement>("#stepNext");
+  const submit = qs<HTMLButtonElement>("#stepSubmit");
+  let step = 1;
+  const showStep = (n: number, focus = true) => {
+    step = n;
+    panels.forEach((p) => { p.hidden = p.dataset.step !== String(n); });
+    back.hidden = n === 1;
+    next.hidden = n !== 1;
+    submit.hidden = n !== 2;
+    markStep(n);
+    if (focus) panels[n - 1].querySelector<HTMLElement>(".is-invalid input, .is-invalid select, input, select")?.focus();
+  };
+  back.addEventListener("click", () => showStep(1));
 
   // each field says what is wrong as soon as the person leaves it
   const hint = qs("#usernameHint");
@@ -129,10 +164,8 @@ boot(async () => {
     setFieldError(form, "phone", !value || PH_MOBILE.test(value) ? "" : "Use a Philippine mobile number, like 09171234567.");
   });
 
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    clearErrors(form);
-    const data = formData(form);
+  // everything wrong with the form, as [field, message]
+  const findProblems = async (data: Record<string, string>): Promise<[string, string][]> => {
     const pw = password.value;
     const problems: [string, string][] = [];
     if (!USERNAME.test(data.username ?? "")) problems.push(["username", "Use 3 to 16 letters, numbers, dots, dashes or underscores."]);
@@ -155,8 +188,35 @@ boot(async () => {
     if (!picked) problems.push(["course", "Choose your course."]);
     else if (picked.majors.length && !data.major) problems.push(["major", "Choose your major."]);
     if (!data.year_level) problems.push(["year_level", "Choose your year level."]);
+    return problems;
+  };
+
+  const goNext = async () => {
+    clearErrors(form);
+    const problems = (await busy(next, () => findProblems(formData(form)))).filter(([name]) => STEP_ONE.includes(name));
     problems.forEach(([name, message]) => setFieldError(form, name, message));
-    if (problems.length) { form.querySelector<HTMLElement>(".is-invalid input, .is-invalid select")?.focus(); return; }
+    if (problems.length) { form.querySelector<HTMLElement>(".is-invalid input")?.focus(); return; }
+    showStep(2);
+  };
+  next.addEventListener("click", goNext);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    // Enter on the first page means "next"
+    if (step === 1) return goNext();
+    clearErrors(form);
+    const data = formData(form);
+    const pw = password.value;
+    const problems = await findProblems(data);
+    const picked = catalog.find((c) => c.code === data.course);
+    const phone = (data.phone ?? "").replace(/[\s-]/g, "");
+    problems.forEach(([name, message]) => setFieldError(form, name, message));
+    if (problems.length) {
+      // a problem on the first page (a name taken meanwhile, say) takes the person back there
+      if (problems.some(([name]) => STEP_ONE.includes(name))) showStep(1, false);
+      form.querySelector<HTMLElement>(".auth-step:not([hidden]) .is-invalid input, .auth-step:not([hidden]) .is-invalid select")?.focus();
+      return;
+    }
 
     // the form is complete: now the terms must be read to the end and agreed to, or no account is made
     if (!(await agreeToTerms("Agree and create account"))) {
@@ -176,7 +236,7 @@ boot(async () => {
         showConfirm(data.email.trim().toLowerCase());
       } catch (error) {
         // a taken email belongs on the email field, where the person can fix it
-        if (error instanceof EmailTakenError) { setFieldError(form, "email", error.message); qs<HTMLInputElement>("#f-email").focus(); return; }
+        if (error instanceof EmailTakenError) { showStep(1, false); setFieldError(form, "email", error.message); qs<HTMLInputElement>("#f-email").focus(); return; }
         fail(friendly(error));
       }
     });

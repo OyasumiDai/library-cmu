@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1860" viewBox="0 0 1400 1860">
+<defs>
+  <marker id="open" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="11" markerHeight="11" orient="auto"><path d="M1 1L11 6L1 11" fill="none" stroke="#000" stroke-width="1.4"/></marker>
+  <marker id="gen" viewBox="0 0 14 14" refX="13" refY="7" markerWidth="16" markerHeight="16" orient="auto"><path d="M1 1L13 7L1 13Z" fill="#fff" stroke="#000" stroke-width="1.2"/></marker>
+  <filter id="bg" x="-0.05" y="-0.1" width="1.1" height="1.2"><feFlood flood-color="#fff"/><feComposite in="SourceGraphic"/></filter>
+</defs>
+<style>
+  text { font-family: Arial, Helvetica, sans-serif; fill: #000; text-anchor: middle; }
+  .bound { fill: none; stroke: #000; stroke-width: 1.8; }
+  .title { font-size: 16px; font-weight: 700; }
+  .uc { fill: #fff; stroke: #000; stroke-width: 1.5; }
+  .uct { font-size: 13px; }
+  .lines path { fill: none; stroke: #000; stroke-width: 1.2; }
+  .dash { fill: none; stroke: #000; stroke-width: 1.2; stroke-dasharray: 6 5; }
+  .stereo { font-size: 11.5px; filter: url(#bg); }
+  .actor circle, .actor path { fill: #fff; stroke: #000; stroke-width: 1.8; }
+  .aname { font-size: 16px; font-weight: 700; }
+</style>
+<rect width="100%" height="100%" fill="#fff"/>
+<rect x="330" y="50" width="740" height="1750" rx="22" class="bound"/>
+<text x="700" y="86" class="title">CMU LIBRARY EXPLORER:</text><text x="700" y="107" class="title">A WEB-BASED LIBRARY CATALOG, BOOK BORROWING</text><text x="700" y="128" class="title">AND CIRCULATION MANAGEMENT SYSTEM</text>
+<g class="lines"><path d="M202.0 738.0L360.0 200.0L565.0 200.0"/><path d="M202.0 738.0L390.0 310.0"/><path d="M202.0 738.0L390.0 410.0"/><path d="M202.0 738.0L390.0 502.0"/><path d="M202.0 738.0L390.0 594.0"/><path d="M202.0 738.0L390.0 686.0"/><path d="M202.0 738.0L390.0 778.0"/><path d="M202.0 738.0L390.0 870.0"/><path d="M202.0 738.0L390.0 962.0"/><path d="M202.0 738.0L390.0 1054.0"/><path d="M202.0 738.0L390.0 1146.0"/><path d="M1198.0 698.0L1040.0 214.0L823.0 214.0"/><path d="M1198.0 698.0L1010.0 410.0"/><path d="M1198.0 698.0L1010.0 502.0"/><path d="M1198.0 698.0L1010.0 594.0"/><path d="M1198.0 698.0L1010.0 686.0"/><path d="M1198.0 698.0L1010.0 778.0"/><path d="M1198.0 698.0L1010.0 870.0"/><path d="M1198.0 698.0L1010.0 962.0"/><path d="M1198.0 698.0L1010.0 1054.0"/><path d="M1282.0 1518.0L1330.0 1518.0L1330.0 186.0L823.0 186.0"/><path d="M1198.0 1518.0L1010.0 1370.0"/><path d="M1198.0 1518.0L1010.0 1462.0"/><path d="M1198.0 1518.0L1010.0 1554.0"/><path d="M1198.0 1518.0L1010.0 1646.0"/><path d="M1198.0 1518.0L1010.0 1738.0"/><path d="M1240 1442V842" marker-end="url(#gen)"/></g>
+<path d="M575.2104805896465 278.43912648650786L649.7895194103535 231.56087351349214" class="dash" marker-end="url(#open)"/><text x="612.5" y="259" class="stereo">«extend»</text><path d="M750.2104805896465 231.56087351349214L824.7895194103535 278.43912648650786" class="dash" marker-end="url(#open)"/><text x="787.5" y="259" class="stereo">«include»</text><path d="M740 1370L627.6589886881685 1531.92" class="dash" marker-end="url(#open)"/><text x="683.8294943440842" y="1454.96" class="stereo">«include»</text><path d="M740 1462L652.6850304053665 1542.96" class="dash" marker-end="url(#open)"/><text x="696.3425152026832" y="1506.48" class="stereo">«include»</text><path d="M740 1554L660 1554" class="dash" marker-end="url(#open)"/><text x="700" y="1558" class="stereo">«include»</text><path d="M740 1646L652.6850304053665 1565.04" class="dash" marker-end="url(#open)"/><text x="696.3425152026832" y="1609.52" class="stereo">«include»</text><path d="M740 1738L627.6589886881685 1576.08" class="dash" marker-end="url(#open)"/><text x="683.8294943440842" y="1661.04" class="stereo">«include»</text>
+<ellipse cx="700" cy="200" rx="135" ry="34" class="uc"/><text x="700" y="204.5" class="uct">Login</text>
+<ellipse cx="525" cy="310" rx="135" ry="34" class="uc"/><text x="525" y="306.5" class="uct">Register student account and</text><text x="525" y="322.5" class="uct">confirm email code</text>
+<ellipse cx="875" cy="310" rx="135" ry="34" class="uc"/><text x="875" y="306.5" class="uct">Verify credentials in User</text><text x="875" y="322.5" class="uct">Accounts</text>
+<ellipse cx="525" cy="410" rx="135" ry="34" class="uc"/><text x="525" y="406.5" class="uct">Search and browse the book</text><text x="525" y="422.5" class="uct">catalog</text>
+<ellipse cx="525" cy="502" rx="135" ry="34" class="uc"/><text x="525" y="498.5" class="uct">View book details and</text><text x="525" y="514.5" class="uct">availability</text>
+<ellipse cx="525" cy="594" rx="135" ry="34" class="uc"/><text x="525" y="598.5" class="uct">Request to borrow a book</text>
+<ellipse cx="525" cy="686" rx="135" ry="34" class="uc"/><text x="525" y="690.5" class="uct">Cancel a borrow request</text>
+<ellipse cx="525" cy="778" rx="135" ry="34" class="uc"/><text x="525" y="782.5" class="uct">Show pickup QR ticket</text>
+<ellipse cx="525" cy="870" rx="135" ry="34" class="uc"/><text x="525" y="866.5" class="uct">View loans, due dates and</text><text x="525" y="882.5" class="uct">fines</text>
+<ellipse cx="525" cy="962" rx="135" ry="34" class="uc"/><text x="525" y="958.5" class="uct">Receive notifications and</text><text x="525" y="974.5" class="uct">email reminders</text>
+<ellipse cx="525" cy="1054" rx="135" ry="34" class="uc"/><text x="525" y="1058.5" class="uct">View announcements</text>
+<ellipse cx="525" cy="1146" rx="135" ry="34" class="uc"/><text x="525" y="1150.5" class="uct">Update profile and account</text>
+<ellipse cx="875" cy="410" rx="135" ry="34" class="uc"/><text x="875" y="414.5" class="uct">Add or edit book details</text>
+<ellipse cx="875" cy="502" rx="135" ry="34" class="uc"/><text x="875" y="506.5" class="uct">Review pending loan requests</text>
+<ellipse cx="875" cy="594" rx="135" ry="34" class="uc"/><text x="875" y="590.5" class="uct">Scan QR ticket to check out a</text><text x="875" y="606.5" class="uct">book</text>
+<ellipse cx="875" cy="686" rx="135" ry="34" class="uc"/><text x="875" y="690.5" class="uct">Record book returns</text>
+<ellipse cx="875" cy="778" rx="135" ry="34" class="uc"/><text x="875" y="782.5" class="uct">Send loan reminder emails</text>
+<ellipse cx="875" cy="870" rx="135" ry="34" class="uc"/><text x="875" y="866.5" class="uct">Post announcements and site</text><text x="875" y="882.5" class="uct">content</text>
+<ellipse cx="875" cy="962" rx="135" ry="34" class="uc"/><text x="875" y="958.5" class="uct">View circulation and movement</text><text x="875" y="974.5" class="uct">records</text>
+<ellipse cx="875" cy="1054" rx="135" ry="34" class="uc"/><text x="875" y="1058.5" class="uct">Download library reports</text>
+<ellipse cx="875" cy="1370" rx="135" ry="34" class="uc"/><text x="875" y="1366.5" class="uct">Approve or request revision of</text><text x="875" y="1382.5" class="uct">submitted books</text>
+<ellipse cx="875" cy="1462" rx="135" ry="34" class="uc"/><text x="875" y="1458.5" class="uct">Manage staff accounts and</text><text x="875" y="1474.5" class="uct">permissions</text>
+<ellipse cx="875" cy="1554" rx="135" ry="34" class="uc"/><text x="875" y="1550.5" class="uct">Set borrowing rules and system</text><text x="875" y="1566.5" class="uct">settings</text>
+<ellipse cx="875" cy="1646" rx="135" ry="34" class="uc"/><text x="875" y="1642.5" class="uct">View analytics and generate</text><text x="875" y="1658.5" class="uct">reports</text>
+<ellipse cx="875" cy="1738" rx="135" ry="34" class="uc"/><text x="875" y="1742.5" class="uct">View audit trail</text>
+<ellipse cx="525" cy="1554" rx="135" ry="34" class="uc"/><text x="525" y="1558.5" class="uct">Record action in Audit Trail</text>
+<g class="actor"><circle cx="160" cy="684" r="22"/><path d="M160 706V780M118 738H202M160 780L124 844M160 780L196 844"/></g><text x="160" y="872" class="aname">Student</text>
+<g class="actor"><circle cx="1240" cy="644" r="22"/><path d="M1240 666V740M1198 698H1282M1240 740L1204 804M1240 740L1276 804"/></g><text x="1240" y="832" class="aname">Library Staff</text>
+<g class="actor"><circle cx="1240" cy="1464" r="22"/><path d="M1240 1486V1560M1198 1518H1282M1240 1560L1204 1624M1240 1560L1276 1624"/></g><text x="1240" y="1652" class="aname">Administrator</text>
+</svg>
