@@ -203,3 +203,29 @@ body[data-auth="guest"] .sidebar__foot { display: none; }
 @media (min-width: 62.01rem) {
   .sidebar-collapsed .nav-link__badge { position: absolute; top: 0.1rem; right: 0.6rem; min-width: 1.1rem; padding: 0 0.25rem; line-height: 1.1rem; box-shadow: 0 0 0 2px var(--sidebar-bg); }
 }
+
+/* phones: students get the library links as a tab bar along the bottom; the page, the help button and toasts make room for it */
+.tabbar { display: none; }
+@media (max-width: 62rem) {
+  body[data-auth="member"]:not([data-staff]) { --tabbar-h: 4.4rem; }
+  .tabbar {
+    position: fixed; z-index: var(--z-sticky); left: 0; right: 0; bottom: 0;
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px;
+    padding: var(--space-1) var(--space-2) calc(var(--space-1) + env(safe-area-inset-bottom, 0px));
+    background: color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter: blur(12px);
+    border-top: var(--border) solid var(--line); box-shadow: 0 -10px 30px -22px var(--shadow);
+  }
+  .tabbar__link {
+    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--space-1) 0;
+    color: var(--text-soft); text-decoration: none; font-size: var(--fs-2xs); font-weight: 700; white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tabbar__link .icon { box-sizing: content-box; padding: 0.3rem 1rem; border-radius: 999px; transition: background-color var(--dur-2) ease, color var(--dur-1) ease, transform var(--dur-2) var(--ease-bounce); }
+  .tabbar__link:hover { color: var(--ink); }
+  .tabbar__link:active .icon { transform: scale(0.88); }
+  .tabbar__link.is-active { color: var(--primary); }
+  .tabbar__link.is-active .icon { background: var(--tint); animation: pop var(--dur-2) var(--ease-bounce) both; }
+  body[data-auth="member"]:not([data-staff]) .site-main { padding-bottom: calc(var(--space-8) + var(--tabbar-h)); }
+  body[data-auth="member"]:not([data-staff]) .assistant { bottom: calc(var(--space-3) + var(--tabbar-h)); }
+  body[data-auth="member"]:not([data-staff]) .toast-region { bottom: calc(var(--space-4) + var(--tabbar-h)); }
+}

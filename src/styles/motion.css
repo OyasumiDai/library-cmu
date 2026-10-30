@@ -45,3 +45,4 @@
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
 .reduce-motion [data-reveal] { opacity: 1; }
 @keyframes slow-zoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+@keyframes meter-fill { from { transform: scaleX(0); } to { transform: none; } }

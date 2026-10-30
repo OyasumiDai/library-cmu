@@ -1,7 +1,7 @@
 import { cancelRequest, expireUnclaimed, loanFines, myLoans, type LoanFine } from "../api/loans";
 import { publicSettings, settingNumber } from "../api/content";
 import { boot } from "../core/boot";
-import { actions, html, icon, mount, qs } from "../core/dom";
+import { actions, html, icon, mount, qs, type Safe } from "../core/dom";
 import { friendly } from "../core/errors";
 import { confirmBox } from "../core/modal";
 import { reveal } from "../core/motion";
@@ -21,6 +21,48 @@ const TABS = [
 let loans: Loan[] = [];
 let fines = new Map<number, LoanFine>();
 let tab: (typeof TABS)[number]["id"] = "active";
+let maxLoans = 3;
+
+// how long is left, in words: "3 days left", "5 hours left", "time is up"
+function timeLeft(iso: string): string {
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return "time is up";
+  const hours = Math.round(ms / 3600000);
+  return hours < 24 ? `${plural(Math.max(hours, 1), "hour")} left` : `${plural(Math.round(hours / 24), "day")} left`;
+}
+
+// a bar that fills up through the pickup window (reserved) or the loan period (borrowed)
+function meter(loan: Loan): ReturnType<typeof html> | "" {
+  const f = fines.get(loan.id);
+  const span = loan.status === "requested" && f?.pickup_by ? { from: loan.requested_at, to: f.pickup_by, label: "Pickup window" }
+    : loan.status === "borrowed" && loan.due_at ? { from: loan.borrowed_at ?? loan.requested_at, to: loan.due_at, label: "Loan period" }
+    : null;
+  if (!span) return "";
+  const start = new Date(span.from).getTime();
+  const end = new Date(span.to).getTime();
+  const used = Math.min(100, Math.max(0, ((Date.now() - start) / Math.max(end - start, 1)) * 100));
+  const tone = used >= 100 ? "danger" : used >= 70 ? "warning" : loan.status === "requested" ? "info" : "success";
+  return html`<div class="loan-meter" data-tone="${tone}" style="--value:${Math.round(used)}" role="img" aria-label="${span.label}: ${timeLeft(span.to)}">
+    <span class="loan-meter__track"><span class="loan-meter__fill"></span></span>
+    <span class="loan-meter__label">${span.label} · <strong>${timeLeft(span.to)}</strong></span></div>`;
+}
+
+// the four numbers at the top: waiting for pickup, borrowed, due within two days, and fines owed
+function drawStats(): void {
+  const open = loans.filter((l) => l.status === "requested" || l.status === "borrowed");
+  const reserved = open.filter((l) => l.status === "requested").length;
+  const borrowed = open.length - reserved;
+  const soon = open.filter((l) => l.status === "borrowed" && l.due_at && dueLabel(l.due_at).tone !== "success").length;
+  const owed = loans.reduce((sum, l) => sum + (fines.get(l.id)?.amount ?? 0), 0);
+  const tile = (label: string, value: Safe | string | number, iconName: string, tone: string, note: string) => html`
+    <div class="loan-stat" data-tone="${tone}" data-reveal><span class="loan-stat__icon">${icon(iconName)}</span><div><span class="loan-stat__value">${value}</span><span class="loan-stat__label">${label}</span><span class="loan-stat__note">${note}</span></div></div>`;
+  mount(qs("#loanStats"), html`
+    ${tile("Waiting for pickup", html`<span data-count="${reserved}">${reserved}</span>`, "clock", "info", reserved ? "Show your ticket at the desk" : "No reservations")}
+    ${tile("Borrowed", html`<span data-count="${borrowed}">${borrowed}</span>`, "shelf", "primary", `${plural(Math.max(0, maxLoans - open.length), "slot")} free of ${maxLoans}`)}
+    ${tile("Due soon", html`<span data-count="${soon}">${soon}</span>`, "calendar", soon ? "warning" : "success", soon ? "Return or bring them in" : "Nothing due soon")}
+    ${tile("Fines", peso(owed), "info", owed ? "danger" : "success", owed ? "Grows every weekday" : "All clear")}`);
+  qs("#ticketButton").hidden = !open.some((l) => l.pickup_code);
+}
 
 // what the ticket says about one book: the pickup deadline while reserved, the due date and any fine once borrowed
 function ticketLine(loan: Loan): { text: string; tone: "info" | "success" | "warning" | "danger" } {
@@ -38,7 +80,7 @@ function row(loan: Loan) {
   const due = loan.status === "borrowed" ? dueLabel(loan.due_at) : null;
   const f = fines.get(loan.id);
   return html`
-    <article class="loan-row card px" data-reveal>
+    <article class="loan-row card px card--lift" data-status="${loan.status}" data-reveal>
       ${loan.book ? cover({ id: loan.book.id, title: loan.book.title, cover_url: loan.book.cover_url }) : ""}
       <div>
         <h3 class="card__title">${loan.book?.title ?? "Removed book"} ${statusBadge(loan.status)}</h3>
@@ -48,12 +90,14 @@ function row(loan: Loan) {
         ${due ? html`<span class="badge badge--${due.tone}">${due.text} · ${formatDateTime(loan.due_at)}</span>` : ""}
         ${f?.amount ? html`<span class="badge badge--danger">Fine ${peso(f.amount)} (${plural(f.fine_days, "weekday")} late${loan.status === "borrowed" ? ", still growing" : ""})</span>` : ""}
         ${loan.note ? html`<p class="card__meta">Note: ${loan.note}</p>` : ""}
+        ${meter(loan)}
       </div>
       <div class="table__actions">${loan.pickup_code && (loan.status === "requested" || loan.status === "borrowed") ? html`<button class="btn btn--sm btn--accent" type="button" data-action="qr" data-id="${loan.id}">${icon("qr")} My ticket</button>` : ""}${loan.status === "requested" ? html`<button class="btn btn--sm btn--danger px" type="button" data-action="cancel" data-id="${loan.id}">Cancel</button>` : ""}</div>
     </article>`;
 }
 
 function draw(): void {
+  drawStats();
   const counts = Object.fromEntries(TABS.map((t) => [t.id, loans.filter((l) => (t.statuses as readonly string[]).includes(l.status)).length]));
   mount(qs("#loanTabs"), html`${TABS.map((t) => html`<button class="tab" role="tab" type="button" data-action="tab" data-tab="${t.id}" aria-selected="${String(t.id === tab)}">${t.label} <span class="tab__count">${counts[t.id]}</span></button>`)}`);
   const shown = loans.filter((l) => (TABS.find((t) => t.id === tab)!.statuses as readonly string[]).includes(l.status));
@@ -79,6 +123,7 @@ async function load(): Promise<void> {
 boot(async () => {
   const settings = await publicSettings();
   const max = settingNumber(settings, "max_loans", 3);
+  maxLoans = max;
   const rules = settings.loan_rules as Record<string, { label: string; days: number; fine: number }> | undefined;
   const hours = settingNumber(settings, "pickup_hours", 48);
   qs("#limitNote").textContent = rules
@@ -92,7 +137,7 @@ boot(async () => {
     // the ticket: ONE QR the library desk scans for all of the student's books (the same one is in the email),
     // with each book's state: the pickup deadline while reserved, the due date and any fine once picked up
     qr: async (el) => {
-      const loan = loans.find((l) => l.id === Number(el.dataset.id));
+      const loan = el.dataset.id ? loans.find((l) => l.id === Number(el.dataset.id)) : loans.find((l) => l.pickup_code && (l.status === "requested" || l.status === "borrowed"));
       if (!loan?.pickup_code) return;
       const image = await QRCode.toDataURL(`${location.origin}/pickup?c=${loan.pickup_code}`, { margin: 1, width: 360, errorCorrectionLevel: "M", color: { dark: "#0b1f5c", light: "#ffffff" } });
       const mine = loans.filter((l) => l.status === "requested" || l.status === "borrowed");

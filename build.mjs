@@ -47,6 +47,15 @@ const renderNav = (current, pinned = false) => navGroups.filter((group) => !!gro
   if (pinned) return `<div class="nav-group" data-visible="${group.visible ?? "all"}">${links}</div>`;
   return `<div class="nav-group" data-visible="${group.visible ?? "all"}"><span class="nav-group__label">${group.label}</span>${links}</div>`;
 }).join("\n        ");
+// phones: students get their library links and their profile as a tab bar along the bottom of the app
+const renderTabbar = (current) => {
+  const student = navGroups.find((group) => group.visible === "student");
+  const profile = navGroups.find((group) => group.pin).items.find((item) => item.page === "profile");
+  return [...student.items, profile].map((item) => {
+    const on = item.page === current;
+    return `<a class="tabbar__link${on ? " is-active" : ""}" href="${item.href}"${on ? ' aria-current="page"' : ""}><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${item.icon}"/></svg><span>${item.label}</span></a>`;
+  }).join("");
+};
 const renderFooterLinks = () => footerLinks.map((l) => `<a href="${l.href}" data-visible="${l.visible ?? "all"}">${l.label}</a>`).join("\n        ");
 // theme cards for the Settings page: a tiny preview painted by CSS, one per theme in themes.json
 const renderThemeCards = () => themes.map((t) => `<button class="theme-card" type="button" data-theme-choice="${t.id}" aria-pressed="false"><span class="theme-card__preview" aria-hidden="true"><span class="theme-card__side"></span><span class="theme-card__body"><span class="theme-card__line"></span><span class="theme-card__line theme-card__line--accent"></span><span class="theme-card__line"></span></span></span><span class="theme-card__name">${t.label}</span><span class="text-soft">${t.note}</span></button>`).join("");
@@ -62,7 +71,7 @@ function renderPage(file) {
     title: meta.title, description: meta.description ?? "", entry: meta.entry ?? page, access: meta.access ?? "all",
     page, version, body: meta.body ?? "", content: raw.slice(match[0].length),
     header: shell === "landing" ? partial("header") : "", footer: shell === "landing" ? partial("footer") : "",
-    nav: renderNav(page), navFoot: renderNav(page, true), footerLinks: renderFooterLinks(), themeCards: renderThemeCards(), authHero: partial("auth-hero"),
+    nav: renderNav(page), navFoot: renderNav(page, true), tabbar: renderTabbar(page), footerLinks: renderFooterLinks(), themeCards: renderThemeCards(), authHero: partial("auth-hero"),
   };
   let html = partial(shell === "app" ? "layout-app" : shell === "auth" ? "layout-auth" : "layout");
   for (let pass = 0; pass < 3; pass++) {

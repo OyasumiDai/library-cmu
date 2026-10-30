@@ -1,11 +1,127 @@
 /* inside the app: catalog, borrowing, auth, profile, settings, game, text pages, staff panel */
-.welcome { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); padding: var(--space-5); margin-bottom: var(--space-5); background: linear-gradient(120deg, var(--primary), color-mix(in srgb, var(--primary) 70%, var(--accent))); color: var(--on-primary); border-radius: var(--radius); }
-.welcome h1 { color: var(--on-primary); margin: 0 0 var(--space-1); }
+/* Discover: the banner greets the student, shows the next book due and how many borrowing slots are used */
+.welcome {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-5);
+  padding: var(--space-6); margin-bottom: var(--space-5); border-radius: var(--radius);
+  background: linear-gradient(120deg, var(--primary), color-mix(in srgb, var(--primary) 72%, var(--accent)));
+  color: var(--on-primary); box-shadow: 0 18px 40px -26px var(--primary);
+  animation: rise var(--dur-3) var(--ease-soft) both;
+}
+/* a soft gold glow, and a row of book spines along the bottom right */
+.welcome::before { content: ""; position: absolute; z-index: -1; right: -4rem; top: -6rem; width: 22rem; height: 22rem; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, transparent), transparent 65%); animation: pulse-glow 7s ease-in-out infinite; }
+.welcome::after {
+  content: ""; position: absolute; z-index: -1; right: var(--space-6); bottom: 0; width: 13rem; height: 4.5rem; opacity: 0.14;
+  background: repeating-linear-gradient(90deg, #fff 0 0.9rem, transparent 0.9rem 1.15rem, #fff 1.15rem 1.7rem, transparent 1.7rem 2rem, #fff 2rem 3.1rem, transparent 3.1rem 3.35rem);
+  -webkit-mask: linear-gradient(to top, #000 0 70%, transparent); mask: linear-gradient(to top, #000 0 70%, transparent);
+}
+.welcome h1 { color: var(--on-primary); margin: 0 0 var(--space-2); font-size: var(--fs-3xl); line-height: 1.05; }
 .welcome p { margin: 0; opacity: 0.9; }
-.welcome__facts { display: flex; gap: var(--space-5); }
-.welcome__fact { display: grid; text-align: center; }
-.welcome__fact strong { font-size: var(--fs-2xl); line-height: 1; }
-.welcome__fact span { font-size: var(--fs-xs); opacity: 0.85; }
+.welcome__text { min-width: 0; max-width: 100%; }
+.welcome__kicker { display: block; margin-bottom: var(--space-1); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); }
+.welcome__due {
+  display: inline-flex; align-items: center; gap: var(--space-2); max-width: 100%; padding: var(--space-2) var(--space-3);
+  background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 999px;
+  color: var(--on-primary); font-size: var(--fs-sm); text-decoration: none; transition: background-color var(--dur-1) ease, transform var(--dur-1) ease;
+}
+.welcome__due span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.welcome__due .icon { flex: none; }
+.welcome__due:hover { background: rgba(255, 255, 255, 0.24); color: var(--on-primary); transform: translateX(2px); }
+.welcome__due[data-tone="warning"] .icon:first-child { color: var(--accent); }
+.welcome__due[data-tone="danger"] { background: color-mix(in srgb, var(--danger) 60%, transparent); }
+.welcome__facts { display: flex; align-items: center; gap: var(--space-3); }
+.welcome__fact {
+  display: grid; justify-items: center; min-width: 5.5rem; padding: var(--space-3) var(--space-2);
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.16); border-radius: var(--radius-sm);
+  color: var(--on-primary); text-decoration: none; transition: background-color var(--dur-1) ease, transform var(--dur-2) var(--ease-bounce);
+}
+.welcome__fact:hover { background: rgba(255, 255, 255, 0.2); color: var(--on-primary); transform: translateY(-3px); }
+.welcome__fact strong, .welcome__ring strong { font-size: var(--fs-2xl); line-height: 1.1; }
+.welcome__fact span, .welcome__ring span { font-size: var(--fs-xs); opacity: 0.85; }
+/* the slots ring fills gold as books are requested or borrowed */
+.welcome__ring {
+  display: grid; place-content: center; justify-items: center; width: 6rem; height: 6rem; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--primary) 85%, black) 80%, transparent 82% 100%), conic-gradient(var(--accent) calc(var(--value, 0) * 1%), rgba(255, 255, 255, 0.2) 0);
+}
+
+/* Discover: the search bar, availability switch and subject chips */
+.finder { display: grid; gap: var(--space-4); margin-bottom: var(--space-4); padding: var(--space-4); }
+.finder__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.finder__search { flex: 1 1 18rem; margin: 0; }
+.finder__search .input { min-height: 3rem; padding-right: 2.8rem; font-size: var(--fs-md); }
+.finder__search .icon { bottom: 1.5rem; }
+.finder__key { position: absolute; right: var(--space-3); top: 50%; transform: translateY(-50%); min-width: 1.6rem; padding: 0.1rem 0.45rem; text-align: center; color: var(--text-soft); background: var(--surface-2); border: 1px solid var(--line-strong); border-bottom-width: 3px; border-radius: 6px; font-size: var(--fs-xs); pointer-events: none; transition: opacity var(--dur-1) ease; }
+.finder__search:focus-within .finder__key { opacity: 0; }
+.finder__subjects { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.finder__label { flex: none; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-soft); }
+
+.segmented { display: inline-flex; gap: 2px; margin: 0; padding: 4px; min-width: 0; border: 0; background: var(--surface-3); border-radius: var(--radius); }
+.segmented__opt { position: relative; }
+.segmented__opt input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.segmented__opt span { display: block; padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); font-size: var(--fs-sm); font-weight: 700; color: var(--text-soft); white-space: nowrap; transition: background-color var(--dur-1) ease, color var(--dur-1) ease, box-shadow var(--dur-1) ease; }
+.segmented__opt:hover span { color: var(--ink); }
+.segmented__opt input:checked + span { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px var(--shadow); animation: pop var(--dur-2) var(--ease-bounce) both; }
+.segmented__opt input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 1px; }
+
+/* one row that scrolls sideways; the edges fade so it is clear there is more */
+.subject-chips {
+  display: flex; gap: var(--space-2); min-width: 0; overflow-x: auto; padding: 2px 2px var(--space-1); scrollbar-width: none; scroll-snap-type: x proximity;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 0.5rem, #000 calc(100% - 1.5rem), transparent); mask: linear-gradient(90deg, transparent, #000 0.5rem, #000 calc(100% - 1.5rem), transparent);
+}
+.subject-chips::-webkit-scrollbar { display: none; }
+.subject-chips .chip { flex: none; scroll-snap-align: center; font-weight: 700; cursor: pointer; transition: background-color var(--dur-1) ease, color var(--dur-1) ease, border-color var(--dur-1) ease, transform var(--dur-2) var(--ease-bounce); }
+.subject-chips .chip:hover { transform: translateY(-1px); }
+.subject-chips .chip:active { transform: scale(0.95); }
+.chip__count { padding: 0 0.4rem; border-radius: 999px; background: var(--surface-3); color: var(--text-soft); font-size: var(--fs-2xs); line-height: 1.35rem; }
+.chip[aria-pressed="true"] .chip__count { background: rgba(255, 255, 255, 0.2); color: var(--on-primary); }
+
+/* the line above the books: the count and active filters, then per page, grid or list, reset */
+.result-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-3); margin-bottom: var(--space-4); }
+.result-bar .result-count { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: 0; }
+.result-bar .result-count strong { color: var(--ink); }
+.result-count__tag { padding: 0 var(--space-2); border-radius: 999px; background: var(--tint); color: var(--ink); font-size: var(--fs-xs); font-weight: 700; line-height: 1.5rem; }
+.result-bar__tools { display: flex; align-items: center; gap: var(--space-2); margin-left: auto; }
+.select--sm { min-height: 2.1rem; width: auto; padding-block: 0; font-size: var(--fs-xs); font-weight: 700; }
+.view-toggle { display: inline-flex; padding: 3px; gap: 2px; background: var(--surface-3); border-radius: var(--radius-sm); }
+.view-toggle__btn { display: grid; place-items: center; width: 2rem; height: 1.8rem; padding: 0; background: transparent; border: 0; border-radius: 6px; color: var(--text-soft); cursor: pointer; transition: background-color var(--dur-1) ease, color var(--dur-1) ease; }
+.view-toggle__btn:hover { color: var(--ink); }
+.view-toggle__btn[aria-pressed="true"] { background: var(--surface); color: var(--primary); box-shadow: 0 1px 3px var(--shadow); }
+
+/* the books: hovering tilts the cover and shows "View details"; the list view lays each card out sideways */
+.book-card__art { position: relative; display: block; }
+.book-card__peek {
+  position: absolute; left: 50%; bottom: var(--space-3); transform: translate(-50%, 6px); display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: var(--space-1) var(--space-3); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: var(--fs-xs); font-weight: 700; white-space: nowrap;
+  box-shadow: 0 8px 18px -8px var(--shadow); opacity: 0; transition: opacity var(--dur-2) ease, transform var(--dur-2) var(--ease-soft); pointer-events: none;
+}
+.book-card:hover .book-card__peek, .book-card:focus-visible .book-card__peek { opacity: 1; transform: translate(-50%, 0); }
+.book-card:active { transform: scale(0.98); }
+.shelf-grid { align-items: stretch; }
+.shelf-grid--list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr)); gap: var(--space-3); }
+.shelf-grid--list .book-card { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); grid-template-rows: auto auto 1fr; column-gap: var(--space-4); row-gap: var(--space-1); align-items: start; }
+.shelf-grid--list .book-card__art { grid-row: 1 / 4; }
+.shelf-grid--list .book-card__peek { display: none; }
+.shelf-grid--list .book-card:hover .cover { transform: rotate(-3deg) scale(1.04); }
+.shelf-grid--list .book-card--ghost .skeleton--cover { grid-row: 1 / 4; }
+.book-card--ghost { pointer-events: none; }
+.skeleton--cover { aspect-ratio: 2 / 3; width: 100%; border-radius: 3px 8px 8px 3px; }
+.skeleton--short { width: 60%; }
+
+@media (max-width: 40rem) {
+  .welcome { padding: var(--space-5); }
+  .welcome h1 { font-size: var(--fs-2xl); }
+  .welcome__facts { width: 100%; }
+  .welcome__fact { flex: 1; min-width: 0; }
+  .welcome__ring { width: 5rem; height: 5rem; flex: none; }
+  .welcome__ring strong, .welcome__fact strong { font-size: var(--fs-xl); }
+  .finder__key { display: none; }
+  .segmented { display: flex; width: 100%; }
+  .segmented__opt { flex: 1; }
+  .segmented__opt span { text-align: center; padding-inline: var(--space-2); }
+  .finder__subjects { flex-direction: column; align-items: stretch; gap: var(--space-2); }
+  .result-bar__tools { margin-left: 0; width: 100%; }
+  .result-bar__tools .btn { margin-left: auto; }
+}
 
 .toolbar { display: grid; grid-template-columns: 1fr repeat(3, minmax(0, 10rem)) auto; gap: var(--space-3); align-items: end; margin-bottom: var(--space-4); padding: var(--space-4); }
 @media (max-width: 60rem) { .toolbar { grid-template-columns: 1fr 1fr; } .toolbar .search { grid-column: 1 / -1; } }
@@ -105,6 +221,54 @@
 
 .loan-row { display: grid; grid-template-columns: 5rem 1fr auto; gap: var(--space-4); align-items: center; }
 @media (max-width: 34rem) { .loan-row { grid-template-columns: 4rem 1fr; } .loan-row > :last-child { grid-column: 1 / -1; } }
+
+/* My books: four numbers up top, then each loan with a bar showing how much of its time is used */
+.page-title__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.loan-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-3); margin-bottom: var(--space-5); }
+.loan-stat {
+  --tone: var(--primary); --tone-bg: var(--tint);
+  display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); min-width: 0;
+  background: var(--surface); border: var(--border) solid var(--line); border-radius: var(--radius);
+  box-shadow: inset 0 -3px 0 var(--tone); transition: transform var(--dur-2) var(--ease-soft), box-shadow var(--dur-2) ease;
+}
+.loan-stat:hover { transform: translateY(-2px); box-shadow: inset 0 -3px 0 var(--tone), 0 14px 26px -18px var(--shadow); }
+.loan-stat[data-tone="info"] { --tone: var(--info); --tone-bg: var(--info-bg); }
+.loan-stat[data-tone="success"] { --tone: var(--success); --tone-bg: var(--success-bg); }
+.loan-stat[data-tone="warning"] { --tone: var(--warning); --tone-bg: var(--warning-bg); }
+.loan-stat[data-tone="danger"] { --tone: var(--danger); --tone-bg: var(--danger-bg); }
+.loan-stat__icon { display: grid; place-items: center; flex: none; width: 2.6rem; height: 2.6rem; border-radius: var(--radius-sm); background: var(--tone-bg); color: var(--tone); }
+.loan-stat > div { display: grid; min-width: 0; }
+.loan-stat__value { font-size: var(--fs-xl); font-weight: 700; line-height: 1.15; color: var(--ink); }
+.loan-stat__label { font-size: var(--fs-sm); font-weight: 700; color: var(--ink); }
+.loan-stat__note { font-size: var(--fs-xs); color: var(--text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.loan-row { position: relative; overflow: hidden; }
+.loan-row::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--line-strong); }
+.loan-row[data-status="requested"]::before { background: var(--warning); }
+.loan-row[data-status="borrowed"]::before { background: var(--info); }
+.loan-row[data-status="returned"]::before { background: var(--success); }
+.loan-row[data-status="rejected"]::before { background: var(--danger); }
+.loan-row .cover { transition: transform var(--dur-2) var(--ease-bounce); }
+.loan-row:hover .cover { transform: rotate(-3deg) scale(1.04); }
+
+.loan-meter { --fill: var(--success); display: grid; gap: var(--space-1); max-width: 26rem; margin-top: var(--space-3); }
+.loan-meter[data-tone="info"] { --fill: var(--info); }
+.loan-meter[data-tone="warning"] { --fill: var(--warning); }
+.loan-meter[data-tone="danger"] { --fill: var(--danger); }
+.loan-meter__track { display: block; height: 0.5rem; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.loan-meter__fill { display: block; height: 100%; width: calc(var(--value, 0) * 1%); min-width: 0.5rem; border-radius: inherit; background: var(--fill); transform-origin: left; animation: meter-fill 0.9s var(--ease-soft) both; }
+.loan-meter__label { font-size: var(--fs-xs); color: var(--text-soft); }
+.loan-meter__label strong { color: var(--fill); }
+
+@media (max-width: 60rem) { .loan-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 34rem) {
+  .loan-stat { padding: var(--space-3); gap: var(--space-2); }
+  .loan-stat__icon { width: 2.1rem; height: 2.1rem; }
+  .page-title__actions { width: 100%; }
+  .page-title__actions .btn { flex: 1; }
+  .loan-row .table__actions { display: flex; gap: var(--space-2); }
+  .loan-row .table__actions .btn { flex: 1; }
+}
 .site-notice { display: flex; gap: var(--space-3); align-items: center; margin-bottom: var(--space-5); }
 
 /* ------------------------------------------------------ staff panel (lives inside the app shell) */

@@ -7,7 +7,7 @@
   <meta name="description" content="{{description}}">
   <meta name="theme-color" content="#0b1f5c">
   <link rel="icon" type="image/png" href="/assets/brand/cmu-library-favicon.png">
-  <link rel="preload" href="/assets/fonts/PixelifySans.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="/assets/fonts/PixelifySans.ttf?v=2" as="font" type="font/ttf" crossorigin>
   <script src="/assets/theme-init.js"></script>
   <link rel="stylesheet" href="/assets/css/site.css?v={{version}}">
   <script src="/config.js"></script>
@@ -46,6 +46,7 @@
       </main>
     </div>
   </div>
+  <nav class="tabbar" data-visible="student" aria-label="Quick links">{{tabbar}}</nav>
   <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
   <script type="module" src="/assets/js/{{entry}}.js?v={{version}}"></script>
 </body>

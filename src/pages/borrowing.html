@@ -2,8 +2,12 @@
 <div class="container" data-page-root>
   <div class="page-title">
     <div><h1>My books</h1><p class="page-title__sub" id="limitNote"></p></div>
-    <a class="btn px" href="/catalog"><svg class="icon"><use href="/assets/icons/icons.svg#plus"/></svg> Find a book</a>
+    <div class="page-title__actions">
+      <button class="btn btn--accent px" type="button" data-action="qr" id="ticketButton" hidden><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#qr"/></svg> My ticket</button>
+      <a class="btn px" href="/catalog"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#plus"/></svg> Find a book</a>
+    </div>
   </div>
+  <div class="loan-stats" id="loanStats" aria-live="polite"></div>
   <div class="tabs" role="tablist" id="loanTabs"></div>
   <div id="loanList"></div>
 </div>

@@ -13,7 +13,8 @@ export function cover(book: Pick<Book, "id" | "title" | "cover_url">): Safe {
   if (book.cover_url) {
     return html`<span class="cover"><img class="cover__img" src="${book.cover_url}" alt="Cover of ${book.title}" loading="lazy"></span>`;
   }
-  const hue = hash(book.id) % 360;
+  // stepping by the golden angle spreads ids that differ by one character (bk-100, bk-101) far apart on the colour wheel
+  const hue = Math.round((hash(book.id) * 137.508) % 360);
   return raw(`<span class="cover" style="--hue:${hue}" role="img" aria-label="${escapeHtml(book.title)}"><span class="cover__title">${escapeHtml(book.title)}</span><span class="cover__band"></span>${icon("book", "cover__mark").value}</span>`);
 }
 
@@ -38,7 +39,7 @@ export function mineBadge(mine: MyStatus): Safe {
 export function bookCard(book: CatalogBook, mine?: MyStatus): Safe {
   return html`
     <button class="book-card card px card--lift" type="button" data-action="open-book" data-id="${book.id}" data-reveal>
-      ${cover(book)}
+      <span class="book-card__art">${cover(book)}<span class="book-card__peek">${icon("eye")} View details</span></span>
       <h3 class="book-card__title">${book.title}</h3>
       <p class="book-card__author">${book.author || "Unknown author"}</p>
       <div class="book-card__foot">${mineBadge(mine)}${stockBadge(book)}<span class="badge">${book.category}</span></div>
