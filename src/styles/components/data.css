@@ -34,3 +34,17 @@
 
 .progress { height: 0.7rem; background: var(--surface-3); border-radius: 999px; overflow: hidden; }
 .progress__bar { height: 100%; width: var(--value, 0%); background: var(--primary); border-radius: 999px; transition: width var(--dur-3) var(--ease-soft); }
+
+/* phones: a .table--stack table shows each row as a card; the first and last cells (title, buttons) span the width,
+   the rest sit two to a row with their data-label as a small heading */
+@media (max-width: 48rem) {
+  .table--stack thead { display: none; }
+  .table--stack, .table--stack tbody { display: block; }
+  .table--stack tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); padding: var(--space-4); border-bottom: var(--border) solid var(--line); }
+  .table--stack tbody tr:last-child { border-bottom: 0; }
+  .table--stack td { display: block; min-width: 0; padding: 0; border: 0; }
+  .table--stack td:first-child, .table--stack td:last-child { grid-column: 1 / -1; }
+  .table--stack td[data-label]::before { content: attr(data-label); display: block; margin-bottom: var(--space-1); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-soft); }
+  .table--stack .table__actions { justify-content: stretch; }
+  .table--stack .table__actions .btn { flex: 1; }
+}

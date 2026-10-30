@@ -80,6 +80,9 @@ boot(({ params }) => {
         if (/Invalid login credentials/i.test((error as Error).message ?? "")) {
           if (recordFailure(data.email) > 0) return startLock();
           const left = triesLeft(data.email);
+          // said under the field too, so it is still there after the toast fades
+          setFieldError(form, "password", "That email and password do not match.");
+          password.select();
           return fail(`That email and password do not match. ${left} ${left === 1 ? "try" : "tries"} left of ${MAX_TRIES}.`);
         }
         fail(friendly(error));

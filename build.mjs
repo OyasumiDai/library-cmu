@@ -140,7 +140,7 @@ if (!serve) {
       if (!new RegExp(`^${rule.source}$`).test(pathname)) continue;
       for (const h of rule.headers) {
         if (/^(strict-transport-security|cache-control)$/i.test(h.key)) continue;
-        extra[h.key] = /content-security-policy/i.test(h.key) && origin ? h.value.replace("connect-src 'self'", `connect-src 'self' ${origin}`).replace("img-src 'self'", `img-src 'self' ${origin}`) : h.value;
+        extra[h.key] = /content-security-policy/i.test(h.key) && origin ? h.value.replace("connect-src 'self'", `connect-src 'self' ${origin} ${origin.replace(/^http/, "ws")}`).replace("img-src 'self'", `img-src 'self' ${origin}`) : h.value;
       }
     }
     res.writeHead(missing || !fs.existsSync(file) ? 404 : 200, { ...extra, "Content-Type": types[path.extname(file)] ?? "application/octet-stream", "Cache-Control": "no-store" });

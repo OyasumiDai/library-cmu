@@ -62,9 +62,9 @@ export const students: PanelTab = {
       const shown = list.slice(0, 80);
       mount(body, cards
         ? html`<div class="people-cards">${shown.map((p) => html`<button class="person-card card px" type="button" data-action="open" data-id="${p.id}">${avatar(p)}<strong>${p.username}</strong><small>${p.full_name}</small><small class="text-soft">${p.course ?? "No course yet"}</small>${p.active ? "" : html`<span class="badge badge--danger">disabled</span>`}</button>`)}</div>`
-        : html`<div class="table-wrap"><table class="table"><thead><tr><th>Student</th><th>Course</th><th>Year</th><th>Joined</th><th></th></tr></thead><tbody>
+        : html`<div class="table-wrap"><table class="table table--stack"><thead><tr><th>Student</th><th>Course</th><th>Year</th><th>Joined</th><th></th></tr></thead><tbody>
           ${shown.map((p) => html`<tr><td><div class="cluster">${avatar(p)}<div><span class="table__title">${p.username}</span> ${p.active ? "" : html`<span class="badge badge--danger">disabled</span>`}${complete(p) ? "" : html`<span class="badge badge--warning">incomplete</span>`}<br><span class="table__sub">${p.full_name} · ${p.student_id ?? "no ID"}</span></div></div></td>
-            <td>${p.course ?? "-"}<br><span class="table__sub">${p.college ?? ""}</span></td><td>${p.year_level ?? "-"}</td><td>${formatDate(p.created_at)}</td>
+            <td data-label="Course">${p.course ?? "-"}<br><span class="table__sub">${p.college ?? ""}</span></td><td data-label="Year">${p.year_level ?? "-"}</td><td data-label="Joined">${formatDate(p.created_at)}</td>
             <td><div class="table__actions"><button class="btn btn--sm btn--quiet" data-action="open" data-id="${p.id}">Open</button></div></td></tr>`)}</tbody></table></div>`);
       if (list.length > 80) body.append(Object.assign(document.createElement("p"), { className: "result-count", textContent: `Showing 80 of ${list.length}. Use the filters to narrow it down.` }));
       root.querySelector<HTMLElement>("#stCount")!.textContent = `${list.length} of ${all.length} students`;

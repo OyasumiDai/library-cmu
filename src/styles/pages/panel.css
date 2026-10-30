@@ -420,15 +420,6 @@ body[data-page="panel"] .team-grid { display: grid; grid-template-columns: repea
   .book-bar__row .field:not(.book-bar__search) { flex: 1 1 8rem; }
   .book-bar__row .select { width: 100%; }
   .book-bar__search .finder__key { display: none; }
-  /* each table row becomes a card: the book on top, subject and copies side by side, buttons along the bottom */
-  .book-table thead { display: none; }
-  .book-table, .book-table tbody { display: block; }
-  .book-table tr { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); padding: var(--space-4); border-bottom: var(--border) solid var(--line); }
-  .book-table td { display: block; padding: 0; border: 0; }
-  .book-table td:first-child, .book-table td:last-child { grid-column: 1 / -1; }
-  .book-table td[data-label]::before { content: attr(data-label); display: block; margin-bottom: var(--space-1); font-size: var(--fs-2xs); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-soft); }
-  .book-table .table__actions { justify-content: stretch; }
-  .book-table .table__actions .btn { flex: 1; }
   .cover-grid { grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: var(--space-2); padding: var(--space-3); }
 }
 .book-tile .tile__label { padding-right: 2.6rem; }

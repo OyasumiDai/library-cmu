@@ -55,3 +55,4 @@ button.tile:hover { transform: translateY(-2px); border-color: var(--line-strong
 .tile__note { font-size: var(--fs-xs); color: var(--text-soft); }
 .tile__note--up { color: var(--success); }
 .tile__note--down { color: var(--danger); }
+@media (max-width: 40rem) { .tile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3); } }

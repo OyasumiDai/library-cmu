@@ -55,12 +55,12 @@ export const circulation: PanelTab = {
       return !q || [l.book?.title, l.book?.author, l.profile?.username, l.profile?.full_name, l.profile?.student_id, String(l.id)].join(" ").toLowerCase().includes(q);
     };
 
-    const loanRows = (rows: Loan[]) => rows.length ? html`<div class="table-wrap"><table class="table">
+    const loanRows = (rows: Loan[]) => rows.length ? html`<div class="table-wrap"><table class="table table--stack">
       <thead><tr><th>Book</th><th>Student</th><th>Status</th><th></th></tr></thead>
       <tbody>${rows.map((l) => { const info = dueInfo(l); return html`<tr>
         <td><span class="table__title">${l.book?.title}</span><br><span class="table__sub">Loan #${l.id} · ${l.book?.author}</span></td>
-        <td>${l.profile?.username}<br><span class="table__sub">${l.profile?.full_name}${l.profile?.student_id ? ` · ${l.profile.student_id}` : ""}</span></td>
-        <td>${l.status === "requested" || l.status === "borrowed" ? html`<span class="badge badge--${info.tone}">${info.text}</span>` : statusBadge(l.status)}<br><span class="table__sub">${l.returned_at ? `returned ${formatDate(l.returned_at)}` : l.status === "requested" && fines.get(l.id)?.pickup_by ? `pick up by ${formatDateTime(fines.get(l.id)!.pickup_by)}` : `requested ${formatDate(l.requested_at)}`}</span>
+        <td data-label="Student">${l.profile?.username}<br><span class="table__sub">${l.profile?.full_name}${l.profile?.student_id ? ` · ${l.profile.student_id}` : ""}</span></td>
+        <td data-label="Status">${l.status === "requested" || l.status === "borrowed" ? html`<span class="badge badge--${info.tone}">${info.text}</span>` : statusBadge(l.status)}<br><span class="table__sub">${l.returned_at ? `returned ${formatDate(l.returned_at)}` : l.status === "requested" && fines.get(l.id)?.pickup_by ? `pick up by ${formatDateTime(fines.get(l.id)!.pickup_by)}` : `requested ${formatDate(l.requested_at)}`}</span>
         ${fines.get(l.id)?.amount ? html`<br><span class="badge badge--danger">Fine ${peso(fines.get(l.id)!.amount)}</span>` : ""}${emailedNote(l)}</td>
         <td><div class="table__actions">${l.status === "requested"
           ? html`<button class="btn btn--sm" data-action="checkout" data-id="${l.id}">${icon("check")} Check out</button><button class="btn btn--sm btn--danger" data-action="reject" data-id="${l.id}">${icon("cross")} Reject</button>`

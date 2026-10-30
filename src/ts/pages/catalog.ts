@@ -215,7 +215,7 @@ boot(async ({ params }) => {
   });
   // "/" jumps to the search box from anywhere on the page; Escape clears it
   document.addEventListener("keydown", (e) => {
-    const typing = (e.target as Element | null)?.closest("input, textarea, select, [contenteditable]");
+    const typing = e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]");
     if (e.key === "/" && !typing && !e.ctrlKey && !e.metaKey && !document.body.classList.contains("has-modal")) {
       e.preventDefault();
       search.focus();

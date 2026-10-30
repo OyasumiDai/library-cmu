@@ -155,7 +155,7 @@ export const books: PanelTab = {
       if (!rows.length) { mount(body, show === "archived" ? empty("Nothing in the archive", "Archived books and books past their obsolete year show up here.", "archive") : empty("No books", "Add the first one or change the search.", "book")); return; }
       const shown = rows.slice(0, limit);
       mount(body, html`${viewMode === "table"
-        ? html`<div class="table-wrap"><table class="table book-table"><thead><tr>${sortHead("title", "Book")}${sortHead("category", "Subject")}${sortHead("copies", "Copies")}<th><span class="visually-hidden">Actions</span></th></tr></thead><tbody>
+        ? html`<div class="table-wrap"><table class="table table--stack book-table"><thead><tr>${sortHead("title", "Book")}${sortHead("category", "Subject")}${sortHead("copies", "Copies")}<th><span class="visually-hidden">Actions</span></th></tr></thead><tbody>
           ${shown.map((b) => html`<tr class="book-row" data-action="edit" data-id="${b.id}" title="Click to edit">
             <td><div class="book-cell">${cover(b)}<div class="book-cell__text"><span class="table__title">${b.title}</span> ${archiveBadge(b)}<br><span class="table__sub">${b.isbn ? `ISBN ${formatIsbn(b.isbn)}` : html`<span class="badge badge--warning">No ISBN</span>`} · ${b.author}${b.edition ? ` · ${b.edition}` : ""}${obsoleteNote(b)}</span></div></div></td>
             <td data-label="Subject"><span class="badge">${b.category || "None"}</span></td><td data-label="Copies">${bar(b)}</td>
@@ -563,7 +563,7 @@ export const books: PanelTab = {
     slashKey = new AbortController();
     document.addEventListener("keydown", (e) => {
       if (!search.isConnected) return slashKey?.abort();
-      const typing = (e.target as Element | null)?.closest("input, textarea, select, [contenteditable]");
+      const typing = e.target instanceof Element && e.target.closest("input, textarea, select, [contenteditable]");
       if (e.key === "/" && !typing && !document.body.classList.contains("has-modal")) { e.preventDefault(); search.focus(); search.select(); }
     }, { signal: slashKey.signal });
     actions(root, {
