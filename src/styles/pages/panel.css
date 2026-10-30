@@ -270,7 +270,8 @@ button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border
 .team-avatar__dot.is-on { background: var(--success); }
 .team-avatar__dot.is-off { background: var(--line-strong); }
 
-.team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); gap: var(--space-4); }
+/* the staff list (scoped, so the public "people behind it" row keeps its own 4 / 2 / 1 layout) */
+body[data-page="panel"] .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 21rem), 1fr)); gap: var(--space-4); max-width: none; margin-inline: 0; }
 .team-card { display: grid; gap: var(--space-4); align-content: start; padding: var(--space-5); transition: transform var(--dur-1) ease, box-shadow var(--dur-1) ease, border-color var(--dur-1) ease; }
 .team-card:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -18px var(--shadow); }
 .team-card.is-me { border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); }

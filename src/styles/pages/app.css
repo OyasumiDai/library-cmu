@@ -69,10 +69,10 @@
 .faq__q .icon { transition: transform var(--dur-2) var(--ease-soft); }
 .faq__q[aria-expanded="true"] .icon { transform: rotate(180deg); }
 .faq__a { padding: 0 var(--space-5) var(--space-4); }
-/* The people: equal cards that wrap and stay centred, with a hover lift */
-.team-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 15rem)); justify-content: center; gap: var(--space-5); }
-@media (max-width: 66rem) { .team-grid { grid-template-columns: repeat(2, minmax(0, 15rem)); } }
-@media (max-width: 34rem) { .team-grid { grid-template-columns: minmax(0, 20rem); } }
+/* The people: one straight row of four, two by two on tablets, one per row on phones */
+.team-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-5); }
+@media (max-width: 66rem) { .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 40rem; margin-inline: auto; } }
+@media (max-width: 34rem) { .team-grid { grid-template-columns: minmax(0, 1fr); max-width: 22rem; } }
 .team { position: relative; width: 100%; margin: 0; padding: var(--space-6) var(--space-4) var(--space-5); display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-2);
   transition: transform var(--dur-2) var(--ease-soft), box-shadow var(--dur-2) var(--ease-soft), border-color var(--dur-2) var(--ease-soft); }
 .team::before { content: ""; position: absolute; inset: 0 0 auto; height: 4.5rem; border-radius: var(--radius) var(--radius) 0 0; background: linear-gradient(180deg, var(--tint), transparent); pointer-events: none; }
