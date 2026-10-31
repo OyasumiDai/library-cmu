@@ -321,12 +321,9 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
 .auth-hero__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .auth-hero__home { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3); border-radius: 999px; color: var(--on-primary); background: color-mix(in srgb, var(--on-primary) 12%, transparent); font-size: var(--fs-sm); font-weight: 700; text-decoration: none; transition: background-color var(--dur-1) ease, transform var(--dur-1) ease; }
 .auth-hero__home:hover { color: var(--on-primary); background: color-mix(in srgb, var(--on-primary) 22%, transparent); transform: translateX(-2px); }
-/* the library crest and name, centred above the Sign in / Create account tabs */
-.auth-logo { display: grid; justify-items: center; gap: var(--space-1); justify-self: center; color: var(--ink); text-decoration: none; }
-.auth-logo:hover { color: var(--primary); }
-.auth-logo__crest { width: 4rem; height: 4rem; filter: drop-shadow(0 6px 10px color-mix(in srgb, var(--primary) 30%, transparent)); animation: bob 4s ease-in-out infinite; transition: transform var(--dur-2) var(--ease-bounce); }
-.auth-logo:hover .auth-logo__crest { transform: rotate(-6deg) scale(1.06); }
-.auth-logo__name { font-family: var(--font-display); font-size: var(--fs-lg); letter-spacing: 0.04em; white-space: nowrap; }
+/* the crest and name, just above "Library Explorer" */
+.auth-hero__brand { display: inline-flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); font-family: var(--font-display); font-size: var(--fs-lg); letter-spacing: 0.04em; white-space: nowrap; }
+.auth-hero__crest { width: 3.5rem; height: 3.5rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); animation: bob 4s ease-in-out infinite; }
 .auth-hero__body { min-height: 0; }
 .auth-hero__kicker { margin: 0 0 var(--space-2); color: var(--accent); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 .auth-hero__title { margin: 0 0 var(--space-5); color: var(--on-primary); font-size: clamp(1.35rem, 2.3vw, 1.95rem); font-weight: 700; line-height: var(--lh-tight); }
@@ -390,6 +387,8 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
   .auth-hero { gap: var(--space-3); }
   .auth-hero__list, .auth-hero__tips, .auth-hero__kicker { display: none; }
   .auth-hero__title { margin: 0; font-size: var(--fs-lg); }
+  .auth-hero__brand { margin-bottom: var(--space-2); font-size: var(--fs-md); }
+  .auth-hero__crest { width: 2.4rem; height: 2.4rem; }
 }
 @media (max-width: 34rem) {
   .auth-step { grid-template-columns: 1fr; }
@@ -399,8 +398,8 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
   .auth-hero__list li:nth-child(n+3), .auth-hero__tips { display: none; }
   .auth-hero__title { margin-bottom: var(--space-3); }
   .auth-panel__head p { display: none; }
-  .auth-logo { grid-auto-flow: column; align-items: center; gap: var(--space-2); }
-  .auth-logo__crest { width: 2.6rem; height: 2.6rem; }
+  .auth-hero__brand { margin-bottom: var(--space-2); }
+  .auth-hero__crest { width: 2.6rem; height: 2.6rem; }
 }
 /* a phone on its side: the brand side keeps only its title, the form tightens up, and the tabs replace the footer link */
 @media (min-width: 52rem) and (max-height: 30rem) {
@@ -410,7 +409,6 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
   .auth-panel__head h1 { font-size: var(--fs-xl); }
   .auth-panel .auth__foot { display: none; }
   .auth-panel .btn--lg { min-height: var(--control-h); }
-  .auth-logo { display: none; }
 }
 
 /* the three dots on the forgot-password card */
