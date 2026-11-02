@@ -309,7 +309,12 @@ body[data-page="panel"] .team-grid { display: grid; grid-template-columns: repea
 .more > summary { list-style: none; letter-spacing: 1px; }
 .more > summary::-webkit-details-marker { display: none; }
 .more[open] > summary { background: var(--surface-3); }
-.more__menu { right: 0; left: auto; min-width: 13rem; }
+.more__menu { right: 0; left: auto; min-width: 13rem; max-width: calc(100vw - 2rem); }
+.more__menu .menu__item { white-space: nowrap; }
+/* flipped above its button when there is no room below (set by staff.ts) */
+.more--up > .more__menu { top: auto; bottom: calc(100% + var(--space-2)); transform-origin: bottom right; }
+/* the card holding an open menu sits above the cards around it, so the menu is never covered */
+.team-card:has(.more[open]), tr:has(.more[open]) { position: relative; z-index: 5; }
 .menu__item--danger { color: var(--danger); }
 .menu__item--danger:hover { background: var(--danger-bg); color: var(--danger); }
 

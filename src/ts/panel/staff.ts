@@ -198,7 +198,14 @@ export const staff: PanelTab = {
     // one ••• menu open at a time; a click elsewhere closes it
     root.addEventListener("toggle", (event) => {
       const opened = event.target as HTMLDetailsElement;
-      if (opened.open) root.querySelectorAll<HTMLDetailsElement>("details.more[open]").forEach((d) => { if (d !== opened) d.open = false; });
+      if (!opened.open) return;
+      root.querySelectorAll<HTMLDetailsElement>("details.more[open]").forEach((d) => { if (d !== opened) d.open = false; });
+      // open upward when the menu would run past the bottom of the screen and there is more room above
+      const menu = opened.querySelector<HTMLElement>(".more__menu");
+      if (!menu) return;
+      const edge = opened.getBoundingClientRect();
+      const need = menu.offsetHeight + 12;
+      opened.classList.toggle("more--up", window.innerHeight - edge.bottom < need && edge.top > window.innerHeight - edge.bottom);
     }, true);
     document.addEventListener("click", (event) => {
       if (!root.isConnected || (event.target as Element).closest("details.more")) return;
