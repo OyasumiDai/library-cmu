@@ -332,7 +332,7 @@
         "statistics",
         "dashboard"
       ],
-      "answer": "**Dashboard** shows live numbers (titles, requests, loans, overdue, most borrowed). **Reports** downloads CSV files for loans, books and people."
+      "answer": "**Dashboard** shows live numbers (titles, requests, loans, overdue, most borrowed). **Reports** downloads formatted Excel files for loans, books and people."
     },
     {
       "id": "sitesettings",

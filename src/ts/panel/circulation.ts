@@ -1,7 +1,8 @@
 import { expireUnclaimed, loanFines, loansByStatus, type LoanFine } from "../api/loans";
 import { loanEmails, movements, type LoanEmail, type Movement } from "../api/staff";
 import { actions, debounce, html, icon, mount } from "../core/dom";
-import { csvDateTime, daysUntil, downloadCsv, formatDate, formatDateTime, peso, plural } from "../core/format";
+import { csvDateTime, daysUntil, formatDate, formatDateTime, peso, plural } from "../core/format";
+import { downloadSheet } from "../core/sheet";
 import { who } from "./reports";
 import { reveal } from "../core/motion";
 import { empty, loading, statusBadge } from "../ui/components";
@@ -109,7 +110,7 @@ export const circulation: PanelTab = {
         <div class="field"><label class="field__label" for="mvType">Type</label><select class="select" id="mvType">${MOVEMENT_TYPES.map((t) => html`<option value="${t}">${t || "All types"}</option>`)}</select></div>
         <div class="field"><label class="field__label" for="mvFrom">From</label><input class="input" id="mvFrom" type="date"></div>
         <div class="field"><label class="field__label" for="mvTo">To</label><input class="input" id="mvTo" type="date"></div>
-        <button class="btn btn--secondary" type="button" data-action="exportMoves">${icon("download")} CSV</button>
+        <button class="btn btn--secondary" type="button" data-action="exportMoves">${icon("download")} Excel</button>
       </div>
       <div class="card px card--flush" data-body></div></div>`);
 
@@ -135,7 +136,7 @@ export const circulation: PanelTab = {
         draw();
       },
       loanLink: (el) => { view = "history"; search = el.dataset.id ?? ""; (root.querySelector("#loanSearch") as HTMLInputElement).value = search; void reload(); },
-      exportMoves: () => downloadCsv({ title: "Book movements", file: "movements", by: who(), header: ["Date and time", "Type", "Book", "Quantity", "By", "Remarks"], rows: moves.map((m) => [csvDateTime(m.created_at), m.action, m.title, m.quantity, m.actor ?? "", m.remarks ?? ""]) }),
+      exportMoves: () => downloadSheet({ title: "Book movements", file: "movements", by: who(), totals: ["Quantity"], header: ["Date and time", "Type", "Book", "Quantity", "By", "Remarks"], rows: moves.map((m) => [csvDateTime(m.created_at), m.action, m.title, m.quantity, m.actor ?? "", m.remarks ?? ""]) }),
     });
     await reload();
     void go;

@@ -17,7 +17,7 @@ export const PERMISSIONS: { id: string; label: string; text: string; icon: strin
   { id: "game_edit", label: "Edit Game", icon: "edit", text: "Change the game title, description and the About the game page." },
   { id: "game_host", label: "Host Game", icon: "game", text: "Set the game open, under maintenance or closed." },
   { id: "system", label: "Manage System", icon: "settings", text: "Loan rules, fines, holidays, registration, site notice, hours.", sensitive: true },
-  { id: "reports", label: "Reports", icon: "download", text: "Reports and CSV downloads." },
+  { id: "reports", label: "Reports", icon: "download", text: "Reports and Excel downloads." },
   { id: "audit", label: "Audit Trail", icon: "archive", text: "Read every recorded action.", sensitive: true },
 ];
 const PRESETS: { id: string; label: string; perms: string[] }[] = [

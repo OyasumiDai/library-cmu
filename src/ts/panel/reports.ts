@@ -1,10 +1,11 @@
-// Four reports in tabs. Each shows a summary of its numbers; "Preview" opens the CSV exactly as it will download
-// (title block, every row, file name), and the download is logged. Needs the "Reports" permission.
+// Four reports in tabs. Each shows a summary of its numbers; "Preview" shows the Excel file as it will download
+// (file name, title band, every row, tinted rows), and the download is logged. Needs the "Reports" permission.
 import { allBooks, logReportDownload, movements } from "../api/staff";
 import { loanFines, loansByStatus, type LoanFine } from "../api/loans";
 import { actions, debounce, html, icon, mount, raw } from "../core/dom";
 import { friendly } from "../core/errors";
-import { csvDate, csvDateTime, csvSheet, daysUntil, downloadCsv, peso, plural, type CsvReport } from "../core/format";
+import { csvDate, csvDateTime, daysUntil, peso, plural } from "../core/format";
+import { downloadSheet, sheetInfo, type RowTone, type SheetReport } from "../core/sheet";
 import { formatIsbn } from "../core/isbn";
 import { openModal } from "../core/modal";
 import { current } from "../core/session";
@@ -30,6 +31,8 @@ interface Report {
   icon: string;
   filters: "none" | "dates" | "loans";
   build(f: Filters, data: Data): Promise<Result>;
+  totals?: string[];                                          // columns added up in the Total row of the file
+  tone?(row: (string | number)[], header: string[]): RowTone; // tints rows that need action
   // the numbers shown on the page, worked out from the finished table
   summary(result: Result): [string, string | number][];
 }
@@ -55,6 +58,8 @@ const overdueDays = (due: string | null) => (due && daysUntil(due) < 0 ? -daysUn
 const REPORTS: Report[] = [
   {
     id: "catalog", title: "Catalog and availability", icon: "book", filters: "none",
+    totals: ["Copies", "On loan", "Reserved", "Free"],
+    tone: (row, header) => (row[header.indexOf("Status")] === "Active" && row[header.indexOf("Free")] === 0 ? "warning" : ""),
     text: "Every title with its ISBN, copies, what is on loan and what is free, and the date it was added.",
     async build(_f, data) {
       const [books, loans] = await Promise.all([data.books(), data.loans()]);
@@ -76,6 +81,8 @@ const REPORTS: Report[] = [
   },
   {
     id: "loans", title: "Loans", icon: "shelf", filters: "loans",
+    totals: ["Fine (Php)"],
+    tone: (row, header) => (row[header.indexOf("Days overdue")] !== "" ? "danger" : ""),
     text: "Requests, checkouts and returns with the date and time of each step. Filter by request date and status.",
     async build(f, data) {
       const [loans, books, fines] = await Promise.all([data.loans(), data.books(), data.fines()]);
@@ -95,6 +102,8 @@ const REPORTS: Report[] = [
   },
   {
     id: "overdue", title: "Overdue follow-up", icon: "clock", filters: "none",
+    totals: ["Fine (Php)"],
+    tone: (row, header) => (Number(row[header.indexOf("Days overdue")]) >= 14 ? "danger" : "warning"),
     text: "Borrowed books past their due date, longest overdue first.",
     async build(_f, data) {
       const [all, books, fines] = await Promise.all([data.loans(), data.books(), data.fines()]);
@@ -113,6 +122,7 @@ const REPORTS: Report[] = [
   },
   {
     id: "movements", title: "Book movements", icon: "refresh", filters: "dates",
+    totals: ["Quantity"],
     text: "Checkouts, returns, new titles and copy changes, with the date and time of each. Filter by date.",
     async build(f, data) {
       const [rows, books] = await Promise.all([movements({ from: f.from, to: f.to, limit: 2000 }), data.books()]);
@@ -145,17 +155,17 @@ export const reports: PanelTab = {
     const filters = new Map<string, Filters>(REPORTS.map((r) => [r.id, { from: "", to: "", status: "" }]));
     const results = new Map<string, Result>();
     let active = REPORTS[0];
-    let titleBlock = false; // off: the file is a clean table that starts on row 1
 
-    const sheetFor = (r: Report): CsvReport => {
+    const sheetFor = (r: Report): SheetReport => {
       const f = filters.get(r.id)!;
       const result = results.get(r.id)!;
-      return { title: r.title, file: r.id, header: result.header, rows: result.rows, by: who(), titleBlock, filters: [["From", f.from], ["To", f.to], ["Status", f.status]] };
+      return { title: r.title, file: r.id, header: result.header, rows: result.rows, by: who(), filters: [["From", f.from], ["To", f.to], ["Status", f.status]],
+        totals: r.totals, tone: r.tone ? (row) => r.tone!(row as (string | number)[], result.header) : undefined };
     };
 
     const download = (r: Report, at?: string) => {
       if (!results.has(r.id)) return;
-      downloadCsv(sheetFor(r), at);
+      downloadSheet(sheetFor(r), at);
       void logReportDownload();
       ok(`Downloaded "${r.title}".`);
     };
@@ -173,7 +183,7 @@ export const reports: PanelTab = {
         results.set(r.id, result);
         buttons.forEach((b) => { b.disabled = false; });
         mount(body, html`<div class="tile-grid">${r.summary(result).map(([label, value]) => html`<div class="tile"><span class="tile__label">${label}</span><span class="tile__value">${value}</span></div>`)}</div>
-          <p class="result-count">${plural(result.rows.length, "row")} in the CSV. Press Preview to see them before you download.</p>`);
+          <p class="result-count">${plural(result.rows.length, "row")} in the file. Press Preview to see them before you download.</p>`);
       } catch (error) {
         if (r !== active) return;
         results.delete(r.id);
@@ -181,23 +191,24 @@ export const reports: PanelTab = {
       }
     };
 
-    // the CSV as it will download: the file name, the title block, every row, the end line
+    // the file as it will download: its name, the title band, every row with the same tints
     const preview = (r: Report) => {
       const result = results.get(r.id);
       if (!result) return;
       const at = new Date().toISOString();
-      const sheet = csvSheet(sheetFor(r), at);
+      const sheet = sheetInfo(sheetFor(r), at);
       // long values are cut short to keep rows on one line; hovering shows the whole value
       const table = html`<div class="table-wrap" tabindex="0"><table class="table"><thead><tr>${result.header.map((h) => html`<th>${h}</th>`)}</tr></thead>
-        <tbody>${result.rows.slice(0, PREVIEW_ROWS).map((row) => html`<tr>${row.map((c) => html`<td title="${c}">${c}</td>`)}</tr>`)}</tbody></table></div>`;
-      const modal = openModal(`CSV preview: ${r.title}`, html`<div class="csv-preview">
+        <tbody>${result.rows.slice(0, PREVIEW_ROWS).map((row) => html`<tr class="${r.tone ? `is-${r.tone(row, result.header)}` : ""}">${row.map((c) => html`<td title="${c}">${c}</td>`)}</tr>`)}</tbody></table></div>`;
+      const modal = openModal(`Preview: ${r.title}`, html`<div class="csv-preview">
         <p class="csv-preview__file text-soft">${icon("download")} <strong>${sheet.name}</strong></p>
-        ${titleBlock ? html`<dl class="book-detail__facts">${sheet.meta.slice(1).map(([k, v]) => html`<dt>${k}</dt><dd>${v}</dd>`)}</dl>` : html`<p class="text-soft">Row 1 is the column headings, then one row per record.</p>`}
-        ${result.rows.length ? table : empty("No rows", titleBlock ? "The file will hold only the title block." : "The file will hold only the column headings.", r.icon)}
+        <dl class="book-detail__facts">${sheet.meta.slice(1).map(([k, v]) => html`<dt>${k}</dt><dd>${v}</dd>`)}</dl>
+        ${r.tone ? html`<p class="text-soft csv-preview__legend"><span class="csv-preview__swatch csv-preview__swatch--danger"></span>needs action <span class="csv-preview__swatch csv-preview__swatch--warning"></span>keep an eye on</p>` : ""}
+        ${result.rows.length ? table : empty("No rows", "The file will hold the title band and the column headings.", r.icon)}
         ${result.rows.length > PREVIEW_ROWS ? html`<p class="result-count">Showing the first ${PREVIEW_ROWS} of ${result.rows.length} rows here. The download has all of them.</p>` : ""}
-        ${titleBlock ? html`<p class="text-soft">${sheet.end}</p>` : ""}</div>`, {
+        ${r.totals && result.rows.length ? html`<p class="text-soft">The file ends with a Total row for ${r.totals.join(", ")}.</p>` : ""}</div>`, {
         wide: true,
-        footer: html`<button class="btn btn--quiet" type="button" data-close>Close</button><button class="btn" type="button" data-download>${icon("download")} Download CSV</button>`,
+        footer: html`<button class="btn btn--quiet" type="button" data-close>Close</button><button class="btn" type="button" data-download>${icon("download")} Download Excel</button>`,
       });
       modal.root.querySelector(".modal")?.classList.add("modal--xl");
       modal.root.querySelector("[data-download]")!.addEventListener("click", () => { download(r, at); modal.close(); });
@@ -214,10 +225,9 @@ export const reports: PanelTab = {
             <div class="cluster">
               <button class="btn btn--quiet" type="button" data-action="refresh" aria-label="Refresh" title="Refresh">${icon("refresh")}</button>
               <button class="btn" type="button" data-action="preview" data-needs-result disabled>${icon("eye")} Preview</button>
-              <button class="btn btn--secondary" type="button" data-action="download" data-needs-result disabled>${icon("download")} Download CSV</button>
+              <button class="btn btn--secondary" type="button" data-action="download" data-needs-result disabled>${icon("download")} Download Excel</button>
             </div></div>
           <p class="text-soft">${r.text}</p>
-          <label class="check"><input class="check__box" type="checkbox" data-title-block ${titleBlock ? raw("checked") : ""}><span>Add a title block (who, when and the filters) above the table. Leave it off for a file you will filter or sort in Excel.</span></label>
           ${r.filters !== "none" ? html`<div class="toolbar toolbar--wide" data-filters>
             <div class="field"><label class="field__label" for="rpFrom">From</label><input class="input" id="rpFrom" name="from" type="date" value="${f.from}"></div>
             <div class="field"><label class="field__label" for="rpTo">To</label><input class="input" id="rpTo" name="to" type="date" value="${f.to}"></div>
@@ -225,7 +235,6 @@ export const reports: PanelTab = {
           </div>` : ""}
           <div data-summary></div>
         </section></div>`);
-      root.querySelector<HTMLInputElement>("[data-title-block]")!.addEventListener("change", (e) => { titleBlock = (e.target as HTMLInputElement).checked; });
       const bar = root.querySelector<HTMLElement>("[data-filters]");
       bar?.addEventListener("change", debounce(() => {
         const value = (name: string) => bar.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${name}"]`)?.value ?? "";

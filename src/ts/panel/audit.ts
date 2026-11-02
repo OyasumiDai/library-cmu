@@ -1,6 +1,7 @@
 import { auditTrail, type AuditEntry } from "../api/staff";
 import { actions, debounce, html, icon, mount } from "../core/dom";
-import { csvDateTime, downloadCsv, formatDateTime } from "../core/format";
+import { csvDateTime, formatDateTime } from "../core/format";
+import { downloadSheet } from "../core/sheet";
 import { who } from "./reports";
 import { empty, loading } from "../ui/components";
 import type { PanelTab } from "./tab";
@@ -26,7 +27,7 @@ export const audit: PanelTab = {
     const load = async () => { mount(root.querySelector<HTMLElement>("[data-body]")!, loading("Reading the log")); rows = await auditTrail({ search, module, from, to, limit: 400 }); draw(); };
 
     mount(root, html`<div class="panel__tab">
-      <div class="panel__heading"><h2>Audit trail</h2><button class="btn btn--secondary" data-action="csv">${icon("download")} Export CSV</button></div>
+      <div class="panel__heading"><h2>Audit trail</h2><button class="btn btn--secondary" data-action="csv">${icon("download")} Export to Excel</button></div>
       <div class="toolbar toolbar--wide px px--soft">
         <div class="field search"><label class="visually-hidden" for="auSearch">Search</label>${icon("search")}<input class="input" id="auSearch" type="search" placeholder="Person, action or details" value="${search}"></div>
         <div class="field"><label class="field__label" for="auModule">Module</label><select class="select" id="auModule">${MODULES.map((m) => html`<option value="${m}">${m || "All"}</option>`)}</select></div>
@@ -41,7 +42,7 @@ export const audit: PanelTab = {
       to = (root.querySelector("#auTo") as HTMLInputElement).value;
       void load();
     });
-    actions(root, { csv: () => downloadCsv({ title: "Audit trail", file: "audit-trail", by: who(), filters: [["Search", search], ["Module", module], ["From", from], ["To", to]], header: ["Date and time", "Who", "Action", "Module", "Details"], rows: rows.map((r) => [csvDateTime(r.created_at), r.actor, r.action, r.module, r.details]) }) });
+    actions(root, { csv: () => downloadSheet({ title: "Audit trail", file: "audit-trail", by: who(), filters: [["Search", search], ["Module", module], ["From", from], ["To", to]], header: ["Date and time", "Who", "Action", "Module", "Details"], rows: rows.map((r) => [csvDateTime(r.created_at), r.actor, r.action, r.module, r.details]) }) });
     await load();
   },
 };
