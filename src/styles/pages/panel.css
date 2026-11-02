@@ -111,10 +111,6 @@ button.person-card { cursor: pointer; }
    the tiles restack by the width of their row, not of the screen, so they adapt to the sidebar too */
 .kpi-grid, .book-tiles { display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: var(--space-4); container-type: inline-size; }
 @container (max-width: 66rem) {
-  .kpi { flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-3); }
-  .kpi__icon { width: 2.25rem; height: 2.25rem; }
-  .kpi__value { font-size: var(--fs-xl); }
-  .kpi__label { white-space: normal; line-height: 1.25; }
   .kpi__note, .book-tile .tile__note { font-size: var(--fs-2xs); }
 }
 @container (max-width: 44rem) {
@@ -122,17 +118,19 @@ button.person-card { cursor: pointer; }
   .kpi-grid::-webkit-scrollbar, .book-tiles::-webkit-scrollbar { display: none; }
   .kpi, .book-tile { scroll-snap-align: start; }
 }
-.kpi { --kpi: var(--chart-1);
-  display: flex; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-4); text-align: left; font: inherit; color: inherit;
+/* the same card as the Books tiles: small caps label on top, the icon at the top right, then the number and a note */
+.kpi { --kpi: var(--chart-1); position: relative;
+  display: grid; align-content: start; gap: var(--space-1); min-width: 0; padding: var(--space-4); text-align: left; font: inherit; color: inherit;
   background: var(--surface); border: var(--border) solid var(--line); border-radius: var(--radius);
   transition: transform var(--dur-1) ease, border-color var(--dur-1) ease, box-shadow var(--dur-1) ease;
 }
 button.kpi { cursor: pointer; }
 button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border-color: var(--kpi); box-shadow: 0 10px 24px -16px var(--shadow); }
-.kpi__icon { display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--kpi) 16%, transparent); color: var(--kpi); }
-.kpi__body { display: grid; gap: 2px; min-width: 0; }
-.kpi__value { font-size: var(--fs-2xl); font-weight: 700; line-height: 1.05; color: var(--ink); }
-.kpi__label { font-size: var(--fs-sm); font-weight: 600; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kpi__icon { position: absolute; top: var(--space-3); right: var(--space-3); display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--kpi) 16%, transparent); color: var(--kpi); }
+.kpi__body { display: contents; }
+.kpi__label { order: 1; padding-right: 2.6rem; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-soft); }
+.kpi__value { order: 2; font-size: var(--fs-xl); font-weight: 700; line-height: 1.1; color: var(--ink); }
+.kpi__note { order: 3; }
 .kpi__note { font-size: var(--fs-xs); color: var(--text-soft); overflow-wrap: anywhere; }
 .kpi__note--up { color: var(--success); }
 .kpi__note--down { color: var(--danger); }
@@ -190,11 +188,9 @@ button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border
 @media (max-width: 36rem) {
   .dash { gap: var(--space-4); }
   .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: row; grid-auto-columns: auto; overflow: visible; gap: var(--space-3); }
-  .kpi { flex-direction: column; align-items: flex-start; gap: var(--space-2); padding: var(--space-3); }
-  /* an odd one out at the end takes the whole row, laid out sideways */
-  .kpi-grid > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; flex-direction: row; align-items: center; }
-  .kpi__icon { width: 2.25rem; height: 2.25rem; }
-  .kpi__value { font-size: var(--fs-xl); }
+  .kpi { padding: var(--space-3); }
+  /* an odd one out at the end takes the whole row */
+  .kpi-grid > .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .dash-hero__actions .btn { flex: 1 1 auto; justify-content: center; }
   .dash-row .table__actions { width: 100%; }
   .dash-row .table__actions .btn:first-child { flex: 1; justify-content: center; }
