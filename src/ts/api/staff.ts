@@ -119,7 +119,9 @@ export async function allAnnouncements(): Promise<Announcement[]> {
 }
 
 export async function saveAnnouncement(item: Partial<Announcement> & { title: string; body: string }): Promise<void> {
-  const { error } = item.id ? await db().from("announcements").update(item).eq("id", item.id) : await db().from("announcements").insert(item);
+  // the id picks the row; it is never part of the data (the column is generated and cannot be updated)
+  const { id, ...fields } = item;
+  const { error } = id ? await db().from("announcements").update(fields).eq("id", id) : await db().from("announcements").insert(fields);
   fail(error);
 }
 
