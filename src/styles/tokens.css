@@ -1,10 +1,6 @@
 /* Design tokens: sizes, motion and layers. Colours live in themes.css. */
 :root {
-  /* Reading text uses the system sans: the pixel faces are kept for display lines and numbers,
-     where their character shows and small-size legibility does not matter. */
-  --font-body: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
-  --font-heading: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Roboto, Arial, sans-serif;
-  --font-pixel: "Pixelify Sans", ui-monospace, "Cascadia Mono", monospace;
+  --font-body: "Pixelify Sans", ui-monospace, "Cascadia Mono", system-ui, sans-serif;
   --font-display: "Daydream", "Pixelify Sans", ui-monospace, monospace;
   --fs-root: 16px;
   --fs-2xs: 0.72rem;
@@ -33,9 +29,8 @@
   --space-8: 4.5rem;
   --space-9: 6.5rem;
 
-  --radius: 14px;
-  --radius-sm: 8px;
-  --radius-lg: 20px;
+  --radius: 10px;
+  --radius-sm: 6px;
   --border: 1px;
   --border-bold: 2px;
 
@@ -45,11 +40,6 @@
   --sidebar-w: 15.5rem;
   --topbar-h: 4rem;
   --control-h: 2.7rem;
-
-  /* elevation: one soft key shadow plus a wide ambient one; all take --shadow so every theme tints them */
-  --elev-1: 0 1px 2px var(--shadow), 0 1px 1px -1px var(--shadow);
-  --elev-2: 0 1px 2px var(--shadow), 0 10px 24px -14px var(--shadow);
-  --elev-3: 0 2px 6px var(--shadow), 0 24px 48px -20px var(--shadow);
 
   --dur-1: 120ms;
   --dur-2: 240ms;

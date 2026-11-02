@@ -1,5 +1,5 @@
 .table-wrap { overflow-x: auto; }
-.table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
 .table th { text-align: left; padding: var(--space-3) var(--space-4); background: var(--surface-2); color: var(--text-soft); font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; border-bottom: var(--border) solid var(--line); }
 .table td { padding: var(--space-3) var(--space-4); border-bottom: var(--border) solid var(--line); vertical-align: middle; }
 .table tbody tr:last-child td { border-bottom: 0; }
@@ -12,7 +12,7 @@
 .tabs { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-bottom: var(--space-5); padding: 4px; background: var(--surface-3); border-radius: var(--radius); width: fit-content; max-width: 100%; }
 .tab { display: inline-flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); background: transparent; border: 0; border-radius: var(--radius-sm); color: var(--text-soft); font-weight: 700; font-size: var(--fs-sm); transition: background-color var(--dur-1) ease, color var(--dur-1) ease; }
 .tab:hover { color: var(--ink); }
-.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--elev-1); }
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
 .tab__count { background: var(--primary); color: var(--on-primary); padding: 0 var(--space-2); border-radius: 999px; font-size: var(--fs-2xs); }
 
 .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-2); margin-top: var(--space-6); }
