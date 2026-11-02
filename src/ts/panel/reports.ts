@@ -65,13 +65,13 @@ const REPORTS: Report[] = [
       }
       return {
         header: ["ISBN", "Title", "Authors", "Edition", "Subject", "Shelf", "First published", "Copies", "On loan", "Reserved", "Free", "Status", "Date added"],
-        rows: books.map((b) => [b.isbn ? formatIsbn(b.isbn) : "(none)", b.title, b.author, b.edition ?? "", b.category, b.shelf, b.published, b.copies, out.get(b.id) ?? 0, held.get(b.id) ?? 0,
+        rows: books.map((b) => [b.isbn ? formatIsbn(b.isbn) : "", b.title, b.author, b.edition ?? "", b.category, b.shelf, b.published, b.copies, out.get(b.id) ?? 0, held.get(b.id) ?? 0,
           Math.max(b.copies - (out.get(b.id) ?? 0) - (held.get(b.id) ?? 0), 0), b.archived ? "Archived" : "Active", csvDateTime(b.created_at)]),
       };
     },
     summary: (res) => [
       ["Titles", res.rows.length], ["Copies", sum(column(res, "Copies"))], ["On loan", sum(column(res, "On loan"))], ["Reserved", sum(column(res, "Reserved"))],
-      ["Free on the shelf", sum(column(res, "Free"))], ["Archived", count(column(res, "Status"), "Archived")], ["Missing ISBN", count(column(res, "ISBN"), "(none)")],
+      ["Free on the shelf", sum(column(res, "Free"))], ["Archived", count(column(res, "Status"), "Archived")], ["Missing ISBN", count(column(res, "ISBN"), "")],
     ],
   },
   {
@@ -145,11 +145,12 @@ export const reports: PanelTab = {
     const filters = new Map<string, Filters>(REPORTS.map((r) => [r.id, { from: "", to: "", status: "" }]));
     const results = new Map<string, Result>();
     let active = REPORTS[0];
+    let titleBlock = false; // off: the file is a clean table that starts on row 1
 
     const sheetFor = (r: Report): CsvReport => {
       const f = filters.get(r.id)!;
       const result = results.get(r.id)!;
-      return { title: r.title, file: r.id, header: result.header, rows: result.rows, by: who(), filters: [["From", f.from], ["To", f.to], ["Status", f.status]] };
+      return { title: r.title, file: r.id, header: result.header, rows: result.rows, by: who(), titleBlock, filters: [["From", f.from], ["To", f.to], ["Status", f.status]] };
     };
 
     const download = (r: Report, at?: string) => {
@@ -191,10 +192,10 @@ export const reports: PanelTab = {
         <tbody>${result.rows.slice(0, PREVIEW_ROWS).map((row) => html`<tr>${row.map((c) => html`<td title="${c}">${c}</td>`)}</tr>`)}</tbody></table></div>`;
       const modal = openModal(`CSV preview: ${r.title}`, html`<div class="csv-preview">
         <p class="csv-preview__file text-soft">${icon("download")} <strong>${sheet.name}</strong></p>
-        <dl class="book-detail__facts">${sheet.meta.slice(1).map(([k, v]) => html`<dt>${k}</dt><dd>${v}</dd>`)}</dl>
-        ${result.rows.length ? table : empty("No rows", "The file will hold only the title block.", r.icon)}
+        ${titleBlock ? html`<dl class="book-detail__facts">${sheet.meta.slice(1).map(([k, v]) => html`<dt>${k}</dt><dd>${v}</dd>`)}</dl>` : html`<p class="text-soft">Row 1 is the column headings, then one row per record.</p>`}
+        ${result.rows.length ? table : empty("No rows", titleBlock ? "The file will hold only the title block." : "The file will hold only the column headings.", r.icon)}
         ${result.rows.length > PREVIEW_ROWS ? html`<p class="result-count">Showing the first ${PREVIEW_ROWS} of ${result.rows.length} rows here. The download has all of them.</p>` : ""}
-        <p class="text-soft">${sheet.end}</p></div>`, {
+        ${titleBlock ? html`<p class="text-soft">${sheet.end}</p>` : ""}</div>`, {
         wide: true,
         footer: html`<button class="btn btn--quiet" type="button" data-close>Close</button><button class="btn" type="button" data-download>${icon("download")} Download CSV</button>`,
       });
@@ -216,6 +217,7 @@ export const reports: PanelTab = {
               <button class="btn btn--secondary" type="button" data-action="download" data-needs-result disabled>${icon("download")} Download CSV</button>
             </div></div>
           <p class="text-soft">${r.text}</p>
+          <label class="check"><input class="check__box" type="checkbox" data-title-block ${titleBlock ? raw("checked") : ""}><span>Add a title block (who, when and the filters) above the table. Leave it off for a file you will filter or sort in Excel.</span></label>
           ${r.filters !== "none" ? html`<div class="toolbar toolbar--wide" data-filters>
             <div class="field"><label class="field__label" for="rpFrom">From</label><input class="input" id="rpFrom" name="from" type="date" value="${f.from}"></div>
             <div class="field"><label class="field__label" for="rpTo">To</label><input class="input" id="rpTo" name="to" type="date" value="${f.to}"></div>
@@ -223,6 +225,7 @@ export const reports: PanelTab = {
           </div>` : ""}
           <div data-summary></div>
         </section></div>`);
+      root.querySelector<HTMLInputElement>("[data-title-block]")!.addEventListener("change", (e) => { titleBlock = (e.target as HTMLInputElement).checked; });
       const bar = root.querySelector<HTMLElement>("[data-filters]");
       bar?.addEventListener("change", debounce(() => {
         const value = (name: string) => bar.querySelector<HTMLInputElement | HTMLSelectElement>(`[name="${name}"]`)?.value ?? "";

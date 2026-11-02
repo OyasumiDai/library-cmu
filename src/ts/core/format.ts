@@ -71,10 +71,14 @@ export interface CsvReport {
   rows: unknown[][];
   filters?: [string, string][]; // [["From", "2026-10-01"], ["Status", "borrowed"]]
   by?: string;                // who downloaded it
+  titleBlock?: boolean;       // add who, when and the filters above the table (off: row 1 is the column headings, so filters and pivot tables just work)
 }
 
-// A titled sheet: who and when at the top, then the table, then an end line, so a printed or forwarded copy explains itself.
+// The default file is a clean table: row 1 holds the column headings and every row after it is data, so Excel's filter, sort and
+// pivot tables work on it at once. The filters used go into the file name. With titleBlock on, who, when and the filters are
+// written above the table and an end line below it, so a printed or forwarded copy explains itself.
 // The preview window shows exactly this, so what staff see is what they download.
+const slug = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 24);
 export function csvSheet(report: CsvReport, at = new Date().toISOString()): { name: string; meta: [string, string][]; end: string } {
   const shown = (report.filters ?? []).filter(([, v]) => v);
   const meta: [string, string][] = [
@@ -86,12 +90,13 @@ export function csvSheet(report: CsvReport, at = new Date().toISOString()): { na
     ["Rows", String(report.rows.length)],
   ];
   const stamp = csvDateTime(at).replace(" ", "_").replace(":", "");
-  return { name: `cmu-library_${report.file}_${stamp}.csv`, meta, end: `End of report. ${report.rows.length} row${report.rows.length === 1 ? "" : "s"}.` };
+  const tags = shown.map(([k, v]) => `${slug(k)}-${slug(v)}`).filter((t) => !t.endsWith("-"));
+  return { name: ["cmu-library", report.file, ...tags, stamp].join("_") + ".csv", meta, end: `End of report. ${report.rows.length} row${report.rows.length === 1 ? "" : "s"}.` };
 }
 
 export function downloadCsv(report: CsvReport, at?: string): void {
   const sheet = csvSheet(report, at);
-  const lines: unknown[][] = [...sheet.meta, [], report.header, ...report.rows, [], [sheet.end]];
+  const lines: unknown[][] = report.titleBlock ? [...sheet.meta, [], report.header, ...report.rows, [], [sheet.end]] : [report.header, ...report.rows];
   const body = lines.map((row) => row.map(csvCell).join(",")).join("\r\n");
   const link = document.createElement("a");
   // the byte-order mark makes Excel read accents (Misérables, Gapô) correctly

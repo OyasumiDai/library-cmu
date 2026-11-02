@@ -46,6 +46,37 @@
 .person-card { display: grid; justify-items: center; gap: var(--space-1); padding: var(--space-4); text-align: center; color: var(--text); font-family: inherit; }
 button.person-card { cursor: pointer; }
 .person-card .avatar { margin-bottom: var(--space-1); }
+/* the students list: one bar with search, sort, a filters drawer and removable chips; rows open the student */
+.st-bar { display: grid; gap: var(--space-3); padding: var(--space-4); margin: var(--space-4) 0; border-radius: var(--radius); }
+.st-bar__row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); }
+.st-bar__search { flex: 1 1 16rem; margin: 0; }
+.st-bar__sort { flex: 0 1 11rem; }
+.st-bar .btn .badge { min-height: 1.2rem; padding-inline: 0.4rem; }
+.st-bar__filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); gap: var(--space-3); padding-top: var(--space-3); border-top: var(--border) solid var(--line); animation: fade var(--dur-2) ease both; }
+.st-bar__chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.st-bar__chips:empty { display: none; }
+.chip .icon { width: 0.8em; height: 0.8em; opacity: 0.7; }
+.chip:hover .icon { opacity: 1; }
+.st-row { cursor: pointer; }
+.st-row:hover td:first-child .table__title { color: var(--primary); }
+.st-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.st-name { display: flex; align-items: center; gap: var(--space-3); min-width: 0; }
+.st-badges { display: inline-flex; flex-wrap: wrap; gap: var(--space-1); margin-left: var(--space-2); vertical-align: middle; }
+.st-badges:empty { display: none; }
+.person-card .st-badges { margin: var(--space-1) 0 0; justify-content: center; }
+.person-card { transition: transform var(--dur-2) var(--ease-soft), box-shadow var(--dur-2) ease, border-color var(--dur-1) ease; }
+.person-card:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 14px 28px -18px var(--shadow); }
+.st-empty { display: grid; justify-items: center; gap: var(--space-3); padding-bottom: var(--space-6); }
+.st-more { display: grid; padding: var(--space-3); border-top: var(--border) solid var(--line); }
+.modal__hint { margin-right: auto; font-size: var(--fs-xs); }
+@media (max-width: 40rem) {
+  .st-bar { padding: var(--space-3); }
+  .st-bar__sort { flex: 1 1 8rem; }
+  .st-bar__row > .btn { flex: 1 1 7rem; }
+  .st-bar__row > .seg { flex: 1 1 100%; }
+  .st-bar__row > .seg .seg__btn { flex: 1; }
+  .modal__hint { display: none; }
+}
 .student-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-4); margin-bottom: var(--space-4); }
 .student-head h3 { margin: 0; }
 .tile-grid--small { grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); margin-bottom: var(--space-4); }
