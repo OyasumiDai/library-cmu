@@ -17,12 +17,12 @@ const register = { c: [LX, 310], text: "Register student account and confirm ema
 const verify = { c: [RX, 310], text: "Verify credentials in User Accounts" };
 const col = (x, y0, texts) => texts.map((text, i) => ({ c: [x, y0 + 92 * i], text }));
 const student = col(LX, 410, [
-  "Search and browse the book catalog", "View book details and availability", "Request to borrow a book", "Cancel a borrow request",
-  "Show pickup QR ticket", "View loans, due dates and fines", "Receive notifications and email reminders", "View announcements",
+  "View catalog and book availability", "Access the 2D-3D library game", "Request to borrow a book (website or game)", "Cancel a borrow request",
+  "Show pickup QR ticket (website or game)", "View loans, due dates and fines", "Receive notifications and email reminders", "View announcements",
   "Update profile and account"]);
 const staff = col(RX, 410, [
-  "Add or edit book details", "Review pending loan requests", "Scan QR ticket to check out a book", "Record book returns",
-  "Send loan reminder emails", "Post announcements and site content", "View circulation and movement records", "Download library reports"]);
+  "Manage books (add, edit, archive)", "Review pending loan requests", "Scan QR ticket to check out a book", "Record book returns",
+  "Send loan reminder emails", "Post announcements and site content", "View circulation and movement records", "View book approval results", "Download library reports"]);
 const admin = col(RX, 1370, [
   "Approve or request revision of submitted books", "Manage staff accounts and permissions", "Set borrowing rules and system settings",
   "View analytics and generate reports", "View audit trail"]);

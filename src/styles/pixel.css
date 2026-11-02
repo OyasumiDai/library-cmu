@@ -5,7 +5,7 @@
   background: var(--px-fill);
   border: var(--border) solid var(--line);
   border-radius: var(--radius);
-  box-shadow: 0 1px 2px var(--shadow), 0 8px 20px -14px var(--shadow);
+  box-shadow: var(--elev-2);
   color: var(--text);
 }
 .px--small { border-radius: var(--radius-sm); }

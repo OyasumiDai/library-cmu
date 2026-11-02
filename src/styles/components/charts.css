@@ -40,7 +40,7 @@
 .donut-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-5) var(--space-6); }
 .donut { position: relative; display: grid; place-items: center; width: 9rem; height: 9rem; background: var(--ring); border-radius: 50%; }
 .donut::after { content: ""; position: absolute; inset: 1.6rem; background: var(--surface); border-radius: 50%; }
-.donut span { position: relative; z-index: 1; font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+.donut span { position: relative; z-index: 1; font-family: var(--font-pixel); font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
 .legend { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; font-size: var(--fs-sm); }
 .legend li { display: flex; align-items: center; gap: var(--space-2); margin: 0; }
 .legend i { width: 0.8rem; height: 0.8rem; border-radius: 3px; background: var(--c); }
@@ -51,7 +51,7 @@ button.tile { cursor: pointer; }
 button.tile:hover { transform: translateY(-2px); border-color: var(--line-strong); }
 .tile[aria-pressed="true"] { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent); }
 .tile__label { font-size: var(--fs-xs); color: var(--text-soft); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-.tile__value { font-size: var(--fs-2xl); font-weight: 700; color: var(--ink); line-height: 1.1; }
+.tile__value { font-family: var(--font-pixel); font-variant-numeric: tabular-nums; font-size: var(--fs-2xl); font-weight: 700; color: var(--ink); line-height: 1.1; }
 .tile__note { font-size: var(--fs-xs); color: var(--text-soft); }
 .tile__note--up { color: var(--success); }
 .tile__note--down { color: var(--danger); }

@@ -18,12 +18,12 @@ const processes = [
     L: [["A", "in", "Report & Analytics Request"], ["A", "out", "Analytics Dashboard"], ["A", "out", "Generated Reports"]],
     R: [["T", "out", "Library Reports"]] },
   { no: "1.0", name: ["Registration &", "Authentication"], store: ["D1", "User Accounts"], down: "Account Details", up: "Account Information",
-    L: [["A", "in", "Login Credentials"], ["A", "out", "Login Status"], ["S", "in", "Registration Details"], ["S", "in", "Login Credentials"],
-        ["S", "in", "Profile & Account Updates"], ["S", "out", "Email Verification Code"], ["S", "out", "Login Status"]],
-    R: [["T", "in", "Login Credentials"], ["T", "out", "Login Status"]] },
-  { no: "2.0", name: ["Catalog & Book", "Management"], store: ["D2", "Books & Copies"], down: "Book Records", up: "Book Details & Availability",
-    L: [["A", "in", "Book Approval Decisions"], ["A", "out", "Books Awaiting Approval"], ["S", "in", "Book Search & Filters"], ["S", "out", "Book Details & Availability"]],
-    R: [["T", "in", "New / Edited Book Details"], ["T", "out", "Book Approval Results"]] },
+    L: [["A", "in", "Login Credentials"], ["S", "in", "Registration Details"], ["S", "in", "Login Credentials"],
+        ["S", "in", "Profile & Account Updates"], ["S", "in", "Game Access"], ["S", "out", "Book Request"], ["S", "out", "2D-3D Library Game"]],
+    R: [["T", "in", "Login Credentials"]] },
+  { no: "2.0", name: ["Catalog & Book", "Management"], store: ["D2", "Books & Copies"], down: "Book Records", up: "View Catalog",
+    L: [["A", "in", "Book Approval Decisions"], ["A", "out", "Books Awaiting Approval"], ["S", "in", "View Catalog"], ["S", "out", "View Catalog"]],
+    R: [["T", "in", "Manage Book"], ["T", "out", "Book Approval Results"]] },
   { no: "3.0", name: ["Borrowing &", "Circulation"], store: ["D3", "Loans & Movements"], down: "Loan & Movement Records", up: "Loan Status & History",
     L: [["S", "in", "Borrow Request"], ["S", "in", "Request Cancellation"], ["S", "out", "Pickup QR Ticket"], ["S", "out", "Due Dates & Overdue Fines"]],
     R: [["T", "in", "Pickup QR Scan (Checkout)"], ["T", "in", "Book Returns"], ["T", "out", "Pending Loan Requests"], ["T", "out", "Circulation & Movement Records"]] },
@@ -71,7 +71,7 @@ for (const p of processes) for (const side of ["L", "R"]) p[side].forEach(([who,
 });
 const lane = {
   Adown: (k) => 176 - 16 * k, // lower target, further left
-  Sup: (k) => 200 + 16 * k, // higher target, further left
+  Sup: (k) => 200 + 12 * k, // higher target, further left; 12 apart so all of them land on the box
   Sdown: (k) => 280 - 16 * k,
   Tup: (k) => 1424 - 16 * k, // higher target, further right
   Tdown: (k) => 1220 + 16 * k,

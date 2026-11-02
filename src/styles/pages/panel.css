@@ -107,19 +107,18 @@ button.person-card { cursor: pointer; }
 .dash-hero .dash-search { grid-column: 1 / -1; max-width: none; }
 
 /* headline numbers */
-/* flex, so a short last row stretches instead of leaving a gap */
-.kpi-grid { display: flex; flex-wrap: wrap; gap: var(--space-4); }
-.kpi-grid > .kpi { flex: 1 1 12.5rem; }
+/* auto-fit columns: five tiles share one row on a laptop instead of the fifth stretching across a row of its own */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--space-4); }
 .kpi { --kpi: var(--chart-1);
   display: flex; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-4); text-align: left; font: inherit; color: inherit;
   background: var(--surface); border: var(--border) solid var(--line); border-radius: var(--radius);
   transition: transform var(--dur-1) ease, border-color var(--dur-1) ease, box-shadow var(--dur-1) ease;
 }
 button.kpi { cursor: pointer; }
-button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border-color: var(--kpi); box-shadow: 0 10px 24px -16px var(--shadow); }
+button.kpi:hover, button.kpi:focus-visible { transform: translateY(-2px); border-color: var(--kpi); box-shadow: var(--elev-2); }
 .kpi__icon { display: grid; place-items: center; flex: none; width: 2.75rem; height: 2.75rem; border-radius: var(--radius-sm); background: color-mix(in srgb, var(--kpi) 16%, transparent); color: var(--kpi); }
 .kpi__body { display: grid; gap: 2px; min-width: 0; }
-.kpi__value { font-size: var(--fs-2xl); font-weight: 700; line-height: 1.05; color: var(--ink); }
+.kpi__value { font-family: var(--font-pixel); font-variant-numeric: tabular-nums; font-size: var(--fs-2xl); font-weight: 700; line-height: 1.05; color: var(--ink); }
 .kpi__label { font-size: var(--fs-sm); font-weight: 600; color: var(--text-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi__note { font-size: var(--fs-xs); color: var(--text-soft); overflow-wrap: anywhere; }
 .kpi__note--up { color: var(--success); }

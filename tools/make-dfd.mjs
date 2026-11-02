@@ -10,16 +10,16 @@ const width = 1500, height = 1060;
 
 // flows, top to bottom as they leave or reach each entity
 const student = {
-  in: ["Registration Details", "Login Credentials", "Book Search & Filters", "Borrow Request", "Request Cancellation", "Profile & Account Updates"],
-  out: ["Email Verification Code", "Login Status", "Book Details & Availability", "Pickup QR Ticket", "Due Dates & Overdue Fines", "Notifications & Email Reminders", "Announcements"],
+  in: ["Registration Details", "Login Credentials", "View Catalog", "Borrow Request", "Request Cancellation", "Profile & Account Updates", "Game Access"],
+  out: ["Book Request", "View Catalog", "2D-3D Library Game", "Pickup QR Ticket", "Due Dates & Overdue Fines", "Notifications & Email Reminders", "Announcements"],
 };
 const staff = {
-  in: ["Login Credentials", "New / Edited Book Details", "Pickup QR Scan (Checkout)", "Book Returns", "Loan Reminder Emails", "Announcements & Site Content"],
-  out: ["Login Status", "Pending Loan Requests", "Circulation & Movement Records", "Book Approval Results", "Library Reports"],
+  in: ["Login Credentials", "Manage Book", "Pickup QR Scan (Checkout)", "Book Returns", "Loan Reminder Emails", "Announcements & Site Content"],
+  out: ["Pending Loan Requests", "Circulation & Movement Records", "Book Approval Results", "Library Reports"],
 };
 const admin = {
   in: ["Login Credentials", "Book Approval Decisions", "Staff Accounts & Permissions", "Borrowing Rules & Settings", "Report & Analytics Request"],
-  out: ["Login Status", "Books Awaiting Approval", "Analytics Dashboard", "Audit Trail Logs", "Generated Reports"],
+  out: ["Books Awaiting Approval", "Analytics Dashboard", "Audit Trail Logs", "Generated Reports"],
 };
 
 const P = { x1: 600, y1: 430, x2: 900, y2: 650 };
@@ -32,7 +32,7 @@ const flow = (pts) => (lines += `<path d="${pts.map(([x, y], i) => `${i ? "L" : 
 const label = (x, y, text, anchor) => (labels += `<text x="${x}" y="${y + 4.5}" text-anchor="${anchor}">${text.replace(/&/g, "&amp;")}</text>`);
 
 // Student: inputs leave its right side and drop into the top of the process; outputs leave the process's left side and rise into it
-student.in.forEach((t, i) => { const y = 95 + 36 * i, x = 740 - 18 * i; flow([[S.x2, y], [x, y], [x, P.y1]]); label(S.x2 + 12, y, t, "start"); });
+student.in.forEach((t, i) => { const y = 90 + 30 * i, x = 740 - 18 * i; flow([[S.x2, y], [x, y], [x, P.y1]]); label(S.x2 + 12, y, t, "start"); });
 student.out.forEach((t, j) => { const y = 470 + 25 * j, x = 380 - 45 * j; flow([[P.x1, y], [x, y], [x, S.y2]]); label(P.x1 - 12, y, t, "end"); });
 
 // Library Staff: the mirror image on the right
@@ -45,7 +45,7 @@ admin.in.forEach((t, i) => {
   flow([[A.x1, y], [x, y], [x, turn], [xp, turn], [xp, P.y2]]); label(A.x1 - 12, y, t, "end");
 });
 admin.out.forEach((t, i) => {
-  const y = 885 + 25 * i, x = 1120 + 40 * i, turn = 760 - 20 * i, xp = 780 + 20 * i;
+  const y = 885 + 25 * i, x = 1160 + 40 * i, turn = 760 - 20 * i, xp = 780 + 20 * i;
   flow([[xp, P.y2], [xp, turn], [x, turn], [x, y], [A.x2, y]]); label(A.x2 + 18, y, t, "start");
 });
 
