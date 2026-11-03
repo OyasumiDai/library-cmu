@@ -1,0 +1,26 @@
+<!--page {"shell":"app","title":"Scan pickup","description":"Scan a student's QR code to hand over or take back a book.","entry":"pickup","access":"staff"} -->
+<div class="container" data-page-root>
+  <div class="page-title"><div><h1>Scan pickup</h1><p class="page-title__sub">Scan the QR code on the student's phone or email. The book is confirmed in the system and the student gets an email.</p></div></div>
+  <div class="scan-grid">
+    <section class="card px scan-card" data-reveal>
+      <div class="scanner" id="scanner">
+        <video class="scanner__video" id="scanVideo" muted playsinline></video>
+        <div class="scanner__frame" aria-hidden="true"><i></i><i></i><i></i><i></i><span class="scanner__line"></span></div>
+        <div class="scanner__idle" id="scanIdle"><svg class="icon icon--xl" aria-hidden="true"><use href="/assets/icons/icons.svg#camera"/></svg><p>The camera is off</p></div>
+      </div>
+      <div class="cluster">
+        <button class="btn" type="button" id="scanToggle"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#camera"/></svg> Start camera</button>
+        <label class="check"><input class="check__box" type="checkbox" id="autoConfirm"><span>Confirm pickups as soon as I scan</span></label>
+      </div>
+      <form class="form" id="codeForm" novalidate>
+        <div class="field" data-field="code"><label class="field__label" for="f-code">Or type the pickup code</label>
+          <div class="input-group"><input class="input input--code-small" id="f-code" name="code" autocomplete="off" maxlength="40" placeholder="A1B2C3D4E5F6"><button class="btn btn--secondary" type="submit">Find</button></div>
+          <span class="field__error"></span></div>
+      </form>
+    </section>
+    <section class="stack" aria-live="polite">
+      <div id="scanResult"></div>
+      <div class="card px" id="recentCard" hidden><h3>Recent scans</h3><ul class="list" id="recentScans"></ul></div>
+    </section>
+  </div>
+</div>
