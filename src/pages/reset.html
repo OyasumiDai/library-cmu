@@ -1,0 +1,36 @@
+<!--page {"shell":"auth","title":"Reset password","description":"Get back into your library account.","entry":"reset","access":"all"} -->
+<div class="container auth" data-page-root>
+  <div class="auth__card card px pop-in">
+    <div class="auth__head">
+      <img class="auth__crest" src="/assets/brand/cmu-library-crest.png" alt="">
+      <ol class="steps-dots" aria-label="Progress"><li class="is-current" data-step="1">1</li><li data-step="2">2</li><li data-step="3">3</li></ol>
+      <h1 id="resetTitle">Forgot your password?</h1>
+      <p class="text-soft" id="resetLead">Enter your email and we will send you a 6-digit code.</p>
+    </div>
+    <div id="resetNotice" aria-live="polite"></div>
+
+    <form class="form" id="stepEmail" novalidate>
+      <div class="field" data-field="email"><label class="field__label" for="f-email">Email</label><input class="input" id="f-email" name="email" type="email" autocomplete="email" required><span class="field__error"></span></div>
+      <button class="btn btn--block" type="submit">Send the code</button>
+    </form>
+
+    <form class="form" id="stepCode" hidden novalidate>
+      <div class="field" data-field="code"><label class="field__label" for="f-code">Code from the email</label><input class="input input--code" id="f-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="000000" required><span class="field__hint" id="codeHint"></span><span class="field__error"></span></div>
+      <div class="field" data-field="password"><label class="field__label" for="f-new">New password</label><input class="input" id="f-new" name="password" type="password" autocomplete="new-password" minlength="8" required>
+        <div class="meter-row"><div class="meter" id="pwMeter" data-level="0" aria-hidden="true"><i></i><i></i><i></i><i></i></div><span class="meter__label" id="pwMeterLabel" aria-live="polite"></span></div>
+        <span class="field__error"></span></div>
+      <div class="field" data-field="confirm"><label class="field__label" for="f-confirm">Repeat it</label><input class="input" id="f-confirm" name="confirm" type="password" autocomplete="new-password" required><span class="field__error"></span></div>
+      <button class="btn btn--block" type="submit">Save password</button>
+      <div class="cluster cluster--between">
+        <button class="link-button" type="button" id="resend" disabled>Resend code</button>
+        <button class="link-button" type="button" id="otherEmail">Use a different email</button>
+      </div>
+    </form>
+
+    <div id="stepDone" hidden class="stack text-center">
+      <div class="alert alert--success px px--success">Your password was changed. Other devices were signed out.</div>
+      <a class="btn btn--block" id="goLogin" href="/login?reset=done">Back to sign in</a>
+    </div>
+    <p class="auth__foot"><a href="/login">Back to sign in</a></p>
+  </div>
+</div>
