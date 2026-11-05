@@ -9,6 +9,7 @@ import { formatIsbn, isIsbnShape, isValidIsbn, normalizeIsbn } from "../core/isb
 import { authorsOf, joinAuthors } from "../core/authors";
 import { confirmBox, openModal } from "../core/modal";
 import { fail, ok } from "../core/toast";
+import { openCoverStudio } from "../core/coverStudio";
 import { cover, empty, field, loading, selectField } from "../ui/components";
 import type { Book } from "../types";
 import { openedWith, type PanelTab } from "./tab";
@@ -221,6 +222,8 @@ export const books: PanelTab = {
         <div class="field"><span class="field__label">Cover picture</span>
           <label class="file-drop" id="coverDrop" for="coverFile">${icon("image", "icon--lg")}<span id="coverName">Drag a picture here or click to choose (JPG, PNG or WEBP)</span></label>
           <input class="visually-hidden" type="file" id="coverFile" accept="image/png,image/jpeg,image/webp">
+          <div class="cluster"><label class="btn btn--secondary btn--sm" for="coverCamera">${icon("image")} Take a photo of the cover</label><span class="field__hint">On a phone this opens the camera. The picture is straightened and cleaned up for you.</span></div>
+          <input class="visually-hidden" type="file" id="coverCamera" accept="image/*" capture="environment">
           <input class="input" id="f-cover" name="cover_url" value="${book?.cover_url ?? ""}" placeholder="...or paste a picture link"></div>
       </form>`, {
         wide: true,
@@ -286,16 +289,21 @@ export const books: PanelTab = {
       }));
       const fileInput = $<HTMLInputElement>("#coverFile");
       const drop = $("#coverDrop");
-      const pick = (file: File | undefined) => {
+      const pick = async (chosen: File | undefined) => {
+        if (!chosen) return;
+        if (!/^image\/(png|jpeg|webp)$/.test(chosen.type)) return fail("Please choose a JPG, PNG or WEBP picture.");
+        let file: File | null;
+        try { file = await openCoverStudio(chosen); } catch (error) { return fail(friendly(error)); }
         if (!file) return;
-        if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return fail("Please choose a JPG, PNG or WEBP picture.");
         const transfer = new DataTransfer(); transfer.items.add(file); fileInput.files = transfer.files;
-        $("#coverName").textContent = `${file.name} (${Math.round(file.size / 1024)} KB)`;
+        $("#coverName").textContent = `Clean cover ready (${Math.round(file.size / 1024)} KB). Choose another to replace it.`;
       };
-      fileInput.addEventListener("change", () => pick(fileInput.files?.[0]));
+      fileInput.addEventListener("change", () => void pick(fileInput.files?.[0]));
+      const camera = $<HTMLInputElement>("#coverCamera");
+      camera.addEventListener("change", () => { void pick(camera.files?.[0]); camera.value = ""; });
       for (const ev of ["dragenter", "dragover"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("is-over"); });
       for (const ev of ["dragleave", "drop"]) drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("is-over"); });
-      drop.addEventListener("drop", (e) => pick((e as DragEvent).dataTransfer?.files?.[0]));
+      drop.addEventListener("drop", (e) => void pick((e as DragEvent).dataTransfer?.files?.[0]));
 
       modal.root.querySelectorAll<HTMLElement>("[data-save]").forEach((button) => button.addEventListener("click", async () => {
         const d = formData(formEl);

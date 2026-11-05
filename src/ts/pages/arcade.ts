@@ -52,6 +52,8 @@ boot(async () => {
   const enter = qs<HTMLButtonElement>("#enter");
   enter.disabled = false;
   enter.addEventListener("click", () => {
+    // on a phone the game gets the whole screen: a small frame inside the page is too cramped to play
+    if (window.matchMedia("(pointer: coarse)").matches) { window.location.href = entry; return; }
     const screen = qs("#stageScreen");
     mount(screen, html`
       <div class="stage__loading" id="stageLoading">${loading("Opening the library")}</div>

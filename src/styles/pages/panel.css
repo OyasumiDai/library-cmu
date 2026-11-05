@@ -5,7 +5,7 @@
 .select--small { min-height: 2.1rem; padding-block: 0; font-size: var(--fs-xs); }
 .day-head { margin: 0; padding: var(--space-2) var(--space-4); background: var(--surface-2); color: var(--text-soft); font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: var(--border) solid var(--line); }
 .audit-details { max-width: 32rem; overflow-wrap: anywhere; font-size: var(--fs-xs); }
-.textarea--code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: var(--fs-xs); }
+.textarea--code { font-family: var(--font-mono); font-size: var(--fs-xs); }
 
 /* dashboard */
 .dash-search { position: relative; max-width: 40rem; }

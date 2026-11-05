@@ -6,12 +6,15 @@
 import kb from "../../data/assistant.json";
 import { publicSettings, settingNumber } from "../api/content";
 import { escapeHtml, html, icon, raw, Safe } from "./dom";
+import { canOpen, extractViews, guessView, openView, viewLabel, type ViewCommand } from "./assistantViews";
+import { attachHoldToTalk, stopSpeaking, voiceSupported, type VoiceState } from "./assistantVoice";
 import { current, isStaff } from "./session";
 import type { SiteSettings } from "../types";
 
 interface Turn {
   role: "user" | "assistant";
   content: string;
+  hidden?: boolean; // a spoken question: kept so the assistant has the context, never shown in the chat
 }
 interface Entry {
   id: string;
@@ -111,16 +114,21 @@ const root = () => document.getElementById("assistant")!;
 const part = <T extends HTMLElement>(selector: string) => root().querySelector<T>(selector)!;
 
 function save(): void {
-  try { sessionStorage.setItem(STORE, JSON.stringify(turns.slice(-MAX_TURNS))); } catch { /* private mode */ }
+  try { sessionStorage.setItem(STORE, JSON.stringify(turns.filter((t) => !t.hidden).slice(-MAX_TURNS))); } catch { /* private mode */ }
 }
 
+const viewKey = (view: ViewCommand): string => `${view.name}:${view.query}`;
+
 function bubble(turn: Turn): string {
-  return html`<div class="assistant__msg assistant__msg--${turn.role}">${turn.role === "assistant" ? renderText(turn.content) : turn.content}</div>`.value;
+  if (turn.role === "user") return html`<div class="assistant__msg assistant__msg--user">${turn.content}</div>`.value;
+  const { text, views } = extractViews(turn.content);
+  const buttons = views.filter(canOpen);
+  return html`<div class="assistant__msg assistant__msg--assistant">${renderText(text)}${buttons.length ? html`<div class="assistant__views">${buttons.map((v) => html`<button class="btn btn--sm" type="button" data-view="${viewKey(v)}">${icon("menu")} Open: ${viewLabel(v)}</button>`)}</div>` : ""}</div>`.value;
 }
 
 function draw(): void {
   const log = part("#assistantLog");
-  log.innerHTML = turns.map(bubble).join("") + (busy ? '<div class="assistant__msg assistant__msg--assistant assistant__typing" aria-label="The assistant is typing"><i></i><i></i><i></i></div>' : "");
+  log.innerHTML = turns.filter((t) => !t.hidden).map(bubble).join("") + (busy ? '<div class="assistant__msg assistant__msg--assistant assistant__typing" aria-label="The assistant is typing"><i></i><i></i><i></i></div>' : "");
   log.scrollTop = log.scrollHeight;
   part("#assistantMode").textContent = mode === "ai" ? "AI assistant" : "Quick answers";
   part("#assistantMode").dataset.mode = mode;
@@ -138,10 +146,53 @@ async function send(text: string): Promise<void> {
   draw();
   const ai = await askAi(question);
   mode = ai ? "ai" : "basic";
-  turns.push({ role: "assistant", content: ai ?? quickAnswer(question) });
+  let reply = ai ?? quickAnswer(question);
+  if (!ai) {
+    const guess = guessView(question);
+    if (guess) reply += `
+[[view:${viewKey(guess)}]]`;
+  }
   busy = false;
+  showReply(reply);
+}
+
+function showReply(reply: string): void {
+  turns.push({ role: "assistant", content: reply });
   save();
   draw();
+  // the table the assistant asked for pops up right away; the button stays in the chat to open it again
+  const first = extractViews(reply).views.find(canOpen);
+  if (first) void openView(first);
+}
+
+// ---------------------------------------------------------------- hold to talk
+const VOICE_TEXT: Record<VoiceState, string> = {
+  idle: "",
+  listening: "Listening... let go of the mic to send.",
+  thinking: "Thinking...",
+  speaking: "Speaking... hold the mic to talk again.",
+};
+let noteTimer: number | undefined;
+
+function voiceState(state: VoiceState, note?: string): void {
+  const mic = part<HTMLButtonElement>("#assistantMic");
+  const line = part("#assistantVoice");
+  mic.dataset.state = state;
+  mic.setAttribute("aria-pressed", String(state === "listening"));
+  busy = state === "thinking";
+  draw();
+  clearTimeout(noteTimer);
+  line.textContent = note ?? VOICE_TEXT[state];
+  line.hidden = !line.textContent;
+  if (note) noteTimer = window.setTimeout(() => { line.hidden = true; }, 6000);
+}
+
+function voiceAnswer({ transcript, reply }: { transcript: string; reply: string }): void {
+  // the person's words stay out of the chat; the assistant just keeps them as context
+  if (transcript) turns.push({ role: "user", content: transcript.slice(0, MAX_CHARS), hidden: true });
+  mode = "ai";
+  busy = false;
+  showReply(reply);
 }
 
 function setOpen(open: boolean): void {
@@ -182,8 +233,10 @@ export async function initAssistant(): Promise<void> {
       </header>
       <div class="assistant__log" id="assistantLog" role="log" aria-live="polite"></div>
       <div class="assistant__chips" id="assistantChips">${chips.map((c) => html`<button class="chip" type="button" data-ask="${c}">${c}</button>`)}</div>
+      <div class="assistant__voice" id="assistantVoice" role="status" aria-live="polite" hidden></div>
       <form class="assistant__form" id="assistantForm" autocomplete="off">
         <input class="input" id="assistantInput" maxlength="${MAX_CHARS}" placeholder="Ask about the library..." aria-label="Your question">
+        ${voiceSupported() ? html`<button class="btn btn--icon assistant__mic" type="button" id="assistantMic" data-state="idle" aria-pressed="false" aria-label="Hold to talk, let go to send" title="Hold to talk">${icon("mic", "icon--lg")}</button>` : ""}
         <button class="btn btn--icon" type="submit" aria-label="Send">${icon("chevron-right", "icon--lg")}</button>
       </form>
     </section>
@@ -193,11 +246,18 @@ export async function initAssistant(): Promise<void> {
   document.body.appendChild(el);
 
   part("#assistantLauncher").addEventListener("click", () => setOpen(root().dataset.open !== "true"));
-  part("#assistantClose").addEventListener("click", () => { setOpen(false); part("#assistantLauncher").focus(); });
+  part("#assistantClose").addEventListener("click", () => { stopSpeaking(); setOpen(false); part("#assistantLauncher").focus(); });
   part("#assistantClear").addEventListener("click", () => {
+    stopSpeaking();
     turns = [{ role: "assistant", content: fill(kb.greeting) }];
     save();
     draw();
+  });
+  part("#assistantLog").addEventListener("click", (event) => {
+    const button = (event.target as Element).closest<HTMLElement>("[data-view]");
+    if (!button) return;
+    const [name, ...rest] = (button.dataset.view ?? "").split(":");
+    void openView({ name: name as ViewCommand["name"], query: rest.join(":") });
   });
   part("#assistantChips").addEventListener("click", (event) => {
     const chip = (event.target as Element).closest<HTMLElement>("[data-ask]");
@@ -210,8 +270,10 @@ export async function initAssistant(): Promise<void> {
     input.value = "";
     void send(value);
   });
+  const mic = root().querySelector<HTMLButtonElement>("#assistantMic");
+  if (mic) attachHoldToTalk(mic, { history: () => turns.slice(-10), onState: voiceState, onAnswer: voiceAnswer });
   el.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && el.dataset.open === "true") setOpen(false);
+    if (event.key === "Escape" && el.dataset.open === "true") { stopSpeaking(); setOpen(false); }
   });
   draw();
 }

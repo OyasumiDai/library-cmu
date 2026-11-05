@@ -319,6 +319,16 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
 .auth-hero::before { content: ""; position: absolute; inset: -26rem; z-index: -1; pointer-events: none; background: var(--on-primary); opacity: 0.07; -webkit-mask: url("/assets/brand/pattern-books.png") 0 0 / 20rem 20rem repeat; mask: url("/assets/brand/pattern-books.png") 0 0 / 20rem 20rem repeat; animation: pattern-drift 160s linear infinite; }
 /* a soft gold glow that follows the corner */
 .auth-hero::after { content: ""; position: absolute; right: -8rem; bottom: -8rem; z-index: -1; width: 20rem; height: 20rem; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--accent) 45%, transparent), transparent 70%); animation: pulse-glow 7s ease-in-out infinite; }
+/* Night theme: the side panel is a deep plum with cream words and one warm gold accent. (It used to borrow the gold
+   button colour as a whole panel with lavender words on top, which was harsh to look at.) */
+:root[data-theme="night"] .auth-hero {
+  --on-primary: #f1e6d4;
+  --accent: #e8b968;
+  --primary-edge: #120d19;
+  background: linear-gradient(160deg, color-mix(in srgb, #2b2238 94%, transparent), color-mix(in srgb, #130e1a 97%, transparent)), url("/assets/brand/campus.webp") center / cover;
+}
+:root[data-theme="night"] .auth-hero::after { opacity: 0.55; }
+:root[data-theme="night"] .auth-hero__icon { background: color-mix(in srgb, #f1e6d4 10%, transparent); }
 .auth-hero__top { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .auth-hero__home { display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1) var(--space-3); border-radius: 999px; color: var(--on-primary); background: color-mix(in srgb, var(--on-primary) 12%, transparent); font-size: var(--fs-sm); font-weight: 700; text-decoration: none; transition: background-color var(--dur-1) ease, transform var(--dur-1) ease; }
 .auth-hero__home:hover { color: var(--on-primary); background: color-mix(in srgb, var(--on-primary) 22%, transparent); transform: translateX(-2px); }

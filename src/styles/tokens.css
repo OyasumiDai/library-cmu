@@ -1,7 +1,8 @@
 /* Design tokens: sizes, motion and layers. Colours live in themes.css. */
 :root {
-  --font-body: "Pixelify Sans", ui-monospace, "Cascadia Mono", system-ui, sans-serif;
-  --font-display: "Daydream", "Pixelify Sans", ui-monospace, monospace;
+  --font-body: "Nico Clean", system-ui, "Segoe UI", sans-serif;
+  --font-display: "Nico Paint", "Nico Clean", system-ui, sans-serif;
+  --font-mono: "Nico Clean Mono", ui-monospace, "Cascadia Mono", monospace;
   --fs-root: 16px;
   --fs-2xs: 0.72rem;
   --fs-xs: 0.82rem;

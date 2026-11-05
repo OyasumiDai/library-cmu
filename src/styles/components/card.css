@@ -5,7 +5,9 @@
 .card__footer { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-4); }
 .card--flush { padding: 0; overflow: hidden; }
 
-.badge { display: inline-flex; align-items: center; gap: var(--space-1); padding: 0 var(--space-2); min-height: 1.45rem; font-size: var(--fs-xs); font-weight: 700; background: var(--surface-3); color: var(--text); border-radius: 999px; }
+/* A badge is a rounded label. It stays one tidy line when it can, and when a long name has to wrap it grows into a
+   rounded box with real padding and line spacing, so the words never touch or cross its edge. */
+.badge { display: inline-flex; align-items: center; gap: var(--space-1); box-sizing: border-box; max-width: 100%; min-width: 0; padding: 0.18rem var(--space-2); min-height: 1.45rem; font-size: var(--fs-xs); font-weight: 700; line-height: 1.3; text-align: left; overflow-wrap: anywhere; background: var(--surface-3); color: var(--text); border-radius: 0.8rem; }
 .badge--success { background: var(--success-bg); color: var(--success); }
 .badge--danger { background: var(--danger-bg); color: var(--danger); }
 .badge--warning { background: var(--warning-bg); color: var(--warning); }

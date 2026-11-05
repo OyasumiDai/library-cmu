@@ -3,8 +3,8 @@
 // borrow, cancel, approve, change settings or read anyone else's data.
 import crypto from "node:crypto";
 
-export const TOOL_NAMES = ["search_books", "book_status", "my_loans", "my_notifications", "library_info", "staff_summary", "staff_find_loan"];
-export const STAFF_TOOLS = new Set(["staff_summary", "staff_find_loan"]);
+export const TOOL_NAMES = ["search_books", "book_status", "my_loans", "my_notifications", "library_info", "staff_summary", "staff_find_loan", "staff_overdue"];
+export const STAFF_TOOLS = new Set(["staff_summary", "staff_find_loan", "staff_overdue"]);
 const TOKEN_MINUTES = 10;
 
 const keyOf = (secret) => crypto.createHash("sha256").update(String(secret)).digest();
@@ -84,6 +84,12 @@ export async function runTool({ tool, args = {}, claims, base, anon }) {
       const rows = (await rpc("staff_loans", { p_statuses: ["requested", "borrowed"], p_limit: 300 })) ?? [];
       const hits = rows.filter((l) => !q || `${l.username} ${l.full_name} ${l.title} ${l.student_id}`.toLowerCase().includes(q)).slice(0, 5);
       return { loans: hits.map((l) => ({ id: l.id, title: l.title, student: l.username, status: l.status, due_at: l.due_at })), note: "At most 5 open loans. Staff confirm pickups with Scan pickup." };
+    }
+    case "staff_overdue": {
+      const rows = (await rpc("staff_loans", { p_statuses: ["borrowed"], p_limit: 300 })) ?? [];
+      const now = Date.now();
+      const late = rows.filter((l) => l.due_at && new Date(l.due_at).getTime() < now).map((l) => ({ student: l.username, title: l.title, due_at: l.due_at, days_late: Math.ceil((now - new Date(l.due_at).getTime()) / 86400000) })).sort((a, b) => b.days_late - a.days_late);
+      return { total_overdue: late.length, most_overdue: late.slice(0, 5), note: "Top 5 only. Add [[view:overdue]] to the reply so the full table opens for the staff member." };
     }
     default:
       return { error: "unknown_tool" };

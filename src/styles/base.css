@@ -39,7 +39,7 @@ a:hover { color: var(--primary-hover); }
 img { max-width: 100%; height: auto; }
 ul, ol { margin: 0 0 var(--space-4); padding-left: 1.3em; }
 li { margin-bottom: var(--space-1); }
-code, kbd { font-family: var(--font-body); background: var(--surface-3); padding: 0 var(--space-1); border-radius: 4px; }
+code, kbd { font-family: var(--font-mono); background: var(--surface-3); padding: 0 var(--space-1); border-radius: 4px; }
 
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 button, input, select, textarea { font: inherit; color: inherit; }

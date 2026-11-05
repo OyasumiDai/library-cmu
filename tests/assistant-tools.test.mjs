@@ -63,6 +63,10 @@ const staffToken = sealToolToken({ at: "jwt", uid: "s1", role: "staff" }, SECRET
 assert.equal((await call({ "x-assistant-secret": SECRET }, { tool: "staff_summary", tool_token: staffToken })).out.waiting_requests, 2);
 assert.equal((await call({ "x-assistant-secret": SECRET }, { tool: "staff_find_loan", tool_token: staffToken, args: { query: "ann" } })).out.loans.length, 1);
 
+const late = (await call({ "x-assistant-secret": SECRET }, { tool: "staff_overdue", tool_token: staffToken })).out;
+assert.equal(late.total_overdue, 0, "only borrowed loans past their due date count");
+assert.equal((await call({ "x-assistant-secret": SECRET }, { tool: "staff_overdue", tool_token: token })).out.error, "staff_only");
+
 // the assistant function hands n8n the sealed token and never the raw login token
 process.env.ASSISTANT_WEBHOOK_URL = "http://webhook.test/hook";
 const before = calls.length;
