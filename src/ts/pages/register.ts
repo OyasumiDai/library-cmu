@@ -27,47 +27,170 @@ function markStep(n: number): void {
   });
 }
 
+const CODE_LENGTH = 6;
+const wait = (ms: number) => new Promise<void>((done) => setTimeout(done, ms));
+
 // step 3 of joining: the 6-digit code that was emailed
 function showConfirm(email: string): void {
   markStep(3);
+  const head = document.querySelector(".auth-panel__head");
+  if (head) head.innerHTML = html`<h1 id="authTitle">Check your email</h1><p class="text-soft">One last step and your library account is ready.</p>`.value;
   qs("#registerNotice").innerHTML = html`
-    <form class="form" id="confirmForm" novalidate>
-      <div class="alert alert--success px px--success" role="status">${icon("mail")}<span>We sent a code to <strong>${email}</strong>. It can take a minute. Check your spam folder too.</span></div>
-      <div class="field" data-field="code"><label class="field__label" for="f-confirm-code">Code from the email</label><input class="input input--code" id="f-confirm-code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="000000" required><span class="field__error"></span></div>
-      <button class="btn btn--block" type="submit">Confirm my email</button>
-      <div class="cluster cluster--between"><button class="link-button" type="button" id="resendConfirm" disabled>Resend code</button><a class="link-button" href="/login">I already confirmed</a></div>
-    </form>`.value;
+    <div class="verify">
+      <div class="verify__intro">
+        <span class="verify__badge" aria-hidden="true">${icon("mail", "icon--lg")}</span>
+        <p class="verify__lead">Enter the ${String(CODE_LENGTH)}-digit code we sent to <strong class="verify__email">${email}</strong></p>
+      </div>
+      <form class="verify__form" id="confirmForm" novalidate>
+        <div class="field" data-field="code">
+          <label class="visually-hidden" for="f-confirm-code">Code from the email</label>
+          <div class="otp" id="otp">
+            <input class="otp__input" id="f-confirm-code" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="10" required aria-describedby="verifyStatus">
+            <div class="otp__slots" id="otpSlots" aria-hidden="true"></div>
+          </div>
+          <span class="field__error"></span>
+        </div>
+        <button class="btn btn--block" type="submit" id="confirmBtn">Verify email</button>
+        <p class="verify__status" id="verifyStatus" role="status" aria-live="polite">The code works for one hour.</p>
+      </form>
+      <div class="verify__help">
+        <p>${icon("info", "icon--sm")} Not in your inbox? Check spam or promotions. It can take a minute to arrive.</p>
+        <div class="cluster cluster--between"><button class="link-button" type="button" id="resendConfirm" disabled>Resend code</button><a class="link-button" href="/login">I already confirmed</a></div>
+      </div>
+    </div>`.value;
+
   const confirmForm = qs<HTMLFormElement>("#confirmForm");
   const input = qs<HTMLInputElement>("#f-confirm-code");
+  const otp = qs("#otp");
+  const slots = qs("#otpSlots");
+  const status = qs("#verifyStatus");
+  const button = qs<HTMLButtonElement>("#confirmBtn");
   const resend = qs<HTMLButtonElement>("#resendConfirm");
+  let verifying = false;
+  let lastTried = "";
+
+  // the boxes only mirror the one real input, so paste and the phone's code autofill keep working
+  const paint = () => {
+    const value = input.value;
+    const count = Math.max(CODE_LENGTH, value.length);
+    const focused = document.activeElement === input;
+    slots.replaceChildren(...Array.from({ length: count }, (_, i) => {
+      const slot = document.createElement("span");
+      slot.className = "otp__slot";
+      slot.style.setProperty("--i", String(i));
+      slot.textContent = value[i] ?? "";
+      if (value[i]) slot.classList.add("is-filled");
+      if (focused && !verifying && i === Math.min(value.length, count - 1)) slot.classList.add("is-active");
+      return slot;
+    }));
+  };
+  const clean = (text: string) => text.replace(/\D/g, "").slice(0, 10);
+  const toEnd = () => { const n = input.value.length; input.setSelectionRange(n, n); };
+
+  input.addEventListener("input", () => {
+    input.value = clean(input.value);
+    otp.classList.remove("is-error");
+    setFieldError(confirmForm, "code", "");
+    paint();
+    // a full code checks itself; no need to press the button
+    if (input.value.length === CODE_LENGTH && input.value !== lastTried) confirmForm.requestSubmit();
+  });
+  input.addEventListener("paste", (event) => {
+    event.preventDefault();
+    if (verifying) return;
+    input.value = clean(event.clipboardData?.getData("text") ?? "");
+    input.dispatchEvent(new Event("input"));
+  });
+  input.addEventListener("focus", () => { toEnd(); paint(); });
+  input.addEventListener("blur", paint);
+  input.addEventListener("click", toEnd);
+  input.addEventListener("keyup", toEnd);
+  otp.addEventListener("animationend", (event) => { if (event.animationName === "otp-shake") otp.classList.remove("is-error"); });
+  paint();
   input.focus();
-  input.addEventListener("input", () => { input.value = input.value.replace(/\D/g, "").slice(0, 10); });
-  input.addEventListener("paste", (event) => { event.preventDefault(); input.value = (event.clipboardData?.getData("text") ?? "").replace(/\D/g, "").slice(0, 10); });
 
   // sign-up just sent the first code, so the wait starts now (and grows with each resend)
   const cooldown = resendCooldown(resend, "signup", email);
   if (!cooldown.left()) cooldown.sent();
   resend.addEventListener("click", async () => {
     try {
-      if (await cooldown.run(() => resendSignupCode(email))) ok("A new code was sent. Codes can take a minute to arrive.");
+      if (await cooldown.run(() => resendSignupCode(email))) {
+        ok("A new code was sent. Codes can take a minute to arrive.");
+        status.textContent = "New code sent. Only the newest code works.";
+        input.value = "";
+        lastTried = "";
+        paint();
+        input.focus();
+      }
     } catch (error) {
       fail(serverWait(error) ? "Too many codes asked for. Please wait for the timer, then try again." : friendly(error));
     }
   });
 
+  const setBusy = (on: boolean) => {
+    verifying = on;
+    otp.classList.toggle("is-verifying", on);
+    input.readOnly = on;
+    button.disabled = on;
+    button.classList.toggle("is-loading", on);
+    button.textContent = on ? "Verifying" : "Verify email";
+    paint();
+  };
+
   confirmForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    clearErrors(confirmForm);
-    if (input.value.length < 6) return setFieldError(confirmForm, "code", "Type the code from the email (6 to 10 digits).");
-    await busy(confirmForm.querySelector("button[type=submit]"), async () => {
-      try {
-        await confirmSignupCode(email, input.value);
-        location.href = "/catalog";
-      } catch (error) {
-        setFieldError(confirmForm, "code", /expired|invalid|token/i.test(friendly(error)) ? "That code is wrong or has expired. Check it or ask for a new one." : friendly(error));
-      }
-    });
+    if (verifying) return;
+    const code = input.value;
+    if (code.length < CODE_LENGTH) {
+      otp.classList.add("is-error");
+      setFieldError(confirmForm, "code", `Type all ${CODE_LENGTH} digits from the email.`);
+      input.focus();
+      return;
+    }
+    lastTried = code;
+    setFieldError(confirmForm, "code", "");
+    setBusy(true);
+    status.textContent = "Checking your code...";
+    try {
+      // keep the check on screen long enough to see, even when the server answers quickly
+      await Promise.all([confirmSignupCode(email, code), wait(700)]);
+    } catch (error) {
+      setBusy(false);
+      otp.classList.add("is-error");
+      const message = friendly(error);
+      setFieldError(confirmForm, "code", /expired|invalid|token/i.test(message) ? "That code is wrong or has expired. Check it or ask for a new one." : message);
+      status.textContent = "Try again, or ask for a new code.";
+      input.value = "";
+      paint();
+      input.focus();
+      return;
+    }
+    // the boxes turn green one by one, then the welcome card takes over
+    otp.classList.remove("is-verifying");
+    otp.classList.add("is-success");
+    button.classList.remove("is-loading");
+    button.textContent = "Verified";
+    status.textContent = "Code accepted.";
+    markStep(4);
+    await wait(900);
+    showVerified();
   });
+}
+
+// the account is ready: a check mark draws itself, then on to the catalog
+function showVerified(): void {
+  const next = "/catalog";
+  const head = document.querySelector(".auth-panel__head");
+  if (head) head.innerHTML = html`<h1 id="authTitle">You are all set</h1><p class="text-soft">Welcome to the library.</p>`.value;
+  qs("#registerNotice").innerHTML = html`
+    <div class="verified" role="status">
+      <svg class="verified__check" viewBox="0 0 52 52" aria-hidden="true"><circle class="verified__ring" cx="26" cy="26" r="23"/><path class="verified__tick" d="M15 27l7 7 15-16"/></svg>
+      <h2 class="verified__title">Email confirmed</h2>
+      <p class="verified__text">Your account is ready. Taking you to the catalog...</p>
+      <div class="verified__bar" aria-hidden="true"><span></span></div>
+      <a class="btn btn--block" href="${next}">Go to the catalog now</a>
+    </div>`.value;
+  setTimeout(() => { location.href = next; }, 2600);
 }
 
 boot(async () => {

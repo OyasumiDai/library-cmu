@@ -398,6 +398,64 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
 .input-reveal__btn[aria-pressed="true"]::after { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1); }
 
 /* narrow screens: the brand side shrinks to a banner on top and the page scrolls normally */
+
+/* sign-up step 3: the emailed code (register.ts showConfirm / showVerified) */
+.verify { display: grid; gap: var(--space-5, 1.5rem); animation: step-in var(--dur-3) var(--ease-soft) both; }
+.verify__intro { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--surface-2); border: var(--border) solid var(--line); border-radius: var(--radius); }
+.verify__badge { position: relative; flex: none; display: grid; place-items: center; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: var(--primary); color: var(--on-primary); animation: pop var(--dur-3) var(--ease-bounce) both; }
+.verify__badge::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--primary); animation: verify-ping 2.4s var(--ease-soft) 0.6s infinite; }
+.verify__lead { margin: 0; color: var(--text-soft); font-size: var(--fs-sm); line-height: var(--lh-body); }
+.verify__email { display: block; color: var(--ink); font-size: var(--fs-md); overflow-wrap: anywhere; }
+.verify__form { display: grid; gap: var(--space-3); }
+.verify__status { margin: 0; min-height: 1.3em; text-align: center; color: var(--text-soft); font-size: var(--fs-xs); transition: color var(--dur-2) ease; }
+.verify__help { display: grid; gap: var(--space-3); padding-top: var(--space-4); border-top: var(--border) solid var(--line); }
+.verify__help p { margin: 0; color: var(--text-soft); font-size: var(--fs-xs); }
+
+/* six boxes drawn over one real input */
+.otp { position: relative; }
+.otp__input {
+  position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0;
+  font-size: 16px; color: transparent; caret-color: transparent; background: transparent; cursor: text;
+}
+.otp__slots { display: flex; justify-content: center; gap: clamp(0.35rem, 1.5vw, 0.75rem); }
+.otp__slot {
+  display: grid; place-items: center; flex: 1 1 0; max-width: 3.6rem; aspect-ratio: 5 / 6; min-width: 0;
+  background: var(--field-bg); color: var(--ink); border: var(--border-bold, 2px) solid var(--field-edge); border-radius: var(--radius-sm);
+  font-size: var(--fs-xl); font-weight: 800; font-variant-numeric: tabular-nums;
+  transition: border-color var(--dur-1) ease, box-shadow var(--dur-1) ease, background-color var(--dur-2) ease, color var(--dur-2) ease, transform var(--dur-2) var(--ease-bounce);
+}
+.otp:hover .otp__slot { border-color: var(--line-strong); }
+.otp__slot.is-filled { border-color: var(--primary); animation: otp-pop var(--dur-2) var(--ease-bounce); }
+.otp__slot.is-active { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent); }
+.otp__slot.is-active:empty::after { content: ""; width: 2px; height: 45%; background: var(--primary); animation: otp-caret 1s steps(1) infinite; }
+
+/* checking: the digits ripple left to right */
+.otp.is-verifying .otp__slot { border-color: var(--primary); animation: otp-wave 1s var(--ease-soft) infinite; animation-delay: calc(var(--i, 0) * 90ms); }
+.otp.is-verifying ~ .field__error, .otp.is-verifying .otp__input { pointer-events: none; }
+/* wrong code: a shake and red edges */
+.otp.is-error { animation: otp-shake 0.42s ease; }
+.otp.is-error .otp__slot, .field.is-invalid .otp__slot { border-color: var(--danger); }
+/* right code: each box turns green in turn */
+.otp.is-success .otp__slot { animation: otp-done var(--dur-3) var(--ease-bounce) both; animation-delay: calc(var(--i, 0) * 70ms); }
+
+/* done: a check mark draws itself, then a bar fills while we move on */
+.verified { display: grid; justify-items: center; gap: var(--space-3); padding: var(--space-5, 1.5rem) 0; text-align: center; animation: rise var(--dur-3) var(--ease-soft) both; }
+.verified__check { width: 5.5rem; height: 5.5rem; fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; animation: pop var(--dur-3) var(--ease-bounce) both; }
+.verified__ring { stroke: var(--success); fill: var(--success-bg); stroke-dasharray: 145; stroke-dashoffset: 145; animation: verify-draw 0.6s var(--ease-soft) 0.1s forwards; }
+.verified__tick { stroke: var(--success); stroke-dasharray: 40; stroke-dashoffset: 40; animation: verify-draw 0.4s var(--ease-soft) 0.6s forwards; }
+.verified__title { margin: var(--space-2) 0 0; font-size: var(--fs-xl); color: var(--ink); }
+.verified__text { margin: 0; color: var(--text-soft); font-size: var(--fs-sm); }
+.verified__bar { width: min(16rem, 100%); height: 6px; margin: var(--space-2) 0; border-radius: 999px; background: var(--line); overflow: hidden; }
+.verified__bar span { display: block; height: 100%; background: var(--success); transform-origin: left; animation: meter-fill 2.4s linear 0.2s both; }
+
+@keyframes verify-ping { 0% { opacity: 0.7; transform: scale(1); } 70%, 100% { opacity: 0; transform: scale(1.55); } }
+@keyframes verify-draw { to { stroke-dashoffset: 0; } }
+@keyframes otp-pop { 0% { transform: scale(0.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes otp-caret { 50% { opacity: 0; } }
+@keyframes otp-wave { 0%, 100% { transform: translateY(0); background: var(--field-bg); } 40% { transform: translateY(-5px); background: color-mix(in srgb, var(--primary) 10%, var(--field-bg)); } }
+@keyframes otp-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+@keyframes otp-done { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); border-color: var(--success); background: var(--success-bg); color: var(--success); } }
+
 @media (max-width: 51.99rem) {
   .auth-split, .auth-split--wide { grid-template-columns: minmax(0, 1fr); height: auto; }
   .auth-hero { gap: var(--space-3); container-type: normal; }
