@@ -3,6 +3,7 @@
 // the crest, a status pill, a book card, and a QR code in a frame. Built with tables and inline styles because
 // email apps (Gmail, Outlook, phone mail) ignore most CSS.
 import QRCode from "qrcode";
+import { PNG } from "pngjs";
 import { logoBuffer } from "./_logo.mjs";
 
 // the website's colours (Library Blue theme)
@@ -96,8 +97,35 @@ export function otpBlock(code, caption) {
 }
 
 export async function qrPng(text) {
-  // pure black on white with a wide quiet zone, drawn large: phone screens, glare and dark-mode email apps still scan it
-  return QRCode.toBuffer(text, { type: "png", errorCorrectionLevel: "M", margin: 4, width: 600, color: { dark: "#000000", light: "#ffffff" } });
+  // pure black on white with a wide quiet zone, drawn large: phone screens, glare and dark-mode email apps still scan it.
+  // The highest error correction (H, 30%) leaves room for the library crest in the middle, the same as the ticket on the site.
+  const code = await QRCode.toBuffer(text, { type: "png", errorCorrectionLevel: "H", margin: 4, width: 600, color: { dark: "#000000", light: "#ffffff" } });
+  return withCrest(code);
+}
+
+// email apps cannot lay one picture over another, so the crest is drawn into the QR picture itself:
+// a white rounded badge in the middle (about 6% of the code) with the crest scaled smoothly inside it
+export function withCrest(qrBuffer) {
+  const qr = PNG.sync.read(qrBuffer);
+  const logo = PNG.sync.read(logoBuffer());
+  const size = Math.round(qr.width * 0.2), x0 = (qr.width - size) >> 1, y0 = (qr.height - size) >> 1, radius = size * 0.22;
+  const put = (x, y, r, g, b, a) => {
+    const i = (y * qr.width + x) * 4, k = a / 255;
+    qr.data[i] = Math.round(r * k + qr.data[i] * (1 - k)); qr.data[i + 1] = Math.round(g * k + qr.data[i + 1] * (1 - k)); qr.data[i + 2] = Math.round(b * k + qr.data[i + 2] * (1 - k)); qr.data[i + 3] = 255;
+  };
+  for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+    const dx = Math.max(radius - x, x - (size - 1 - radius), 0), dy = Math.max(radius - y, y - (size - 1 - radius), 0);
+    if (dx * dx + dy * dy <= radius * radius) put(x0 + x, y0 + y, 255, 255, 255, 255);
+  }
+  const inner = Math.round(size * 0.82), off = (size - inner) >> 1, step = logo.width / inner;
+  const at = (x, y, c) => logo.data[(Math.min(logo.height - 1, y) * logo.width + Math.min(logo.width - 1, x)) * 4 + c];
+  for (let y = 0; y < inner; y++) for (let x = 0; x < inner; x++) {
+    // bilinear sample of the crest
+    const sx = (x + 0.5) * step - 0.5, sy = (y + 0.5) * step - 0.5, fx = Math.max(0, Math.floor(sx)), fy = Math.max(0, Math.floor(sy)), tx = Math.max(0, sx - fx), ty = Math.max(0, sy - fy);
+    const px = [0, 1, 2, 3].map((c) => (at(fx, fy, c) * (1 - tx) + at(fx + 1, fy, c) * tx) * (1 - ty) + (at(fx, fy + 1, c) * (1 - tx) + at(fx + 1, fy + 1, c) * tx) * ty);
+    if (px[3] > 0) put(x0 + off + x, y0 + off + y, px[0], px[1], px[2], px[3]);
+  }
+  return PNG.sync.write(qr);
 }
 
 // ---------------------------------------------------------------- several books in one email
