@@ -8,6 +8,7 @@ import { checkPassword, watchPassword } from "../core/password";
 import { fail, ok } from "../core/toast";
 import { capsLockHint, heroTips, revealToggle } from "../ui/authSplit";
 import { clearErrors, setFieldError } from "../ui/components";
+import { searchableSelect } from "../ui/combobox";
 import { agreeToTerms } from "../ui/terms";
 import type { Course } from "../types";
 
@@ -101,6 +102,8 @@ boot(async () => {
     major.disabled = !!chosen && chosen.majors.length === 0;
     for (const m of chosen?.majors ?? []) major.append(new Option(m, m));
   });
+  // gender, course, major and year level: type to narrow the list instead of scrolling it
+  for (const select of [qs<HTMLSelectElement>("#f-gender"), course, major, year]) searchableSelect(select);
 
   const username = qs<HTMLInputElement>("#f-username");
   const password = qs<HTMLInputElement>("#f-password");
