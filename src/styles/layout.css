@@ -87,17 +87,16 @@ body.app { display: block; }
 .shell .site-main > .container { padding-inline: 0; max-width: 76rem; margin-inline: auto; }
 .shell .site-main > .container--narrow { max-width: 58rem; }
 
-/* the fold button sits on top of the crest: hovering the logo swaps the crest for it */
-.sidebar__head { position: relative; }
+/* the fold button sits at the top right of the sidebar, beside the brand; on the collapsed rail it takes the crest's place on hover */
+.sidebar__head { position: relative; padding-right: 2.4rem; }
 .sidebar-fold {
-  position: absolute; top: 50%; left: var(--space-2); transform: translateY(-50%);
-  display: grid; place-items: center; width: 2.6rem; height: 2.6rem; padding: 0;
-  background: var(--sidebar-hi); border: 0; border-radius: var(--radius-sm); color: var(--sidebar-strong); cursor: pointer;
-  opacity: 0; pointer-events: none; transition: opacity var(--dur-1) ease;
+  position: absolute; top: var(--space-2); right: 0;
+  display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0;
+  background: transparent; border: 0; border-radius: var(--radius-sm); color: var(--sidebar-text); cursor: pointer;
+  transition: background-color var(--dur-1) ease, color var(--dur-1) ease, opacity var(--dur-1) ease;
 }
+.sidebar-fold:hover, .sidebar-fold:focus-visible { background: var(--sidebar-hi); color: var(--sidebar-strong); }
 .sidebar-fold .icon { transition: transform var(--dur-2) var(--ease-soft); }
-.sidebar__head:hover .sidebar-fold, .sidebar-fold:focus-visible { opacity: 1; pointer-events: auto; }
-.sidebar__head:hover .brand__mark, .sidebar__head:has(.sidebar-fold:focus-visible) .brand__mark { opacity: 0; }
 
 /* collapsed (wide screens only): an icon rail */
 .shell { transition: grid-template-columns var(--dur-2) var(--ease-soft); }
@@ -105,9 +104,13 @@ body.app { display: block; }
   .sidebar-collapsed .shell { grid-template-columns: 4.5rem minmax(0, 1fr); }
   .sidebar-collapsed .sidebar { padding-inline: var(--space-2); }
   .sidebar-collapsed .sidebar__foot { margin-inline: calc(-1 * var(--space-2)); padding-inline: var(--space-2); }
-  .sidebar-collapsed .brand { justify-content: center; padding-inline: 0; }
-  .sidebar-collapsed .brand__text, .sidebar-collapsed .nav-link span { display: none; }
-  .sidebar-collapsed .sidebar-fold { left: 50%; transform: translate(-50%, -50%); }
+  /* only the sidebar's brand folds: the header on public pages keeps its title */
+  .sidebar-collapsed .sidebar .brand { justify-content: center; padding-inline: 0; }
+  .sidebar-collapsed .sidebar .brand__text, .sidebar-collapsed .nav-link span { display: none; }
+  .sidebar-collapsed .sidebar__head { padding-right: 0; }
+  .sidebar-collapsed .sidebar-fold { top: 50%; right: auto; left: 50%; transform: translate(-50%, -50%); width: 2.6rem; height: 2.6rem; background: var(--sidebar-hi); color: var(--sidebar-strong); opacity: 0; pointer-events: none; }
+  .sidebar-collapsed .sidebar__head:hover .sidebar-fold, .sidebar-collapsed .sidebar-fold:focus-visible { opacity: 1; pointer-events: auto; }
+  .sidebar-collapsed .sidebar__head:hover .brand__mark, .sidebar-collapsed .sidebar__head:has(.sidebar-fold:focus-visible) .brand__mark { opacity: 0; }
   .sidebar-collapsed .sidebar-fold .icon { transform: rotate(180deg); }
   .sidebar-collapsed .nav-group__label { display: none; }
   .sidebar-collapsed .nav-link { justify-content: center; padding-inline: 0; }
