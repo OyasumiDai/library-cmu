@@ -139,12 +139,12 @@ boot(async () => {
     qr: async (el) => {
       const loan = el.dataset.id ? loans.find((l) => l.id === Number(el.dataset.id)) : loans.find((l) => l.pickup_code && (l.status === "requested" || l.status === "borrowed"));
       if (!loan?.pickup_code) return;
-      const image = await QRCode.toDataURL(`${location.origin}/pickup?c=${loan.pickup_code}`, { margin: 1, width: 360, errorCorrectionLevel: "M", color: { dark: "#0b1f5c", light: "#ffffff" } });
+      const image = await QRCode.toDataURL(`${location.origin}/pickup?c=${loan.pickup_code}`, { margin: 1, width: 360, errorCorrectionLevel: "H", color: { dark: "#0b1f5c", light: "#ffffff" } });
       const mine = loans.filter((l) => l.status === "requested" || l.status === "borrowed");
       const profile = current().profile!;
       openModal("My library ticket", html`<div class="qr-modal ticket">
         <p class="ticket__who"><strong>${profile.full_name || profile.username}</strong>${profile.student_id ? html` · ID ${profile.student_id}` : ""}</p>
-        <img src="${image}" alt="QR code for ${loan.pickup_code}"><span class="qr-modal__code mono">${loan.pickup_code}</span>
+        <div class="qr-mark"><img class="qr-mark__code" src="${image}" alt="QR code for ${loan.pickup_code}"><img class="qr-mark__logo" src="/assets/brand/cmu-library-crest.png" alt="" width="96" height="96"></div><span class="qr-modal__code mono">${loan.pickup_code}</span>
         <p class="text-soft">Walk in to the library and show this at the desk. Staff scan it once for all your books.</p>
         <ul class="list ticket__books">${mine.map((l) => { const line = ticketLine(l); return html`<li class="list__item"><div class="list__body"><p class="list__title">${l.book?.title ?? "Book"}</p><p class="list__meta"><span class="badge badge--${line.tone}">${line.text}</span></p></div></li>`; })}</ul></div>`, { footer: html`<button class="btn" type="button" data-close>Done</button>` });
     },

@@ -115,7 +115,11 @@ button.person-card { cursor: pointer; }
 .scan-result__cover { width: 5rem; flex: none; }
 .mono { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: 0.08em; }
 .qr-modal { display: grid; justify-items: center; gap: var(--space-3); text-align: center; }
-.qr-modal img { width: min(18rem, 100%); height: auto; padding: var(--space-3); background: #fff; border: 3px solid var(--sidebar-bg); border-radius: var(--radius); image-rendering: pixelated; }
+/* the library crest sits in the middle of the QR code: the code uses the highest error correction (H, 30%),
+   so a badge covering about 5% of it still scans */
+.qr-mark { position: relative; width: min(18rem, 100%); }
+.qr-mark__code { display: block; width: 100%; height: auto; padding: var(--space-3); background: #fff; border: 3px solid var(--sidebar-bg); border-radius: var(--radius); image-rendering: pixelated; }
+.qr-mark__logo { position: absolute; top: 50%; left: 50%; width: 22%; height: auto; aspect-ratio: 1; padding: 3%; object-fit: contain; background: #fff; border-radius: 22%; box-shadow: 0 0 0 3px #fff; transform: translate(-50%, -50%); }
 .qr-modal__code { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
 
 /* ------------------------------------------------------------- dashboard and analytics */
