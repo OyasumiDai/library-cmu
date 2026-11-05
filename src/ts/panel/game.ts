@@ -33,7 +33,7 @@ export const gameTab: PanelTab = {
     const title = settingText(s, "game_title", "CMU Virtual Library");
 
     mount(root, html`<div class="panel__tab">
-      <div class="panel__heading"><h2>Game</h2><a class="btn btn--accent" href="/arcade">${icon("game")} Play the game</a></div>
+      <div class="panel__heading"><h2>Game</h2></div>
       <div class="grid grid--2">
         <form class="card px form" id="detailsForm">
           <h3>Details</h3><p class="text-soft">What students read on the Game page.</p>

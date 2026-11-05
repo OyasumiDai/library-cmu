@@ -43,6 +43,15 @@ boot(async () => {
   typewriter(tagline, tagline.dataset.text ?? "");
   if (!isConfigured()) return;
 
+  // the search box on the home page: guests are asked to sign in, then land on the results
+  qs<HTMLFormElement>("#quickSearch").addEventListener("submit", (event) => {
+    event.preventDefault();
+    const form = event.currentTarget as HTMLFormElement;
+    const text = (form.elements.namedItem("q") as HTMLInputElement).value.trim();
+    const kind = (form.elements.namedItem("filter") as HTMLSelectElement).value;
+    const target = `/catalog?${new URLSearchParams({ ...(text ? { q: text } : {}), ...(kind === "available" ? { availability: "available" } : {}) })}`;
+    location.href = isMember() ? target : `/login?next=${encodeURIComponent(target)}`;
+  });
   if (isMember()) welcomeBack();
 
   const [books, cats, news, stats, people, settings] = await Promise.all([featuredBooks(4), categories(), announcements(3), publicStats(), team(), publicSettings()]);
