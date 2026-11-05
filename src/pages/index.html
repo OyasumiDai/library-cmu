@@ -10,13 +10,11 @@
       <a class="btn btn--lg hero__ghost" href="/login">Sign in</a>
     </div>
     <div class="hero-stats" id="heroStats" aria-live="polite"></div>
-    <form class="quick-search" id="quickSearch" role="search">
-      <label class="visually-hidden" for="qsFilter">Search by</label>
-      <select class="select" id="qsFilter" name="filter"><option value="all">All</option><option value="genre">By genre</option><option value="category">By category</option><option value="available">Available now</option></select>
-      <label class="visually-hidden" for="qsText">Search the catalog</label>
-      <input class="input" id="qsText" name="q" type="search" placeholder="Search the catalog (sign in to see results)" autocomplete="off">
-      <button class="btn" type="submit"><svg class="icon"><use href="/assets/icons/icons.svg#search"/></svg> Search</button>
-    </form>
+    <nav class="hero-paths" aria-label="Explore the library">
+      <a class="hero-path" href="#books"><span class="hero-path__icon"><svg class="icon"><use href="/assets/icons/icons.svg#book"/></svg></span><span class="hero-path__text"><strong>Browse books</strong><small>New on the shelves</small></span><svg class="icon hero-path__go"><use href="/assets/icons/icons.svg#chevron-right"/></svg></a>
+      <a class="hero-path" href="#game"><span class="hero-path__icon"><svg class="icon"><use href="/assets/icons/icons.svg#game"/></svg></span><span class="hero-path__text"><strong>The library game</strong><small>Walk the halls</small></span><svg class="icon hero-path__go"><use href="/assets/icons/icons.svg#chevron-right"/></svg></a>
+      <a class="hero-path" href="#news"><span class="hero-path__icon"><svg class="icon"><use href="/assets/icons/icons.svg#news"/></svg></span><span class="hero-path__text"><strong>Library news</strong><small>Hours and updates</small></span><svg class="icon hero-path__go"><use href="/assets/icons/icons.svg#chevron-right"/></svg></a>
+    </nav>
   </div>
 </section>
 
