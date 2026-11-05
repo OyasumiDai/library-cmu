@@ -61,3 +61,6 @@
 /* the small picture slots: an empty frame for now */
 .shot__frame--art { aspect-ratio: 3 / 2; border: 0; background: transparent; border-radius: var(--radius); overflow: hidden; }
 .shot__frame--art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* the controls screenshots show whole, at their own shape; a very tall one is shrunk to fit, not cut */
+.shot__frame.shot__frame--fit, .gp-pic .shot__frame.shot__frame--fit { aspect-ratio: auto; display: grid; place-items: center; background: var(--tint); }
+.shot__frame--fit img { width: auto; max-width: 100%; height: auto; max-height: 34rem; object-fit: contain; }
