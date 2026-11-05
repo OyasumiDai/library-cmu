@@ -445,8 +445,17 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
 .complete-banner { justify-content: space-between; align-items: center; margin-bottom: var(--space-4); }
 .site-footer__info { display: grid; gap: var(--space-1); padding-top: var(--space-5); font-size: var(--fs-sm); color: var(--sidebar-text); }
 .site-footer__info strong { color: var(--sidebar-strong); }
-.quick-search { display: grid; grid-template-columns: minmax(8rem, 11rem) 1fr auto; gap: var(--space-2); padding: var(--space-3); margin-top: var(--space-4); max-width: 40rem; background: var(--surface); border-radius: var(--radius); box-shadow: 0 16px 36px -18px rgba(0, 0, 0, 0.45); animation: rise var(--dur-4) var(--ease-soft) 480ms both; }
-@media (max-width: 38rem) { .quick-search { grid-template-columns: 1fr; } }
+/* the three quick links under the hero buttons: glass cards that jump to the books, the game and the news */
+.hero-paths { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); width: 100%; max-width: 48rem; margin-top: var(--space-4); animation: rise var(--dur-4) var(--ease-soft) 480ms both; }
+.hero-path { display: flex; align-items: center; gap: var(--space-3); min-width: 0; padding: var(--space-3); color: #fff; text-decoration: none; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: var(--radius); backdrop-filter: blur(6px); transition: background-color var(--dur-2) ease, border-color var(--dur-2) ease, transform var(--dur-2) var(--ease-soft); }
+.hero-path:hover, .hero-path:focus-visible { background: rgba(255, 255, 255, 0.22); border-color: rgba(255, 255, 255, 0.55); color: #fff; transform: translateY(-2px); }
+.hero-path__icon { display: grid; place-items: center; flex: none; width: 2.4rem; height: 2.4rem; border-radius: var(--radius-sm); background: var(--accent); color: var(--on-accent); }
+.hero-path__text { display: grid; min-width: 0; line-height: 1.25; }
+.hero-path__text strong { font-size: var(--fs-sm); }
+.hero-path__text small { font-size: var(--fs-xs); color: #e4ecff; opacity: 0.85; }
+.hero-path__go { flex: none; margin-left: auto; opacity: 0.7; transition: transform var(--dur-2) var(--ease-soft), opacity var(--dur-2) ease; }
+.hero-path:hover .hero-path__go, .hero-path:focus-visible .hero-path__go { opacity: 1; transform: translateX(3px); }
+@media (max-width: 44rem) { .hero-paths { grid-template-columns: 1fr; max-width: 26rem; } }
 .hero-stats { display: flex; flex-wrap: wrap; gap: var(--space-5); margin-top: var(--space-3); color: #e4ecff; }
 .hero-stats strong { display: block; font-size: var(--fs-xl); color: #fff; line-height: 1.1; }
 .hero-stats span { font-size: var(--fs-xs); opacity: 0.85; }
