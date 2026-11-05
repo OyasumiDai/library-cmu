@@ -104,8 +104,9 @@ body.app { display: block; }
   .sidebar-collapsed .shell { grid-template-columns: 4.5rem minmax(0, 1fr); }
   .sidebar-collapsed .sidebar { padding-inline: var(--space-2); }
   .sidebar-collapsed .sidebar__foot { margin-inline: calc(-1 * var(--space-2)); padding-inline: var(--space-2); }
-  .sidebar-collapsed .brand { justify-content: center; padding-inline: 0; }
-  .sidebar-collapsed .brand__text, .sidebar-collapsed .nav-link span { display: none; }
+  /* only the sidebar's brand folds: the header on public pages keeps its title */
+  .sidebar-collapsed .sidebar .brand { justify-content: center; padding-inline: 0; }
+  .sidebar-collapsed .sidebar .brand__text, .sidebar-collapsed .nav-link span { display: none; }
   .sidebar-collapsed .sidebar__head { padding-right: 0; }
   .sidebar-collapsed .sidebar-fold { top: 50%; right: auto; left: 50%; transform: translate(-50%, -50%); width: 2.6rem; height: 2.6rem; background: var(--sidebar-hi); color: var(--sidebar-strong); opacity: 0; pointer-events: none; }
   .sidebar-collapsed .sidebar__head:hover .sidebar-fold, .sidebar-collapsed .sidebar-fold:focus-visible { opacity: 1; pointer-events: auto; }
