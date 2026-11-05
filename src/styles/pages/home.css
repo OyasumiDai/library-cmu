@@ -21,6 +21,11 @@
 .hero__crest img { position: relative; display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.4)); animation: crest-float 5s ease-in-out infinite; }
 @keyframes crest-float { 0%, 100% { transform: translateY(0) rotate(-2deg); } 50% { transform: translateY(-18px) rotate(2deg); } }
 @keyframes crest-shadow { 0%, 100% { transform: scaleX(1); opacity: 0.9; } 50% { transform: scaleX(0.75); opacity: 0.5; } }
+/* desktop: the words, buttons, cards and crest sit higher in the picture, with more room under the cards */
+@media (min-width: 62.01rem) {
+  .hero__content { padding-bottom: 5rem; }
+  .hero__crest { top: 0; bottom: 5rem; }
+}
 /* on tablets and phones the crest floats above the words, centred, and the words move down to make room */
 @media (max-width: 62rem) {
   .hero { --crest-m: clamp(8rem, 30vw, 11rem); }
