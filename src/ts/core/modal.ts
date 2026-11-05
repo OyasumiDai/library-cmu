@@ -21,13 +21,17 @@ export function openModal(title: string, body: Safe | string, options: { wide?: 
       ${footer ? new Safe(`<div class="modal__foot">${footer}</div>`) : ""}
     </div>`.value;
   document.body.appendChild(backdrop);
+  // only the middle of the window scrolls; if the browser scrolls the backdrop or the window frame
+  // (focusing a hidden file input, a picker closing), put them straight back so nothing slides off screen
+  const modalEl = backdrop.querySelector<HTMLElement>(".modal")!;
+  for (const el of [backdrop, modalEl]) el.addEventListener("scroll", () => { if (el.scrollTop || el.scrollLeft) el.scrollTo(0, 0); });
   document.body.classList.add("has-modal");
 
   const close = () => {
     document.removeEventListener("keydown", onKey);
     backdrop.remove();
     if (!document.querySelector(".modal-backdrop")) document.body.classList.remove("has-modal");
-    previous?.focus();
+    previous?.focus({ preventScroll: true });
   };
   const onKey = (event: KeyboardEvent) => {
     if (event.key === "Escape") close();
