@@ -1,0 +1,170 @@
+%% CMU Library Explorer: entity relationship diagram (Supabase / PostgreSQL, schema "public").
+%% Built from the website's code and the tools/*.sql files. Check it against supabase/site.sql, which holds the full schema.
+erDiagram
+    AUTH_USERS ||--|| PROFILES : "has one"
+    PROFILES ||--o{ LOANS : "borrows"
+    BOOKS ||--o{ LOANS : "is lent in"
+    BOOKS ||--o{ BOOK_COPIES : "has copies"
+    LOANS ||--o{ LOAN_EMAILS : "reminders sent"
+    PROFILES ||--o{ LOAN_EMAILS : "sends"
+    BOOKS ||--o{ MOVEMENTS : "stock changes"
+    PROFILES |o--o{ MOVEMENTS : "records"
+    PROFILES ||--o{ NOTIFICATIONS : "receives"
+    PROFILES ||--o{ USER_ACTIVITY : "does"
+    BOOKS |o--o{ USER_ACTIVITY : "about"
+    PROFILES |o--o{ AUDIT_LOG : "acts in"
+    PROFILES |o--o{ BOOKS : "submits / reviews"
+    COURSES ||..o{ PROFILES : "course chosen (by name)"
+
+    AUTH_USERS {
+        uuid id PK
+        text email
+        timestamptz email_confirmed_at
+        jsonb raw_user_meta_data
+    }
+    PROFILES {
+        uuid id PK, FK "auth.users"
+        text username UK
+        text full_name
+        text email
+        text role "student | staff | admin"
+        text student_id
+        text gender
+        text course
+        text major
+        text college
+        text year_level
+        text phone
+        text photo_url
+        text terms_version
+        timestamptz terms_accepted_at
+        boolean active
+        text_array permissions
+        timestamptz created_at
+    }
+    BOOKS {
+        text id PK
+        text isbn UK
+        text title
+        text author "one line: A, B and C"
+        text_array authors
+        text edition
+        text category
+        text genre
+        text published
+        text publisher
+        text language
+        text synopsis
+        int copies
+        text shelf
+        text cover_url
+        text material "circulation | fiction"
+        int obsolete_year
+        boolean archived
+        text archive_location
+        text archive_reason
+        timestamptz archived_at
+        text approval_status "approved | pending | revision"
+        text review_note
+        uuid submitted_by FK
+        uuid reviewed_by FK
+        timestamptz reviewed_at
+        timestamptz created_at
+    }
+    BOOK_COPIES {
+        text code PK "ISBN-01"
+        text book_id FK
+        int copy_no
+        timestamptz created_at
+    }
+    LOANS {
+        bigint id PK
+        text book_id FK
+        uuid user_id FK
+        text status "requested | borrowed | returned | rejected | cancelled"
+        text pickup_code "QR ticket"
+        timestamptz requested_at
+        timestamptz borrowed_at
+        timestamptz due_at
+        timestamptz returned_at
+        text note
+    }
+    LOAN_EMAILS {
+        bigint id PK
+        bigint loan_id FK
+        text kind "overdue | due_soon | general"
+        uuid sent_by FK
+        timestamptz sent_at
+    }
+    MOVEMENTS {
+        bigint id PK
+        text book_id FK
+        text action "checkout | return | acquisition | withdrawal"
+        int quantity
+        text remarks
+        uuid actor_id FK
+        timestamptz created_at
+    }
+    NOTIFICATIONS {
+        bigint id PK
+        uuid user_id FK
+        text title
+        text message
+        text type
+        boolean is_read
+        timestamptz created_at
+    }
+    USER_ACTIVITY {
+        bigint id PK
+        uuid user_id FK
+        text type "request | checkout | return | read"
+        text book_id FK
+        jsonb details
+        timestamptz created_at
+    }
+    AUDIT_LOG {
+        bigint id PK
+        uuid actor_id FK
+        text action
+        text module
+        text details
+        timestamptz created_at
+    }
+    COURSES {
+        int id PK
+        text college
+        text program
+        text code
+        text_array majors
+        int sort
+    }
+    ANNOUNCEMENTS {
+        bigint id PK
+        text title
+        text body
+        boolean published
+        timestamptz created_at
+    }
+    CONTENT_PAGES {
+        text slug PK
+        text title
+        jsonb body
+        timestamptz updated_at
+    }
+    TEAM_MEMBERS {
+        int id PK
+        text team_group
+        text name
+        text position
+        text email
+        text photo_url
+        text character
+        text bio
+        int display_order
+        boolean is_active
+    }
+    SITE_SETTINGS {
+        text key PK
+        jsonb value "loan_rules, holidays, game_page..."
+        timestamptz updated_at
+    }
