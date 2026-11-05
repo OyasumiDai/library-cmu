@@ -27,9 +27,14 @@ function lock(message: string, title: string): void {
 
 boot(async () => {
   // this page has no sidebar: the back button returns to the library
-  const back = document.querySelector<HTMLAnchorElement>(".auth-back");
-  if (back) { back.href = "/catalog"; back.setAttribute("aria-label", "Back to the library"); back.lastChild!.textContent = " Back to the library"; }
   const profile = current().profile!;
+  const staff = profile.role !== "student";
+  // staff came from Game manage, so the back button takes them there
+  const back = document.querySelector<HTMLAnchorElement>(".auth-back");
+  if (back) {
+    const [href, label] = staff ? ["/panel?tab=game", "Back to Game manage"] : ["/catalog", "Back to the library"];
+    back.href = href; back.setAttribute("aria-label", label); back.lastChild!.textContent = ` ${label}`;
+  }
   const settings = await publicSettings();
   const status = settingText(settings, "game_status", "maintenance");
   const entry = settingText(settings, "game_entry", "/play/");
@@ -42,7 +47,9 @@ boot(async () => {
   qs("#stageWho").textContent = `Playing as ${profile.username} · ${role}`;
 
   const published = await gameIsPublished(entry);
-  if (status !== "online") return lock("The library game is closed for a little while. Everything else on the site works as usual.", "Under maintenance");
+  // staff and admins may test a published game while it is closed to students
+  if (status !== "online" && staff && published) qs("#posterText").textContent = "Students cannot enter yet. You can still test the game as staff.";
+  else if (status !== "online") return lock("The library game is closed for a little while. Everything else on the site works as usual.", "Under maintenance");
   if (!published) return lock("The game is on its way and is not published yet. Browsing and borrowing books already work.", "Coming soon");
 
   const newTab = qs<HTMLAnchorElement>("#newTab");
