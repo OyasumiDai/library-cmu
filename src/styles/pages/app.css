@@ -307,11 +307,12 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
   box-shadow: 0 1px 2px var(--shadow), 0 30px 70px -34px var(--shadow);
   animation: pop var(--dur-3) var(--ease-soft) both;
 }
-.auth-split--wide { grid-template-columns: minmax(0, 0.72fr) minmax(0, 1.28fr); width: min(72rem, 100%); height: min(42rem, calc(100dvh - 2 * var(--auth-pad))); }
+.auth-split--wide { grid-template-columns: minmax(20rem, 0.9fr) minmax(0, 1.1fr); width: min(78rem, 100%); height: min(42rem, calc(100dvh - 2 * var(--auth-pad))); }
 
 .auth-hero {
-  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-5);
+  position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; gap: var(--space-5);
   padding: clamp(1.25rem, 3vw, 2.25rem); color: var(--on-primary);
+  container-type: size; /* its parts drop out by the height it has, below, instead of squeezing on top of each other */
   background: linear-gradient(160deg, color-mix(in srgb, var(--primary) 90%, transparent), color-mix(in srgb, var(--primary-edge) 96%, transparent)), url("/assets/brand/campus.webp") center / cover;
 }
 /* the book pattern again, light on blue, drifting slowly */
@@ -324,7 +325,9 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
 /* the crest and name, just above "Library Explorer" */
 .auth-hero__brand { display: inline-flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); font-family: var(--font-display); font-size: var(--fs-lg); letter-spacing: 0.04em; white-space: nowrap; }
 .auth-hero__crest { width: 3.5rem; height: 3.5rem; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); animation: bob 4s ease-in-out infinite; }
-.auth-hero__body { min-height: 0; }
+/* each part keeps its own height; the tips sit at the bottom with a clear gap above them */
+.auth-hero__top, .auth-hero__body { flex: none; }
+.auth-hero__tips { flex: none; margin-top: auto; }
 .auth-hero__kicker { margin: 0 0 var(--space-2); color: var(--accent); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; }
 .auth-hero__title { margin: 0 0 var(--space-5); color: var(--on-primary); font-size: clamp(1.35rem, 2.3vw, 1.95rem); font-weight: 700; line-height: var(--lh-tight); }
 .auth-hero__list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
@@ -381,9 +384,13 @@ body.auth-fit .site-main { padding: var(--auth-pad) var(--gutter); }
 .input-reveal__btn::after { content: ""; position: absolute; left: 50%; top: 50%; width: 1.3rem; height: 2px; background: currentColor; border-radius: 2px; transform: translate(-50%, -50%) rotate(-45deg) scaleX(0); transition: transform var(--dur-2) var(--ease-soft); }
 .input-reveal__btn[aria-pressed="true"]::after { transform: translate(-50%, -50%) rotate(-45deg) scaleX(1); }
 
+/* a short card: drop the tips first, then the last list items, so nothing ever overlaps */
+@container (max-height: 33.5rem) { .auth-hero__tips { display: none; } }
+@container (max-height: 27rem) { .auth-hero__list li:nth-child(n+3) { display: none; } }
 /* narrow screens: the brand side shrinks to a banner on top and the page scrolls normally */
 @media (max-width: 51.99rem) {
   .auth-split, .auth-split--wide { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .auth-hero { container-type: normal; }
   .auth-hero { gap: var(--space-3); }
   .auth-hero__list, .auth-hero__tips, .auth-hero__kicker { display: none; }
   .auth-hero__title { margin: 0; font-size: var(--fs-lg); }
