@@ -38,14 +38,8 @@
         "href": "/panel?tab=game",
         "page": "panel",
         "tab": "game",
-        "icon": "edit",
+        "icon": "game",
         "need": "game"
-      },
-      {
-        "label": "Play the game",
-        "href": "/arcade",
-        "page": "arcade",
-        "icon": "game"
       },
       {
         "label": "Announcements",
