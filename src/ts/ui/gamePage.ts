@@ -31,8 +31,10 @@ export function readGamePage(value: unknown): GamePage {
   };
 }
 
-const picture = (src: string | null, alt: string) =>
-  html`<div class="shot__frame shot__frame--art"><img src="${src ?? FRAME}" width="1500" height="1000" alt="${src ? alt : ""}" loading="lazy" decoding="async"></div>`;
+// fit: the whole picture shows at its own shape (the controls screenshots), instead of being cropped to 3:2
+export const frameClass = (fit: boolean, src: string | null): string => `shot__frame shot__frame--art${fit && src ? " shot__frame--fit" : ""}`;
+const picture = (src: string | null, alt: string, fit = false) =>
+  html`<div class="${frameClass(fit, src)}"><img src="${src ?? FRAME}" width="1500" height="1000" alt="${src ? alt : ""}" loading="lazy" decoding="async"></div>`;
 
 // "T or Enter" -> <kbd>T</kbd> or <kbd>Enter</kbd>; "W A S D" -> four keys; a word like "Mouse" stays plain text
 const KEY_NAMES = /^([a-z0-9]|shift|space|enter|tab|esc|ctrl|alt|backspace|delete|up|down|left|right|f\d{1,2}|[←→↑↓])$/i;
@@ -53,12 +55,12 @@ export function controlsHtml(page: GamePage): Safe {
   return html`
     <div class="card px controls" data-reveal>
       <h3>${page.controls.title}</h3>
-      ${page.controls.image ? picture(page.controls.image, page.controls.title) : ""}
+      ${page.controls.image ? picture(page.controls.image, page.controls.title, true) : ""}
       <dl class="keys">${page.controls.keys.filter((k) => k.keys || k.action).map((k) => html`<dt>${keyCaps(k.keys)}</dt><dd>${k.action}</dd>`)}</dl>
     </div>
     <div class="card px controls" data-reveal>
       <h3>${page.phone.title}</h3>
-      ${picture(page.phone.image, page.phone.title)}
+      ${picture(page.phone.image, page.phone.title, true)}
       <p class="text-soft">${page.phone.text}</p>
     </div>`;
 }

@@ -5,7 +5,7 @@ import { actions, html, icon, mount, raw, type Safe } from "../core/dom";
 import { friendly } from "../core/errors";
 import { confirmBox } from "../core/modal";
 import { fail, ok } from "../core/toast";
-import { DEFAULT_GAME_PAGE, controlsHtml, featuresHtml, readGamePage, type GamePage } from "../ui/gamePage";
+import { DEFAULT_GAME_PAGE, controlsHtml, frameClass, featuresHtml, readGamePage, type GamePage } from "../ui/gamePage";
 
 const MAX_FEATURES = 12;
 const MAX_KEYS = 16;
@@ -24,9 +24,9 @@ export function mountGamePageEditor(root: HTMLElement, saved: unknown, canEdit: 
   const off = canEdit ? "" : raw("disabled");
 
   // a picture slot: preview, choose / remove; the path says which picture ("features.2", "controls", "phone")
-  const pictureSlot = (path: string, src: string | null, optional = false): Safe => html`
+  const pictureSlot = (path: string, src: string | null, optional = false, fit = false): Safe => html`
     <div class="gp-pic">
-      <div class="shot__frame shot__frame--art">${src ? html`<img src="${src}" alt="">` : html`<div class="shot__ph">${icon("image", "icon--lg")}<span>${optional ? "No picture (optional)" : "No picture yet"}</span></div>`}</div>
+      <div class="${frameClass(fit, src)}">${src ? html`<img src="${src}" alt="">` : html`<div class="shot__ph">${icon("image", "icon--lg")}<span>${optional ? "No picture (optional)" : "No picture yet"}</span></div>`}</div>
       ${canEdit ? html`<div class="cluster">
         <label class="btn btn--sm btn--secondary">${icon("upload")} ${src ? "Change" : "Add"} picture<input class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" data-pic="${path}"></label>
         ${src ? html`<button class="btn btn--sm btn--quiet" type="button" data-action="drop-pic" data-path="${path}">Remove</button>` : ""}</div>` : ""}
@@ -56,7 +56,7 @@ export function mountGamePageEditor(root: HTMLElement, saved: unknown, canEdit: 
       <div class="grid grid--2">
         <section class="card px px--soft gp-controls">
           <div class="field"><label class="field__label" for="gp-ct">Heading</label><input class="input" id="gp-ct" maxlength="40" value="${page.controls.title}" data-path="controls.title" ${off}></div>
-          ${pictureSlot("controls", page.controls.image, true)}
+          ${pictureSlot("controls", page.controls.image, true, true)}
           <div class="gp-keys">${page.controls.keys.map((k, i) => html`<div class="gp-key">
             <input class="input" aria-label="Keys" placeholder="W A S D, or T or Enter" maxlength="30" value="${k.keys}" data-path="controls.keys.${i}.keys" ${off}>
             <input class="input" aria-label="What it does" placeholder="What it does" maxlength="60" value="${k.action}" data-path="controls.keys.${i}.action" ${off}>
@@ -66,7 +66,7 @@ export function mountGamePageEditor(root: HTMLElement, saved: unknown, canEdit: 
         </section>
         <section class="card px px--soft gp-controls">
           <div class="field"><label class="field__label" for="gp-pt">Heading</label><input class="input" id="gp-pt" maxlength="40" value="${page.phone.title}" data-path="phone.title" ${off}></div>
-          ${pictureSlot("phone", page.phone.image)}
+          ${pictureSlot("phone", page.phone.image, false, true)}
           <div class="field"><label class="field__label" for="gp-px">Text</label><textarea class="textarea" id="gp-px" rows="3" maxlength="300" data-path="phone.text" ${off}>${page.phone.text}</textarea></div>
         </section>
       </div>
