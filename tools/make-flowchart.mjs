@@ -7,7 +7,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const width = 1740, height = 2360;
+const width = 1740, height = 2530;
 const C = { primary: "#0a2e9c", edge: "#061c63", ink: "#14204a", tint: "#dfe8fb", soft: "#eef2fc", accent: "#f5a800", grey: "#5b6584", yes: "#2E8540", no: "#B3261E" };
 const T = 70; // everything sits below the title
 
@@ -51,8 +51,8 @@ term(X, T + 40, "Start");
 proc(X, T + 140, 280, 56, ["Open CMU Library Explorer", "(website landing page)"]);
 dec(X, T + 270, 240, 120, ["Has a library", "account?"]);
 io(X, T + 410, 300, 62, ["Enter email and password"]);
-dec(X, T + 540, 240, 120, ["Credentials", "valid?"]);
-proc(560, T + 540, 230, 70, ["Count failed try;", "lock sign-in after", "too many tries"]);
+dec(X, T + 540, 250, 124, ["Credentials valid", "and account", "active?"]);
+proc(560, T + 540, 230, 70, ["Count failed try;", "lock sign-in for a", "while after too many"]);
 dec(X, T + 680, 220, 110, ["User role?"]);
 line([[X, T + 66], [X, T + 112]]);
 line([[X, T + 168], [X, T + 210]]);
@@ -64,17 +64,15 @@ yes([[X, T + 600], [X, T + 625]], { dx: 26, dy: 0 });
 
 // registration (right of the spine)
 const R = 1380;
-io(R, T + 270, 300, 62, ["Enter account & student details", "(username, ID, course, year)"]);
-proc(R, T + 380, 290, 56, ["Send 6-digit verification code", "to the student's email"]);
+io(R, T + 270, 320, 62, ["Enter Registration Details (username,", "name, ID, course, major, year)"]);
+proc(R, T + 380, 290, 56, ["Agree to the Terms; email a", "6-digit verification code"]);
 dec(R, T + 500, 230, 110, ["Code", "correct?"]);
 proc(R, T + 620, 240, 56, ["Create the account"]);
-db(1630, T + 620, 140, 74, ["D1 User", "Accounts"]);
-no([[X + 120, T + 270], [R - 168, T + 270]], { dy: -14 });
+no([[X + 120, T + 270], [R - 178, T + 270]], { dy: -14 });
 line([[R, T + 301], [R, T + 352]]);
 line([[R, T + 408], [R, T + 445]]);
 no([[R + 115, T + 500], [1610, T + 500], [1610, T + 380], [R + 145, T + 380]], { dy: -14 });
 yes([[R, T + 555], [R, T + 592]], { dx: 26, dy: 0 });
-line([[R + 120, T + 620], [1560, T + 620]], { dashed: true, arrow: true });
 line([[R - 120, T + 620], [1090, T + 620], [1090, T + 410], [X + 168, T + 410]], { label: "Account ready", tone: C.primary, at: 1, dx: 62, dy: 0 });
 
 // ---------------------------------------------------------------- the student (left column)
@@ -88,38 +86,37 @@ line([[G, cy + 28], [G, sy - 42]]);
 line([[G, sy + 42], [G, sy + 125], [S + 115, sy + 125]]);
 line([[S, cy + 60], [S, sy - 28]], { label: "Website", tone: C.primary, dx: 40, dy: 0 });
 proc(S, sy, 280, 56, ["Search and filter the catalog"]);
-db(140, sy, 150, 74, ["D2 Books", "& Copies"]);
 dec(S, sy + 125, 230, 110, ["Book", "available?"]);
 proc(S, sy + 250, 290, 60, ["Request the book", "(on the website or in the game)"]);
 proc(S, sy + 355, 320, 84, ["Reserve a copy and make the QR", "ticket (shown in My books and", "in the game) and email it"]);
-db(140, sy + 355, 150, 74, ["D3 Loans", "& Movements"]);
-dec(S, sy + 490, 250, 120, ["Picked up within", "2 days?"]);
-proc(140, sy + 490, 210, 84, ["Request cancelled", "by itself; book goes", "back on the shelf"]);
-proc(S, sy + 630, 320, 84, ["Desk scans the QR: book checked", "out, due date set (Fiction 5 days,", "Circulation 3 days)"]);
-dec(S, sy + 775, 250, 120, ["Returned by", "the due date?"]);
-proc(730, sy + 775, 220, 84, ["Overdue: fine for each", "late weekday, email", "reminders"]);
-proc(S, sy + 905, 300, 62, ["Return the book at the desk;", "staff record the return"]);
+dec(S, sy + 490, 250, 120, ["Student cancels", "the request?"]);
+dec(S, sy + 660, 250, 120, ["Picked up within", "2 days?"]);
+proc(140, sy + 505, 210, 104, ["Request cancelled", "(by the student or", "after 2 days); copy", "back; email sent"]);
+proc(S, sy + 800, 320, 84, ["Desk scans the QR: book checked", "out, due date set (Fiction 5 days,", "Circulation 3 days)"]);
+dec(S, sy + 945, 250, 120, ["Returned by", "the due date?"]);
+proc(730, sy + 945, 230, 84, ["Overdue: fine for each", "late weekday shown in", "My books; email reminder"]);
+proc(S, sy + 1075, 320, 62, ["Return the book at the desk; staff", "record it; receipt emailed"]);
 line([[X - 110, T + 680], [S, T + 680], [S, cy - 60]], { label: "Student", tone: C.primary, at: 0, dy: -14 });
-line([[215, sy - 8], [S - 140, sy - 8]], { dashed: true });
 line([[S, sy + 28], [S, sy + 70]]);
 no([[S - 115, sy + 125], [258, sy + 125], [258, sy + 18], [S - 140, sy + 18]], { dy: -14 });
 yes([[S, sy + 180], [S, sy + 220]], { dx: 26, dy: 0 });
 line([[S, sy + 280], [S, sy + 313]]);
-line([[S - 160, sy + 355], [215, sy + 355]], { dashed: true });
 line([[S, sy + 397], [S, sy + 430]]);
-no([[S - 125, sy + 490], [245, sy + 490]], { dy: -14 });
-yes([[S, sy + 550], [S, sy + 588]], { dx: 26, dy: 0 });
-line([[S, sy + 672], [S, sy + 715]]);
-no([[S + 125, sy + 775], [620, sy + 775]], { dy: -14 });
-line([[730, sy + 817], [730, sy + 905], [S + 150, sy + 905]]);
-yes([[S, sy + 835], [S, sy + 874]], { dx: 26, dy: 0 });
+yes([[S - 125, sy + 490], [245, sy + 490]], { dy: -14 });
+no([[S, sy + 550], [S, sy + 600]], { dx: 26, dy: -4 });
+no([[S - 125, sy + 660], [290, sy + 660], [290, sy + 530], [245, sy + 530]], { dy: -14 });
+yes([[S, sy + 720], [S, sy + 758]], { dx: 26, dy: 0 });
+line([[S, sy + 842], [S, sy + 885]]);
+no([[S + 125, sy + 945], [615, sy + 945]], { dy: -14 });
+line([[730, sy + 987], [730, sy + 1075], [S + 160, sy + 1075]]);
+yes([[S, sy + 1005], [S, sy + 1044]], { dx: 26, dy: 0 });
 
 // ---------------------------------------------------------------- staff and admins (right column)
 const F = 1300, fy = T + 820;
 proc(F, fy, 260, 56, ["Open the staff dashboard"]);
 dec(F, fy + 125, 230, 110, ["Choose a", "module"]);
-const mods = [["Books:", "add, edit,", "archive, approve"], ["Circulation:", "requests, QR", "pickups, returns"], ["Students:", "profiles,", "notices"], ["Reports &", "analytics,", "CSV downloads"], ["Settings &", "staff", "(admin only)"]];
-const mw = 140, mg = 10, mx0 = F - ((mods.length - 1) * (mw + mg)) / 2, my = fy + 290;
+const mods = [["Books: add, edit,", "archive; approve", "(admin)"], ["Circulation:", "pending requests,", "QR pickup, returns"], ["Records:", "circulation &", "movements"], ["Reports (Excel)", "& analytics", "dashboard"], ["Users &", "permissions, audit", "trail (admin)"]];
+const mw = 148, mg = 8, mx0 = F - ((mods.length - 1) * (mw + mg)) / 2, my = fy + 290;
 line([[X + 110, T + 680], [F, T + 680], [F, fy - 28]], { label: "Staff / Admin", tone: C.primary, at: 0, dy: -14 });
 line([[F, fy + 28], [F, fy + 70]]);
 line([[F, fy + 180], [F, fy + 215]], { arrow: false });
@@ -131,27 +128,25 @@ mods.forEach((m, i) => {
   line([[mx, my + 46], [mx, fy + 375]], { arrow: false });
 });
 line([[mx0, fy + 375], [mx0 + (mods.length - 1) * (mw + mg), fy + 375]], { arrow: false });
-proc(F, fy + 460, 300, 62, ["Save the change and record", "it in the audit trail"]);
-db(1630, fy + 460, 150, 74, ["D6 Settings", "& Audit Log"]);
+proc(F, fy + 460, 300, 62, ["Save any change and record", "it in the audit trail"]);
 dec(F, fy + 600, 230, 110, ["More tasks?"]);
 line([[F, fy + 375], [F, fy + 429]]);
-line([[F + 150, fy + 460], [1555, fy + 460]], { dashed: true });
 line([[F, fy + 491], [F, fy + 545]]);
 yes([[F + 115, fy + 600], [1712, fy + 600], [1712, fy + 125], [F + 115, fy + 125]], { dy: -14 });
 
 // ---------------------------------------------------------------- the end
-const ey = sy + 1030;
+const ey = sy + 1200;
 proc(X, ey, 240, 56, ["Log out"]);
 term(X, ey + 100, "End");
-line([[140, sy + 532], [140, ey], [S, ey]], { arrow: false });
-line([[S, sy + 936], [S, ey], [X - 120, ey]]);
+line([[140, sy + 557], [140, ey], [S, ey]], { arrow: false });
+line([[S, sy + 1106], [S, ey], [X - 120, ey]]);
 no([[F, fy + 655], [F, ey], [X + 120, ey]], { dx: 26, dy: 0 });
 line([[X, ey + 28], [X, ey + 74]]);
 
 // legend
 const lg = [[`<rect x="0" y="-13" width="44" height="26" rx="13" fill="${C.primary}"/>`, "Start / End"], [`<rect x="0" y="-13" width="44" height="26" rx="4" fill="#fff" stroke="${C.primary}" stroke-width="2"/>`, "Process"],
-  [`<polygon points="22,-15 44,0 22,15 0,0" fill="${C.tint}" stroke="${C.primary}" stroke-width="2"/>`, "Decision"], [`<polygon points="8,-13 48,-13 40,13 0,13" fill="${C.soft}" stroke="${C.primary}" stroke-width="2"/>`, "Input / Output"],
-  [`<rect x="0" y="-15" width="44" height="30" rx="8" fill="#fff8e6" stroke="${C.accent}" stroke-width="2"/>`, "Data store"], [`<path d="M0,0 H44" stroke="${C.accent}" stroke-width="2.2" stroke-dasharray="7 5"/>`, "Data read / saved"]];
+  [`<polygon points="22,-15 44,0 22,15 0,0" fill="${C.tint}" stroke="${C.primary}" stroke-width="2"/>`, "Decision"], [`<polygon points="8,-13 48,-13 40,13 0,13" fill="${C.soft}" stroke="${C.primary}" stroke-width="2"/>`, "Input / Output"]
+];
 const legend = lg.map(([icon, label], i) => `<g transform="translate(${60 + (i % 3) * 230},${height - 92 + Math.floor(i / 3) * 40})">${icon}<text x="60" y="0" font-size="14" font-weight="600" fill="${C.ink}" dominant-baseline="central">${label}</text></g>`).join("");
 
 const out = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" font-family="Segoe UI, Arial, sans-serif">

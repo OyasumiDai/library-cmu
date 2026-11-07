@@ -2,20 +2,16 @@
 
 This document explains the program flowcharts of the CMU Library Explorer, a web-based library catalog, book borrowing and circulation management system with a 2D-3D library game.
 
-Each flowchart follows one **data flow that goes into the system** in the Level 0 Data Flow Diagram (`dfd-level0.png`). The Level 0 diagram has 18 such inputs:
+Each flowchart follows one **data flow** in the Level 0 Data Flow Diagram (`dfd-level0.png`). The Level 0 diagram has **24 data flows**: 12 that go **into** the system (what the user enters) and 12 that come **out** of it (what the system gives back).
 
-| User | Inputs into the system | Flowcharts |
-|---|---|---|
-| Student | 7 | Registration Details, Login Credentials, View Catalog, Borrow Request, Request Cancellation, Profile & Account Updates, Game Access |
-| Library Staff | 6 | Login Credentials, Manage Book, Pickup QR Scan (Checkout), Book Returns, Loan Reminder Emails, Announcements & Site Content |
-| Administrator | 5 | Login Credentials, Book Approval Decisions, Staff Accounts & Permissions, Borrowing Rules & Settings, Report & Analytics Request |
+| User | Into the system (in) | Out to the user (out) | Total |
+|---|---|---|---|
+| Student | 5: Registration Details, Login Credentials, View Catalog, Borrow Request, Request Cancellation | 4: 2D-3D Library Game, Pickup QR Ticket, Due Dates & Overdue Fines, Notifications & Email Reminders | 9 |
+| Library Staff | 4: Login Credentials, Manage Book, Pickup QR Scan (Checkout), Book Returns | 4: Pending Borrow Requests, Circulation & Movement Records, Book Approval Results, Generated Reports | 8 |
+| Administrator | 3: Login Credentials, Book Manage Request, Manage Users & Permission | 4: Book Manage Request, Analytics Dashboard, Audit Trail Logs, Generated Reports | 7 |
+| **Total** | **12** | **12** | **24** |
 
-Each flowchart shows how the system handles that input:
-
-- what the user enters
-- the checks the system makes
-- the data stores it reads from or saves to
-- what it sends back to the user
+An **in** flowchart starts with what the user enters and shows the checks the system makes before it saves anything. An **out** flowchart shows how the system gathers and works out the information it sends back to the user.
 
 The data stores use the same numbers as the Level 1 Data Flow Diagram (`dfd-level1.png`).
 
@@ -32,7 +28,7 @@ The data stores use the same numbers as the Level 1 Data Flow Diagram (`dfd-leve
 | Gold cylinder | **Data store**: where data is kept (D1 to D6) |
 | Dashed gold line | Data being **read** from (arrow points to the process) or **saved** to (arrow points to the store) a data store |
 
-The main steps run down the middle. A **No** line that goes back up on the left side is a **loop**: the user corrects the input and the check runs again. Side branches on the right handle the other answer of a decision and then rejoin the main flow or go to End. Where two lines cross, the crossing line hops over the other one so they do not look joined.
+The main steps run down the middle. A **No** line that goes back up on the left side is a **loop**: the user corrects the input and the check runs again. Side branches on the right handle the other answer of a decision and then rejoin the main flow or go to End.
 
 **Data stores used**
 
@@ -42,450 +38,402 @@ The main steps run down the middle. A **No** line that goes back up on the left 
 | D2 | Books & Copies | Book records, copy codes, approval status and archive details |
 | D3 | Loans & Movements | Book requests, loans, due dates, returns and book movements |
 | D4 | Notifications & Announcements | In-app notifications, announcements and the email log |
-| D5 | User Activity | Activity and usage data used for reports and analytics |
+| D5 | User Activity | Activity and usage data, including report downloads |
 | D6 | Settings & Audit Log | Borrowing rules, site settings and the audit trail |
 
 ---
 
-# Part 1. Student
+# Part 1. Student (9 flowcharts)
 
-## Student 1 · Registration Details
+## Student 1 · Registration Details (in)
 
 ![Student 1 · Registration Details](program-flowcharts/student/1-registration-details.png)
 
-**Purpose.** A new student creates a library account. The same account is used on the website and in the 2D-3D library game.
-
-**Input.** Registration Details: username, email, password, student ID, course and year level.
+**Purpose.** A new student creates a library account. The same account is used on the website and in the game.
 
 **How it works**
 
-1. The system reads the registration setting from **D6 Settings & Audit Log**. If registration is closed, the system shows that it is closed and the flow ends.
-2. The student enters the registration details.
-3. **All fields valid and password strong?** If not, the errors are shown under the fields and the student enters the details again (loop).
-4. The system checks **D1 User Accounts** to make sure the username and email are not already taken. If either is taken, the student goes back to the form (loop).
-5. The system emails a **6-digit verification code** to the student.
-6. The student enters the code. **Code correct?** If not, the student enters it again (loop).
-7. The account and student profile are saved to **D1 User Accounts**.
-8. The system shows that the account is ready and takes the student to Sign in.
+1. The system reads the registration setting from **D6**. If registration is closed, it says so and the flow ends.
+2. The student enters the Registration Details: username, email, password, name, student ID, course, major and year level.
+3. **All fields valid and password strong?** If not, the student corrects them (loop).
+4. The system checks **D1** that the username and email are free. If not, back to the form (loop).
+5. **Agrees to the Terms and Conditions?** If not, no account is made and the flow ends.
+6. The system emails a 6-digit verification code. The student types it in; a wrong code is typed again (loop).
+7. The account and student profile are saved to **D1**, and the catalog opens.
 
-**Output.** A new student account, and the message that it is ready.
+**Data stores.** D6 (read), D1 (read, then save).
 
-**Data stores.** D6 (read the registration setting), D1 (check that the username and email are free, then save the new account).
-
-## Student 2 · Login Credentials
+## Student 2 · Login Credentials (in)
 
 ![Student 2 · Login Credentials](program-flowcharts/student/2-login-credentials.png)
 
-**Purpose.** A student signs in to use the library.
-
-**Input.** Login Credentials: email and password.
+**Purpose.** A student signs in.
 
 **How it works**
 
 1. The student enters the email and password.
-2. **Sign-in locked for this email?** After too many wrong passwords, sign-in for that email is locked for a while. If it is locked, the system shows the time left until the lock ends, and the flow ends.
-3. The system checks the email and password against **D1 User Accounts**.
-4. **Credentials valid?** If not, the failed try is counted (too many tries lock the sign-in) and the student enters the credentials again (loop).
-5. **Account active?** A disabled account cannot sign in. The system shows that the account is disabled, and the flow ends.
-6. The system starts the session and loads the student profile from D1.
-7. The student catalog (Discover) opens.
+2. **Sign-in locked for this email?** After too many wrong passwords the email is locked for a while; the time left is shown and the flow ends.
+3. The credentials are checked against **D1**. Wrong credentials are counted and the student tries again (loop).
+4. **Account active?** A disabled account cannot sign in.
+5. The session starts, the profile is loaded and the catalog (Discover) opens.
 
-**Output.** A signed-in session and the Discover page.
+**Data stores.** D1 (read).
 
-**Data stores.** D1 (read the account to check the credentials and load the profile).
-
-## Student 3 · View Catalog
+## Student 3 · View Catalog (in)
 
 ![Student 3 · View Catalog](program-flowcharts/student/3-view-catalog.png)
 
-**Purpose.** A student searches the catalog and looks at a book.
-
-**Input.** View Catalog: search words, subject and availability filter.
+**Purpose.** A student searches the catalog and opens a book.
 
 **How it works**
 
-1. The student enters search words, picks a subject and chooses an availability filter (all books, free now, all out).
-2. The system searches **D2 Books & Copies**.
-3. **Any books found?** If not, the system shows "Nothing matched" and suggests using fewer words, and the flow ends.
-4. The system shows the book cards with the number of copies free and the student's own status, for example "You requested this".
-5. **Open a book?** If the student does not open one, the flow ends.
-6. The system reads the book's details and copies free from D2.
-7. The system shows the book details: author, ISBN, shelf, loan period and availability.
+1. The student enters search words, a subject and availability.
+2. The system searches **D2**. If nothing matches, the student searches again (loop).
+3. The book cards show the copies free and the student's own status.
+4. **Open a book?** If yes, the details are read from D2: author, ISBN, shelf, loan period and availability.
 
-**Output.** View Catalog: the list of matching books and the details of the chosen book.
+**Data stores.** D2 (read).
 
-**Data stores.** D2 (read the books and copies).
-
-## Student 4 · Borrow Request
+## Student 4 · Borrow Request (in)
 
 ![Student 4 · Borrow Request](program-flowcharts/student/4-borrow-request.png)
 
-**Purpose.** A student reserves a book to pick up at the library. This works on the website and inside the 2D-3D library game.
-
-**Input.** Borrow Request: the student presses "Request to borrow".
+**Purpose.** A student asks to borrow a book, on the website or in the game.
 
 **How it works**
 
-1. The student presses Request to borrow on the website or in the game.
-2. The system counts the student's open loans and the copies free, using **D3 Loans & Movements**.
-3. **A copy free?** If no copy is free, the system shows that the book is not available, and the flow ends.
-4. **Under the borrowing limit and not already requested?** If the student already has the most books allowed, or already requested this book, the system shows the limit message, and the flow ends.
-5. The system reserves a copy and saves the loan as **requested** with a pickup code in D3.
-6. The system makes the **Pickup QR Ticket** and emails it to the student.
-7. The ticket is shown in My books and in the game. The student must pick up the book within 2 days.
+1. The student presses Request to borrow.
+2. The system counts the student's open loans and the copies free in **D3**.
+3. **A copy free?** and **Under the borrowing limit and not already requested?** If either is No, the reason is shown and the flow ends.
+4. A copy is reserved and the loan is saved as *requested* with a pickup code in **D3**.
+5. **Student 7 · Pickup QR Ticket** runs, then the request shows in My books with the 2-day pickup window.
 
-**Output.** Book Request and the Pickup QR Ticket (on screen and by email).
+**Data stores.** D3 (read, then save).
 
-**Data stores.** D3 (read the open loans, then save the new request).
-
-## Student 5 · Request Cancellation
+## Student 5 · Request Cancellation (in)
 
 ![Student 5 · Request Cancellation](program-flowcharts/student/5-request-cancellation.png)
 
-**Purpose.** A student cancels a book request they no longer need.
-
-**Input.** Request Cancellation: the student presses Cancel on a request in My books.
+**Purpose.** A student cancels a request before picking the book up.
 
 **How it works**
 
-1. The student opens My books and presses Cancel on a request.
-2. The system reads the loan from **D3 Loans & Movements**.
-3. **Still requested (not picked up)?** A book that was already picked up cannot be cancelled. The system shows that it can no longer be cancelled, and the flow ends.
-4. **Student confirms?** If the student does not confirm, nothing changes and the flow ends.
-5. The loan is marked **cancelled** in D3, and the copy goes back on the shelf for other students.
-6. The system emails a cancellation notice.
-7. The request now appears under History in My books.
+1. The student presses Cancel on a request in My books, and the loan is read from **D3**.
+2. **Still requested (not picked up)?** If not, it can no longer be cancelled.
+3. **Student confirms?** If not, nothing changes.
+4. The loan is marked cancelled in **D3** and the copy goes back on the shelf.
+5. A cancellation email is sent, and the request moves to History.
 
-**Output.** The cancelled request, a cancellation email, and the updated History.
+**Data stores.** D3 (read, then save).
 
-**Data stores.** D3 (read the loan, then save it as cancelled).
+## Student 6 · 2D-3D Library Game (out)
 
-## Student 6 · Profile & Account Updates
+![Student 6 · 2D-3D Library Game](program-flowcharts/student/6-2d-3d-library-game.png)
 
-![Student 6 · Profile & Account Updates](program-flowcharts/student/6-profile-and-account-updates.png)
-
-**Purpose.** A student keeps their profile and password up to date.
-
-**Input.** Profile & Account Updates.
+**Purpose.** The system gives the student the 2D-3D library game with the same account.
 
 **How it works**
 
-1. The student opens My profile.
-2. **Change the password?** If yes, the student enters the current password and the new one. The system checks the new password's strength and saves it to D1, and the flow ends.
-3. Otherwise the student edits their name, phone, gender, course, major, year level or photo.
-4. **Fields valid?** If not, the student corrects them (loop).
-5. The profile is saved to **D1 User Accounts**.
-6. The system shows that the profile is saved.
+1. The student opens the Game page and the game status is read from **D6**.
+2. **Game online and published?** If not, "Under maintenance" or "Coming soon" is shown.
+3. **Signed in?** If not, **Student 2 · Login Credentials** runs first.
+4. The student's name and books are loaded from **D1**, and the game opens with the same session.
+5. **Request a book in the game?** If yes, **Student 4 · Borrow Request** runs.
 
-**Output.** The updated profile or password.
+**Data stores.** D6 (read), D1 (read).
 
-**Data stores.** D1 (save the profile or the new password).
+## Student 7 · Pickup QR Ticket (out)
 
-## Student 7 · Game Access
+![Student 7 · Pickup QR Ticket](program-flowcharts/student/7-pickup-qr-ticket.png)
 
-![Student 7 · Game Access](program-flowcharts/student/7-game-access.png)
-
-**Purpose.** A student enters the 2D-3D library game with the same library account.
-
-**Input.** Game Access: the student opens the Game page.
+**Purpose.** The system gives the student the QR ticket to show at the desk.
 
 **How it works**
 
-1. The student opens the Game page.
-2. The system reads the game status from **D6 Settings & Audit Log**.
-3. **Game online and published?** If the game is under maintenance or not published yet, the system shows "Under maintenance" or "Coming soon", and the flow ends.
-4. **Signed in?** If not, the **Student 2 · Login Credentials** flowchart runs, and then the check is made again.
-5. The system loads the **2D-3D Library Game** with the same session, so the student does not sign in twice.
-6. In the game, the student walks to the librarian (NPC) or to a shelf.
-7. **Request a book in the game?** If yes, the **Student 4 · Borrow Request** flowchart runs, so the student can request a book and get the QR ticket inside the game.
+1. The student's requested loans and pickup code are read from **D3**.
+2. **Any request waiting for pickup?** If not, "No ticket yet" is shown.
+3. **Still within the 2-day pickup window?** If not, the request is cancelled, the copy goes back (D3) and an "expired" email is sent.
+4. The QR code is made from the pickup code.
+5. The ticket is shown in My books and in the game, and emailed. The student shows it at the desk.
 
-**Output.** The 2D-3D Library Game, and a Book Request if the student borrows in the game.
+**Data stores.** D3 (read; save when a request expires).
 
-**Data stores.** D6 (read the game status). The login and the request use D1 and D3 through the flowcharts they call.
+## Student 8 · Due Dates & Overdue Fines (out)
+
+![Student 8 · Due Dates & Overdue Fines](program-flowcharts/student/8-due-dates-and-overdue-fines.png)
+
+**Purpose.** The system shows the student when each book is due and any fine.
+
+**How it works**
+
+1. The student's borrowed books are read from **D3**. If there are none, "No books borrowed" is shown.
+2. The loan rules (days and daily fine for each material) and the holidays are read from **D6**.
+3. For each loan (loop): **Past the due date?** If No, the school days left are counted. If Yes, the late weekdays (not holidays) are multiplied by the daily fine.
+4. The Due Dates & Overdue Fines are shown in My books.
+
+**Data stores.** D3 (read), D6 (read).
+
+## Student 9 · Notifications & Email Reminders (out)
+
+![Student 9 · Notifications & Email Reminders](program-flowcharts/student/9-notifications-and-email-reminders.png)
+
+**Purpose.** The system tells the student about every change to their loans.
+
+**How it works**
+
+1. An event happens: a loan is requested, picked up, returned or declined, or a book is due soon or overdue.
+2. The loan and student are read from **D3**, and an in-app notification is saved to **D4**.
+3. **Already emailed about this event?** If not, the email is sent (ticket, receipt or reminder) and recorded in the email log in **D4**, so it is sent only once.
+4. The notification shows in Notifications and on the bell badge. When the student opens it, it is marked read.
+
+**Data stores.** D3 (read), D4 (save).
 
 ---
 
-# Part 2. Library Staff
+# Part 2. Library Staff (8 flowcharts)
 
-## Library Staff 1 · Login Credentials
+## Library Staff 1 · Login Credentials (in)
 
 ![Library Staff 1 · Login Credentials](program-flowcharts/library-staff/1-login-credentials.png)
 
-**Purpose.** A staff member signs in to the staff panel.
+**Purpose.** A staff member signs in. The steps are the same as Student 2, but the system also loads the staff role and permissions from **D1** and opens the staff dashboard with only the allowed tabs.
 
-**Input.** Login Credentials: email and password.
+**Data stores.** D1 (read).
 
-**How it works.** The steps are the same as **Student 2 · Login Credentials**:
-
-1. The lock check runs first.
-2. The credentials are checked against **D1 User Accounts**, and failed tries are counted.
-3. The account must be active.
-
-After a successful sign-in, the system loads the staff member's **role and permissions** and opens the **staff dashboard**. The dashboard only shows the tabs the staff member is allowed to use, for example Students or Reports.
-
-**Output.** A signed-in session and the staff dashboard.
-
-**Data stores.** D1 (read the account, role and permissions).
-
-## Library Staff 2 · Manage Book
+## Library Staff 2 · Manage Book (in)
 
 ![Library Staff 2 · Manage Book](program-flowcharts/library-staff/2-manage-book.png)
 
-**Purpose.** A staff member adds a new book, edits a book or archives one.
-
-**Input.** Manage Book.
+**Purpose.** Staff add, edit or archive a book.
 
 **How it works**
 
-1. The staff member chooses Add, Edit or Archive.
-2. **Archive?** If yes, the staff member chooses where the book is kept and why. The book is moved to the archive in D2, and the flow continues at the audit trail step.
-3. For Add or Edit, the staff member enters the details: ISBN, title, authors, edition, subject, copies and cover.
-4. **ISBN valid and not a duplicate?** If not, the staff member corrects the details (loop).
-5. **Copies not below those on loan?** The number of copies cannot be lower than the copies already borrowed. If it is, the staff member corrects it (loop).
-6. The book and its copy codes are saved to **D2 Books & Copies**.
-7. The book is kept out of the catalog, and the administrators are notified that it is waiting for approval.
-8. The **Book Approval Results** arrive later as a notification, after an administrator decides (see Administrator 2).
-9. The change is recorded in the audit trail in **D6 Settings & Audit Log**.
+1. Staff choose Add, Edit or Archive. **Archive?** If yes, they choose where the book is kept and why, and it moves to the archive in D2.
+2. Otherwise they enter the book details: ISBN, title, authors, edition, subject, copies and cover.
+3. **ISBN valid and not a duplicate?** and **Copies not below those on loan?** If not, they correct the form (loop).
+4. The book and its copy codes are saved to **D2** as *waiting for approval*. It stays out of the catalog and the admins are notified.
+5. The change is recorded in the audit trail in **D6**.
+6. **Library Staff 7 · Book Approval Results** follows when the admin decides.
 
-**Output.** The saved or archived book, and later the Book Approval Results.
+**Data stores.** D2 (save), D6 (save).
 
-**Data stores.** D2 (save the book or the archive), D6 (record the change in the audit trail).
+## Library Staff 3 · Pickup QR Scan (Checkout) (in)
 
-## Library Staff 3 · Pickup QR Scan (Checkout)
+![Library Staff 3 · Pickup QR Scan](program-flowcharts/library-staff/3-pickup-qr-scan-checkout.png)
 
-![Library Staff 3 · Pickup QR Scan (Checkout)](program-flowcharts/library-staff/3-pickup-qr-scan-checkout.png)
-
-**Purpose.** A staff member gives a reserved book to the student at the library desk.
-
-**Input.** Pickup QR Scan: the staff member scans the QR code on the student's ticket.
+**Purpose.** Staff hand the book to the student by scanning the ticket.
 
 **How it works**
 
-1. The staff member scans the student's QR ticket with the camera, or types the code.
-2. The system looks up the ticket's loans in **D3 Loans & Movements**.
-3. **Ticket found?** If not, the system shows that the ticket was not found, and the flow ends.
-4. **Still requested and within 2 days?** If the request expired or was cancelled, the system says so, and the flow ends.
-5. The system shows the student and the books on the ticket.
-6. The book is checked out: the loan becomes **borrowed** in D3 and the due date is set. Fiction books get 5 days and Circulation/Reserve books get 3 days; weekends and holidays are skipped.
-7. The system emails the student the due dates.
-8. The Circulation & Movement Records are updated.
+1. Staff scan the QR ticket (camera or typed code) and the loans are read from **D3**. If the ticket is not found, they scan again (loop).
+2. **Still requested and within 2 days?** If not, the system shows that it expired or was cancelled.
+3. The student and books are shown, and the books are checked out in **D3**: the due date is Fiction 5 days, Circulation 3 days, counting school days only.
+4. The student is emailed the due dates.
 
-**Output.** The checked-out loan, the due-date email to the student, and the updated Circulation & Movement Records.
+**Data stores.** D3 (read, then save).
 
-**Data stores.** D3 (read the ticket's loans, then save the checkout).
-
-## Library Staff 4 · Book Returns
+## Library Staff 4 · Book Returns (in)
 
 ![Library Staff 4 · Book Returns](program-flowcharts/library-staff/4-book-returns.png)
 
-**Purpose.** A staff member records a book that a student brings back.
-
-**Input.** Book Returns.
+**Purpose.** Staff record a returned book.
 
 **How it works**
 
-1. The staff member scans the ticket or searches for the loan.
-2. The system reads the loan from **D3 Loans & Movements**.
-3. **Borrowed and not yet returned?** If the book was already returned, the system says so, and the flow ends.
-4. **Returned late?** If yes, the system works out the fine for each late weekday.
-5. The loan is marked **returned** and the movement is logged in D3. The copy goes back on the shelf.
-6. The system emails the student a return receipt.
-7. The Circulation & Movement Records are updated.
+1. Staff scan the ticket or search the loan, read from **D3**. If it is not a borrowed book, they search again (loop).
+2. **Returned late?** If yes, the fine is worked out for each late weekday.
+3. The loan is marked returned, the movement is logged and the copy goes back on the shelf in **D3**.
+4. A return receipt is emailed.
 
-**Output.** The returned loan, any fine, a receipt email and the updated Circulation & Movement Records.
+**Data stores.** D3 (read, then save).
 
-**Data stores.** D3 (read the loan, then save the return and the movement).
+## Library Staff 5 · Pending Borrow Requests (out)
 
-## Library Staff 5 · Loan Reminder Emails
+![Library Staff 5 · Pending Borrow Requests](program-flowcharts/library-staff/5-pending-borrow-requests.png)
 
-![Library Staff 5 · Loan Reminder Emails](program-flowcharts/library-staff/5-loan-reminder-emails.png)
-
-**Purpose.** Students are reminded before a book is due and when it is overdue.
-
-**Input.** Loan Reminder Emails.
+**Purpose.** The system shows staff the requests waiting for pickup.
 
 **How it works**
 
-1. The system finds the loans that are due soon or overdue in **D3 Loans & Movements**.
-2. **Any loans to remind?** If not, the flow ends.
-3. The system takes the next loan.
-4. **Already emailed about it?** If yes, it is skipped so the student is not emailed twice.
-5. The system sends the **Loan Reminder Email**: due soon, or overdue with the fine so far.
-6. The email is recorded in the email log in **D4 Notifications & Announcements**.
-7. **More loans?** If yes, the system goes back to step 3 (loop) until every loan has been handled.
-8. The system shows how many reminders were sent.
+1. Requests past the 2-day pickup window are cancelled in **D3** and the students are emailed.
+2. The requests still waiting are read from **D3**. If there are none, "Nothing waiting" is shown.
+3. The Pending Borrow Requests are shown: student, book, ticket and time left.
+4. **Student at the desk?** If yes, **Library Staff 3 · Pickup QR Scan** runs.
+5. **Decline the request?** If yes, staff write the reason, the loan is marked declined in D3 (the copy goes back) and the student is emailed.
 
-**Output.** Reminder emails to the students, and the number of reminders sent.
+**Data stores.** D3 (read, then save).
 
-**Data stores.** D3 (read the loans that are due), D4 (save each email in the email log).
+## Library Staff 6 · Circulation & Movement Records (out)
 
-## Library Staff 6 · Announcements & Site Content
+![Library Staff 6 · Circulation & Movement Records](program-flowcharts/library-staff/6-circulation-and-movement-records.png)
 
-![Library Staff 6 · Announcements & Site Content](program-flowcharts/library-staff/6-announcements-and-site-content.png)
-
-**Purpose.** A staff member posts an announcement or updates a site page.
-
-**Input.** Announcements & Site Content.
+**Purpose.** The system shows staff the history of loans and book movements.
 
 **How it works**
 
-1. The staff member chooses an announcement or a site page (Help, About or Terms).
-2. The staff member writes the title and text.
-3. **Title and text filled in?** If not, the staff member completes them (loop).
-4. **Publish now?** If not, it is saved as a draft, and the flow ends.
-5. The announcement or page is saved and published in **D4 Notifications & Announcements**.
-6. **An announcement?** If yes, every student is notified on the Updates page and by the bell icon. A site page is simply updated.
-7. The change is recorded in the audit trail in **D6 Settings & Audit Log**.
+1. Staff choose the view (borrowed, history or movements) and the filters: dates, type, book, student.
+2. The loans and movements are read from **D3**. If nothing matches, they change the filters (loop).
+3. The records are shown: checkouts, returns, acquisitions and withdrawals.
+4. **Open a record?** If yes, the loan's timeline and the emails sent are shown.
 
-**Output.** The published announcement or page, and notices to the students.
+**Data stores.** D3 (read).
 
-**Data stores.** D4 (save and publish), D6 (record it in the audit trail).
+## Library Staff 7 · Book Approval Results (out)
+
+![Library Staff 7 · Book Approval Results](program-flowcharts/library-staff/7-book-approval-results.png)
+
+**Purpose.** The system tells the staff member what the admin decided about their book.
+
+**How it works**
+
+1. The admin's decision is read from **D2**.
+2. **Approved?** Yes: the result is "Approved", the book is in the catalog. No: the result is "Needs revision" with the admin's note.
+3. The staff member is notified (**D4**), and the result shows in Notifications and on the Books page.
+4. **Needs revision?** If yes, **Library Staff 2 · Manage Book** runs so they can fix and resubmit it.
+
+**Data stores.** D2 (read), D4 (save).
+
+## Library Staff 8 · Generated Reports (out)
+
+![Library Staff 8 · Generated Reports](program-flowcharts/library-staff/8-generated-reports.png)
+
+**Purpose.** The system makes a library report for staff.
+
+**How it works**
+
+1. **Staff has the Reports permission?** If not, the Reports tab is hidden.
+2. Staff choose the report (catalog, loans, overdue or movements) and the filters.
+3. The data is read from **D3**. If no rows match, they change the filters (loop).
+4. The summary and a preview are shown. **Download it?** If yes, the Excel file is made and the download is recorded in **D5**.
+
+**Data stores.** D3 (read), D5 (save).
 
 ---
 
-# Part 3. Administrator
+# Part 3. Administrator (7 flowcharts)
 
-## Administrator 1 · Login Credentials
+## Administrator 1 · Login Credentials (in)
 
 ![Administrator 1 · Login Credentials](program-flowcharts/administrator/1-login-credentials.png)
 
-**Purpose.** The administrator signs in to manage the library system.
+**Purpose.** The admin signs in. The steps are the same as Student 2; the admin role is loaded from **D1** and the admin dashboard opens.
 
-**Input.** Login Credentials: email and password.
+**Data stores.** D1 (read).
 
-**How it works.** The steps are the same as **Student 2 · Login Credentials**:
+## Administrator 2 · Book Manage Request (in)
 
-1. The lock check runs first.
-2. The credentials are checked against **D1 User Accounts**, and failed tries are counted.
-3. The account must be active.
+![Administrator 2 · Book Manage Request (in)](program-flowcharts/administrator/2-book-manage-request.png)
 
-After a successful sign-in, the system loads the **admin role** and opens the **admin dashboard**, which shows every module.
-
-**Output.** A signed-in session and the admin dashboard.
-
-**Data stores.** D1 (read the account and role).
-
-## Administrator 2 · Book Approval Decisions
-
-![Administrator 2 · Book Approval Decisions](program-flowcharts/administrator/2-book-approval-decisions.png)
-
-**Purpose.** The administrator checks the books that staff added before they appear in the catalog.
-
-**Input.** Book Approval Decisions.
+**Purpose.** The admin decides on a book a staff member added, or manages a book directly.
 
 **How it works**
 
-1. The system reads the **Books Awaiting Approval** from **D2 Books & Copies**.
-2. **Any books waiting?** If not, the flow ends.
-3. The administrator reviews a book's details.
-4. **Approve it?**
-   - **Yes:** the book is published to the catalog in D2, and students can now find and borrow it.
-   - **No:** the administrator writes a revision note, and the book is marked **needs revision** in D2.
-5. The staff member who added the book is notified with the **Book Approval Results**.
-6. The decision is recorded in the audit trail in **D6 Settings & Audit Log**.
+1. The admin chooses to review a waiting book, or to add, edit or archive one.
+2. **Review a waiting book?** If yes, the admin approves it or sends it back with a revision note. The decision is saved in D2 and **Library Staff 7 · Book Approval Results** runs.
+3. Otherwise the admin enters the book details. **ISBN valid, not a duplicate and copies not below those on loan?** If not, they correct them (loop).
+4. The book is saved to **D2**. An admin's book goes straight to the catalog with no approval step.
+5. The action is recorded in the audit trail in **D6**, and the system shows that it is saved.
 
-**Output.** Book Approval Results, sent to the staff member.
+**Data stores.** D2 (save), D6 (save).
 
-**Data stores.** D2 (read the waiting books, then save the decision), D6 (record the decision in the audit trail).
+## Administrator 3 · Manage Users & Permission (in)
 
-## Administrator 3 · Staff Accounts & Permissions
+![Administrator 3 · Manage Users & Permission](program-flowcharts/administrator/3-manage-users-and-permission.png)
 
-![Administrator 3 · Staff Accounts & Permissions](program-flowcharts/administrator/3-staff-accounts-and-permissions.png)
-
-**Purpose.** The administrator manages who works in the staff panel and what each staff member can do.
-
-**Input.** Staff Accounts & Permissions.
+**Purpose.** The admin manages user accounts and staff permissions.
 
 **How it works**
 
-1. The administrator opens the Staff page.
-2. **Add a staff member?** If yes, the administrator finds the account by email and makes it a staff account. The flow then continues at the permissions step.
-3. Otherwise, the administrator chooses an existing staff member.
-4. **Disable, or make a student again?** If yes, the account is disabled or its role is changed in D1, and the flow continues at the audit trail step.
-5. The administrator ticks the permissions the staff member may use: Students, Game, System, Reports and Audit.
-6. The account and permissions are saved to **D1 User Accounts**.
-7. The change is recorded in the audit trail in **D6 Settings & Audit Log**.
-8. The system shows the updated staff list.
+1. The admin opens the Students or Staff page.
+2. **Add a staff member?** If yes, the account is found by email and made staff.
+3. Otherwise the admin chooses a user. **Disable, enable or change the role?** If yes, the change is saved to D1.
+4. For staff, the admin ticks the permissions: students, game, system, reports and audit. They are saved to **D1**.
+5. The change is recorded in **D6**, and the updated list is shown.
 
-**Output.** The updated staff account and permissions, and the staff list.
+**Data stores.** D1 (save), D6 (save).
 
-**Data stores.** D1 (save the account, role and permissions), D6 (record the change in the audit trail).
+## Administrator 4 · Book Manage Request (out)
 
-## Administrator 4 · Borrowing Rules & Settings
+![Administrator 4 · Book Manage Request (out)](program-flowcharts/administrator/4-book-manage-request.png)
 
-![Administrator 4 · Borrowing Rules & Settings](program-flowcharts/administrator/4-borrowing-rules-and-settings.png)
-
-**Purpose.** The administrator sets the rules that every loan follows.
-
-**Input.** Borrowing Rules & Settings.
+**Purpose.** The system shows the admin the books waiting for a decision.
 
 **How it works**
 
-1. The administrator opens Settings.
-2. The administrator enters the values:
-   - loan days and fines for each material type
-   - the borrowing limit and the pickup hours
-   - holidays
-   - whether registration is open
-   - the site notice
-3. **Values valid (numbers and dates)?** If not, the administrator corrects them (loop).
-4. The settings are saved to **D6 Settings & Audit Log**.
-5. The change is recorded in the audit trail in D6.
-6. The system shows that the settings are saved. New loans follow the new rules.
+1. The books waiting for approval are read from **D2**. If there are none, "Waiting for approval: 0" is shown.
+2. The admins are notified of each new book (**D4**).
+3. The list is shown with the count on the Books tab and who added each book.
+4. **Open a book to review?** If yes, **Administrator 2 · Book Manage Request (in)** runs.
 
-**Output.** The saved settings, and the confirmation.
+**Data stores.** D2 (read), D4 (save).
 
-**Data stores.** D6 (save the settings and record the change in the audit trail).
+## Administrator 5 · Analytics Dashboard (out)
 
-## Administrator 5 · Report & Analytics Request
+![Administrator 5 · Analytics Dashboard](program-flowcharts/administrator/5-analytics-dashboard.png)
 
-![Administrator 5 · Report & Analytics Request](program-flowcharts/administrator/5-report-and-analytics-request.png)
-
-**Purpose.** The administrator sees how the library is used and downloads reports.
-
-**Input.** Report & Analytics Request.
+**Purpose.** The system shows the admin how the library is being used.
 
 **How it works**
 
-1. The administrator chooses Analytics or Reports.
-2. **Analytics?** If yes:
-   1. The administrator picks the period: 30 days, 90 days, 12 months or all time.
-   2. The system counts the requests, loans, overdue books and popular books from D3 and D5.
-   3. The system shows the **Analytics Dashboard**, and the flow ends.
-3. For Reports, the administrator chooses the report (catalog, loans, overdue or movements) and the filters.
-4. The system reads the activity and loan data from **D5 User Activity**.
-5. The system shows a preview of the report.
-6. **Download it?** If not, the flow ends.
-7. The system makes the **CSV file** (Generated Reports), which opens in a spreadsheet.
-8. The download is recorded in the audit trail in **D6 Settings & Audit Log**.
+1. The admin opens Analytics and picks the period: 30 days, 90 days, 12 months or all.
+2. The loans and movements are read from **D3**, and the activity data from **D5**.
+3. **Any data in this period?** If not, "No activity in this period" is shown.
+4. The system counts requests, loans, returns, overdue books, active students and popular books, and shows them as number cards and charts.
 
-**Output.** The Analytics Dashboard, or the Generated Reports as a CSV file.
+**Data stores.** D3 (read), D5 (read).
 
-**Data stores.** D5 (read the activity data; D3 is also read for analytics), D6 (record the download in the audit trail).
+## Administrator 6 · Audit Trail Logs (out)
+
+![Administrator 6 · Audit Trail Logs](program-flowcharts/administrator/6-audit-trail-logs.png)
+
+**Purpose.** The system shows the admin who did what in the system.
+
+**How it works**
+
+1. The admin opens the Audit trail and sets the filters: search, module and dates.
+2. The audit records are read from **D6**. If nothing matches, the admin changes the filters (loop).
+3. The logs are shown: date and time, who, action, module and details.
+4. **Download it?** If yes, an Excel file of the audit trail is made.
+
+**Data stores.** D6 (read).
+
+## Administrator 7 · Generated Reports (out)
+
+![Administrator 7 · Generated Reports](program-flowcharts/administrator/7-generated-reports.png)
+
+**Purpose.** The system makes a library report for the admin. The steps are the same as Library Staff 8, except that the admin always has access to reports, so there is no permission check.
+
+**Data stores.** D3 (read), D5 (save).
 
 ---
 
 ## Summary
 
-| No. | Flowchart | User | Main data stores | Output to the user |
-|---|---|---|---|---|
-| 1 | Registration Details | Student | D6, D1 | New account |
-| 2 | Login Credentials | Student | D1 | Session and Discover page |
-| 3 | View Catalog | Student | D2 | Book list and book details |
-| 4 | Borrow Request | Student | D3 | Book Request and Pickup QR Ticket |
-| 5 | Request Cancellation | Student | D3 | Cancelled request and email |
-| 6 | Profile & Account Updates | Student | D1 | Updated profile or password |
-| 7 | Game Access | Student | D6 (D1, D3) | 2D-3D Library Game |
-| 8 | Login Credentials | Library Staff | D1 | Session and staff dashboard |
-| 9 | Manage Book | Library Staff | D2, D6 | Saved book, later Book Approval Results |
-| 10 | Pickup QR Scan (Checkout) | Library Staff | D3 | Checked-out loan and due dates |
-| 11 | Book Returns | Library Staff | D3 | Return, fine and receipt |
-| 12 | Loan Reminder Emails | Library Staff | D3, D4 | Reminder emails |
-| 13 | Announcements & Site Content | Library Staff | D4, D6 | Published announcement or page |
-| 14 | Login Credentials | Administrator | D1 | Session and admin dashboard |
-| 15 | Book Approval Decisions | Administrator | D2, D6 | Book Approval Results |
-| 16 | Staff Accounts & Permissions | Administrator | D1, D6 | Updated staff list |
-| 17 | Borrowing Rules & Settings | Administrator | D6 | Saved settings |
-| 18 | Report & Analytics Request | Administrator | D5, D3, D6 | Analytics Dashboard or CSV report |
+| No. | Flowchart | User | Direction | Data stores | What the user gets |
+|---|---|---|---|---|---|
+| 1 | Registration Details | Student | in | D6, D1 | New account |
+| 2 | Login Credentials | Student | in | D1 | Session and catalog |
+| 3 | View Catalog | Student | in | D2 | Book list and details |
+| 4 | Borrow Request | Student | in | D3 | Reserved copy |
+| 5 | Request Cancellation | Student | in | D3 | Cancelled request and email |
+| 6 | 2D-3D Library Game | Student | out | D6, D1 | The game, signed in |
+| 7 | Pickup QR Ticket | Student | out | D3 | QR ticket on the site, in the game and by email |
+| 8 | Due Dates & Overdue Fines | Student | out | D3, D6 | Due dates and fines in My books |
+| 9 | Notifications & Email Reminders | Student | out | D3, D4 | Notifications and emails |
+| 10 | Login Credentials | Library Staff | in | D1 | Session and staff dashboard |
+| 11 | Manage Book | Library Staff | in | D2, D6 | Book saved, waiting for approval |
+| 12 | Pickup QR Scan (Checkout) | Library Staff | in | D3 | Book checked out with due dates |
+| 13 | Book Returns | Library Staff | in | D3 | Return, fine and receipt |
+| 14 | Pending Borrow Requests | Library Staff | out | D3 | List of requests waiting for pickup |
+| 15 | Circulation & Movement Records | Library Staff | out | D3 | Loan and movement history |
+| 16 | Book Approval Results | Library Staff | out | D2, D4 | Approved or needs revision |
+| 17 | Generated Reports | Library Staff | out | D3, D5 | Excel report |
+| 18 | Login Credentials | Administrator | in | D1 | Session and admin dashboard |
+| 19 | Book Manage Request | Administrator | in | D2, D6 | Decision or saved book |
+| 20 | Manage Users & Permission | Administrator | in | D1, D6 | Updated users and permissions |
+| 21 | Book Manage Request | Administrator | out | D2, D4 | Books waiting for a decision |
+| 22 | Analytics Dashboard | Administrator | out | D3, D5 | Number cards and charts |
+| 23 | Audit Trail Logs | Administrator | out | D6 | Audit log and Excel file |
+| 24 | Generated Reports | Administrator | out | D3, D5 | Excel report |
 
 The flowcharts are drawn by `tools/make-program-flowcharts.mjs`. To change a step, edit its list in that file and run `node tools/make-program-flowcharts.mjs`; every chart is redrawn into `docs/program-flowcharts/`.

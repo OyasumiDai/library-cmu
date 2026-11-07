@@ -50,7 +50,7 @@ const charts = [
     { t: "proc", text: "Check the credentials against User Accounts", store: ["D1 User Accounts", "read"] },
     { t: "dec", text: "Credentials valid?", down: "Yes", right: { label: "No", to: "login", steps: [{ t: "proc", text: "Count the failed try; lock after too many" }] } },
     { t: "proc", text: "Load the profile and role; start the session", store: ["D1 User Accounts", "read"] },
-    { t: "dec", text: "Game Access request?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "io", text: "Open the 2D-3D Library Game with the same session" }] } },
+    { t: "dec", text: "Open the game?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "io", text: "Show the 2D-3D Library Game with the same session" }] } },
     { t: "dec", text: "Staff or admin?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "io", text: "Open the staff dashboard" }] } },
     { t: "io", text: "Open the student catalog (Discover)" },
     { id: "end", t: "term", text: "End" },
@@ -69,8 +69,8 @@ const charts = [
     { t: "dec", text: "ISBN valid and not a duplicate?", down: "Yes", left: { label: "No", to: "form" } },
     { t: "proc", text: "Save the book record", store: ["D2 Books & Copies", "write"] },
     { t: "dec", text: "Added by staff (needs approval)?", down: "Yes", right: { label: "No", to: "end" } },
-    { t: "proc", text: "Keep it out of the catalog; list it in Books Awaiting Approval" },
-    { t: "io", text: "Admin enters the Book Approval Decision" },
+    { t: "proc", text: "Keep it out of the catalog; list it for the admin (Book Manage Request)" },
+    { t: "io", text: "Admin reviews it (Book Manage Request)" },
     { t: "dec", text: "Approved?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "proc", text: "Send it back with a revision note (Book Approval Results)" }] } },
     { t: "proc", text: "Publish the book to the catalog", store: ["D2 Books & Copies", "write"] },
     { id: "end", t: "term", text: "End" },
@@ -100,7 +100,7 @@ const charts = [
     { t: "proc", text: "Find the student the notice is for" },
     { id: "notice", t: "proc", text: "Create the in-app notification", store: ["D4 Notifications & Announcements", "write"] },
     { t: "dec", text: "Needs an email?", down: "Yes", right: { label: "No", to: "show" } },
-    { t: "doc", text: "Send the email: ticket, Loan Reminder Email, overdue or notice" },
+    { t: "doc", text: "Send the email: ticket, receipt, due or overdue reminder" },
     { t: "proc", text: "Record it in the email log so it is sent only once", store: ["D4 Notifications & Announcements", "write"] },
     { id: "show", t: "io", text: "Show it in Notifications, the bell badge and Updates" },
     { t: "dec", text: "Student opens it?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "proc", text: "Mark the notification as read" }] } },
@@ -109,13 +109,13 @@ const charts = [
 
   { file: "5-reports-and-analytics", title: "5.0 · Reports & Analytics", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Enter a Report & Analytics Request" },
+    { t: "io", text: "Choose the Analytics Dashboard or Generated Reports" },
     { t: "dec", text: "Analytics dashboard?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "io", text: "Pick the period: 30 days, 90 days, 12 months or all" }, { t: "proc", text: "Count loans, students and trends" }, { t: "io", text: "Show the Analytics Dashboard" }] } },
     { t: "io", text: "Choose the report (catalog, loans, overdue, movements) and filters" },
     { t: "proc", text: "Read the activity and usage data", store: ["D5 User Activity", "read"] },
     { t: "io", text: "Preview the report" },
     { t: "dec", text: "Download it?", down: "Yes", right: { label: "No", to: "end" } },
-    { t: "doc", text: "Make the CSV file (Generated Reports, Library Reports)" },
+    { t: "doc", text: "Make the Excel file (Generated Reports)" },
     { t: "proc", text: "Record the Report Download", store: ["D5 User Activity", "write"] },
     { id: "end", t: "term", text: "End" },
   ] },
@@ -123,9 +123,9 @@ const charts = [
   { file: "6-system-administration", title: "6.0 · System Administration", steps: [
     { t: "term", text: "Start" },
     { t: "dec", text: "Admin, or staff with the system permission?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show that access is not allowed" }] } },
-    { t: "io", text: "Choose staff accounts, borrowing rules and settings, or the audit trail" },
+    { t: "io", text: "Choose users and permissions, settings, or the audit trail" },
     { t: "dec", text: "View the audit trail?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "proc", text: "Read the audit records" }, { t: "io", text: "Show the Audit Trail Logs with filters" }] } },
-    { id: "change", t: "io", text: "Enter the change: Staff Accounts & Permissions or Borrowing Rules & Settings" },
+    { id: "change", t: "io", text: "Enter the change: Manage Users & Permission or settings" },
     { t: "dec", text: "Valid?", down: "Yes", left: { label: "No", to: "change" } },
     { t: "proc", text: "Save the settings or staff account", store: ["D6 Settings & Audit Log", "write"] },
     { t: "proc", text: "Write the audit entry: who, what and when", store: ["D6 Settings & Audit Log", "write"] },
@@ -143,7 +143,7 @@ const charts = [
     { t: "proc", text: "Check the credentials", store: ["D1 User Accounts", "read"] },
     { t: "dec", text: "Valid?", down: "Yes", left: { label: "No", to: "login" } },
     { id: "where", t: "dec", text: "Browse in the 2D-3D game?", down: "No", right: { label: "Yes", to: "pick", steps: [
-      { t: "proc", text: "Game Access: enter the game with the same session (1.0)" }, { t: "io", text: "Walk to the librarian (NPC) or to a shelf" }] } },
+      { t: "proc", text: "2D-3D Library Game: enter it with the same session (1.0)" }, { t: "io", text: "Walk to the librarian (NPC) or to a shelf" }] } },
     { t: "proc", text: "Search and filter the catalog: View Catalog (2.0)", store: ["D2 Books & Copies", "read"] },
     { id: "pick", t: "io", text: "Open a book: details and copies free" },
     { t: "dec", text: "Send a Borrow Request? (3.0)", down: "Yes", right: { label: "No", to: "more" } },
@@ -154,10 +154,8 @@ const charts = [
     { t: "io", text: "Show the QR ticket at the desk and take the book" },
     { t: "dec", text: "Returned by the due date?", down: "Yes", right: { label: "No", to: "ret", steps: [{ t: "io", text: "See Due Dates & Overdue Fines" }] } },
     { id: "ret", t: "io", text: "Return the book at the desk" },
-    { id: "more", t: "dec", text: "Read notifications or announcements? (4.0)", down: "No", right: { label: "Yes", to: "prof", steps: [
-      { t: "io", text: "Read Notifications & Email Reminders and Announcements (D4)" }] } },
-    { id: "prof", t: "dec", text: "Update the profile? (1.0)", down: "No", right: { label: "Yes", to: "again", steps: [
-      { t: "io", text: "Enter Profile & Account Updates" }, { t: "proc", text: "Save them to User Accounts (D1)" }] } },
+    { id: "more", t: "dec", text: "Read notifications? (4.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "io", text: "Read the Notifications & Email Reminders (D4)" }] } },
     { id: "again", t: "dec", text: "Another task?", down: "No", left: { label: "Yes", to: "where" } },
     { t: "proc", text: "Log out" },
     { id: "end", t: "term", text: "End" },
@@ -171,14 +169,16 @@ const charts = [
     { id: "menu", t: "io", text: "Open the staff dashboard and choose a task" },
     { t: "dec", text: "Manage Book? (2.0)", down: "No", right: { label: "Yes", to: "again", steps: [
       { t: "io", text: "Enter book details: ISBN, title, authors, copies, cover" }, { t: "proc", text: "Save it; it waits for admin approval (D2)" }, { t: "io", text: "See the Book Approval Results" }] } },
+    { t: "dec", text: "Check the Pending Borrow Requests? (3.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "io", text: "View the requests waiting for pickup; decline one if needed (D3)" }] } },
     { t: "dec", text: "Student at the desk for pickup? (3.0)", down: "No", right: { label: "Yes", to: "again", steps: [
       { t: "io", text: "Pickup QR Scan: scan the student's ticket" }, { t: "proc", text: "Check the book out; due date set (D3)" }] } },
     { t: "dec", text: "Book being returned? (3.0)", down: "No", right: { label: "Yes", to: "again", steps: [
       { t: "io", text: "Scan the ticket or find the loan" }, { t: "proc", text: "Record the Book Return; copy back on the shelf (D3)" }] } },
-    { t: "dec", text: "Send reminders or announcements? (4.0)", down: "No", right: { label: "Yes", to: "again", steps: [
-      { t: "io", text: "Write Loan Reminder Emails or Announcements & Site Content" }, { t: "proc", text: "Send and publish them (D4)" }] } },
-    { t: "dec", text: "View records or reports? (3.0, 5.0)", down: "No", right: { label: "Yes", to: "again", steps: [
-      { t: "io", text: "View Pending Loan Requests and Circulation & Movement Records" }, { t: "doc", text: "Download the Library Reports (CSV)" }] } },
+    { t: "dec", text: "View the Circulation & Movement Records? (3.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "io", text: "Filter the loans and movements (D3)" }] } },
+    { t: "dec", text: "Generated Reports? (5.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "doc", text: "Preview and download the report (Excel)" }] } },
     { id: "again", t: "dec", text: "Another task?", down: "No", left: { label: "Yes", to: "menu" } },
     { t: "proc", text: "Log out" },
     { id: "end", t: "term", text: "End" },
@@ -190,17 +190,17 @@ const charts = [
     { t: "proc", text: "Check the credentials", store: ["D1 User Accounts", "read"] },
     { t: "dec", text: "Valid?", down: "Yes", left: { label: "No", to: "login" } },
     { id: "menu", t: "io", text: "Open the admin dashboard and choose a task" },
-    { t: "dec", text: "Books Awaiting Approval? (2.0)", down: "No", right: { label: "Yes", to: "again", steps: [
-      { t: "io", text: "Review the book a staff member added" }, { t: "proc", text: "Book Approval Decision: approve, or send back with a note (D2); write the audit entry (D6)" }] } },
-    { t: "dec", text: "Staff Accounts & Permissions? (6.0)", down: "No", right: { label: "Yes", to: "again", steps: [
-      { t: "io", text: "Add staff, change permissions or disable an account" }, { t: "proc", text: "Save and write the audit entry (D6)" }] } },
-    { t: "dec", text: "Borrowing Rules & Settings? (6.0)", down: "No", right: { label: "Yes", to: "again", steps: [
-      { t: "io", text: "Set loan days, fines, holidays, registration and the site notice" }, { t: "proc", text: "Save and write the audit entry (D6)" }] } },
-    { t: "dec", text: "Report & Analytics Request? (5.0)", down: "No", right: { label: "Yes", to: "again", steps: [
-      { t: "io", text: "View the Analytics Dashboard (D5)" }, { t: "doc", text: "Download the Generated Reports (CSV)" }] } },
+    { t: "dec", text: "Book Manage Request? (2.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "io", text: "Review a waiting book, or add, edit or archive one" }, { t: "proc", text: "Save the decision or the book (D2); write the audit entry (D6)" }] } },
+    { t: "dec", text: "Manage Users & Permission? (6.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "io", text: "Add staff, change permissions, or disable an account" }, { t: "proc", text: "Save and write the audit entry (D1, D6)" }] } },
+    { t: "dec", text: "Analytics Dashboard? (5.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "io", text: "Pick the period and view the charts (D3, D5)" }] } },
+    { t: "dec", text: "Generated Reports? (5.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+      { t: "doc", text: "Preview and download the report (Excel)" }] } },
     { t: "dec", text: "View the Audit Trail Logs? (6.0)", down: "No", right: { label: "Yes", to: "again", steps: [
       { t: "io", text: "Search and filter who did what and when (D6)" }] } },
-    { t: "dec", text: "Library Staff tasks? (2.0, 3.0, 4.0)", down: "No", right: { label: "Yes", to: "again", steps: [
+    { t: "dec", text: "Library Staff tasks? (3.0)", down: "No", right: { label: "Yes", to: "again", steps: [
       { t: "sub", text: "Same tasks as the Library Staff chart" }] } },
     { id: "again", t: "dec", text: "Another task?", down: "No", left: { label: "Yes", to: "menu" } },
     { t: "proc", text: "Log out" },
@@ -208,7 +208,8 @@ const charts = [
   ] },
 ];
 
-// ---- one chart per Level 0 data flow INTO the system: 7 from the Student, 6 from the Library Staff, 5 from the Administrator
+// ---- one chart per Level 0 data flow (24): Student 9 (5 in, 4 out), Library Staff 8 (4 in, 4 out), Administrator 7 (3 in, 4 out)
+// "in" charts start with what the user enters; "out" charts show how the system makes what it sends to the user
 const login = (who, home, perms) => [
   { t: "term", text: "Start" },
   { id: "login", t: "io", text: `${who} enters the Login Credentials (email and password)` },
@@ -220,47 +221,60 @@ const login = (who, home, perms) => [
   { t: "io", text: home },
   { id: "end", t: "term", text: "End" },
 ];
+const report = (who, perm) => [
+  { t: "term", text: "Start" },
+  ...(perm ? [{ t: "dec", text: "Staff has the Reports permission?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Hide the Reports tab" }] } }] : []),
+  { id: "pick", t: "io", text: `${who} chooses the report (catalog, loans, overdue or movements) and the filters` },
+  { t: "proc", text: "Read the books, loans and movements", store: ["D3 Loans & Movements", "read"] },
+  { t: "dec", text: "Any rows match?", down: "Yes", left: { label: "No", to: "pick" } },
+  { t: "io", text: "Show the summary and preview the report" },
+  { t: "dec", text: "Download it?", down: "Yes", right: { label: "No", to: "end" } },
+  { t: "doc", text: "Make the Excel file: Generated Reports" },
+  { t: "proc", text: "Record the download", store: ["D5 User Activity", "write"] },
+  { id: "end", t: "term", text: "End" },
+];
 charts.push(
-  // ------------------------------------------------ Student (7)
-  { file: "student/1-registration-details", title: "Student 1 · Registration Details", steps: [
+  // ------------------------------------------------ Student (9): 1-5 into the system, 6-9 out to the student
+  { file: "student/1-registration-details", title: "Student 1 · Registration Details (in)", steps: [
     { t: "term", text: "Start" },
     { t: "proc", text: "Read the registration setting", store: ["D6 Settings & Audit Log", "read"] },
     { t: "dec", text: "Registration open?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show that registration is closed" }] } },
-    { id: "form", t: "io", text: "Enter Registration Details: username, email, password, student ID, course, year" },
+    { id: "form", t: "io", text: "Enter Registration Details: username, email, password, name, student ID, course, major, year" },
     { t: "dec", text: "All fields valid and password strong?", down: "Yes", left: { label: "No", to: "form" } },
     { t: "proc", text: "Check that the username and email are not taken", store: ["D1 User Accounts", "read"] },
     { t: "dec", text: "Username and email free?", down: "Yes", left: { label: "No", to: "form" } },
+    { t: "dec", text: "Agrees to the Terms and Conditions?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show that no account was made" }] } },
     { t: "doc", text: "Email a 6-digit verification code" },
     { id: "code", t: "io", text: "Enter the verification code" },
     { t: "dec", text: "Code correct?", down: "Yes", left: { label: "No", to: "code" } },
     { t: "proc", text: "Create the account and student profile", store: ["D1 User Accounts", "write"] },
-    { t: "io", text: "Show that the account is ready and go to Sign in" },
+    { t: "io", text: "Show 'Email confirmed' and open the catalog" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "student/2-login-credentials", title: "Student 2 · Login Credentials", steps: login("The student", "Open the student catalog (Discover)", "Start the session and load the student profile") },
-  { file: "student/3-view-catalog", title: "Student 3 · View Catalog", steps: [
+  { file: "student/2-login-credentials", title: "Student 2 · Login Credentials (in)", steps: login("The student", "Open the student catalog (Discover)", "Start the session and load the student profile") },
+  { file: "student/3-view-catalog", title: "Student 3 · View Catalog (in)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Enter search words, subject and availability" },
+    { id: "search", t: "io", text: "Enter search words, subject and availability" },
     { t: "proc", text: "Search Books & Copies", store: ["D2 Books & Copies", "read"] },
-    { t: "dec", text: "Any books found?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show 'Nothing matched' and suggest fewer words" }] } },
+    { t: "dec", text: "Any books found?", down: "Yes", left: { label: "No", to: "search" } },
     { t: "io", text: "Show the book cards with copies free and the student's own status" },
     { t: "dec", text: "Open a book?", down: "Yes", right: { label: "No", to: "end" } },
     { t: "proc", text: "Read the book's details and copies free", store: ["D2 Books & Copies", "read"] },
-    { t: "io", text: "View Catalog: author, ISBN, shelf, loan period and availability" },
+    { t: "io", text: "Show author, ISBN, shelf, loan period and availability" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "student/4-borrow-request", title: "Student 4 · Borrow Request", steps: [
+  { file: "student/4-borrow-request", title: "Student 4 · Borrow Request (in)", steps: [
     { t: "term", text: "Start" },
     { t: "io", text: "Press Request to borrow (website or game)" },
     { t: "proc", text: "Count the student's open loans and the copies free", store: ["D3 Loans & Movements", "read"] },
     { t: "dec", text: "A copy free?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show that the book is not available" }] } },
     { t: "dec", text: "Under the borrowing limit and not already requested?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show the borrowing limit message" }] } },
     { t: "proc", text: "Reserve a copy; save the loan as requested with a pickup code", store: ["D3 Loans & Movements", "write"] },
-    { t: "doc", text: "Make the Pickup QR Ticket and email it" },
-    { t: "io", text: "Book Request: show the ticket in My books and in the game; pick up within 2 days" },
+    { t: "sub", text: "Student 7 · Pickup QR Ticket" },
+    { t: "io", text: "Show the request in My books: pick up within 2 days" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "student/5-request-cancellation", title: "Student 5 · Request Cancellation", steps: [
+  { file: "student/5-request-cancellation", title: "Student 5 · Request Cancellation (in)", steps: [
     { t: "term", text: "Start" },
     { t: "io", text: "Open My books and press Cancel on a request" },
     { t: "proc", text: "Read the loan", store: ["D3 Loans & Movements", "read"] },
@@ -271,138 +285,182 @@ charts.push(
     { t: "io", text: "Show the request under History" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "student/6-profile-and-account-updates", title: "Student 6 · Profile & Account Updates", steps: [
+  { file: "student/6-2d-3d-library-game", title: "Student 6 · 2D-3D Library Game (out)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Open My profile" },
-    { t: "dec", text: "Change the password?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "io", text: "Enter the current and the new password" }, { t: "proc", text: "Check the strength and save the new password (D1)" }] } },
-    { id: "edit", t: "io", text: "Edit name, phone, gender, course, major, year or photo" },
-    { t: "dec", text: "Fields valid?", down: "Yes", left: { label: "No", to: "edit" } },
-    { t: "proc", text: "Save the profile", store: ["D1 User Accounts", "write"] },
-    { t: "io", text: "Show that the profile is saved" },
-    { id: "end", t: "term", text: "End" },
-  ] },
-  { file: "student/7-game-access", title: "Student 7 · Game Access", steps: [
-    { t: "term", text: "Start" },
-    { t: "io", text: "Open the Game page" },
+    { t: "io", text: "Student opens the Game page" },
     { t: "proc", text: "Read the game status", store: ["D6 Settings & Audit Log", "read"] },
     { t: "dec", text: "Game online and published?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show 'Under maintenance' or 'Coming soon'" }] } },
     { id: "signed", t: "dec", text: "Signed in?", down: "Yes", right: { label: "No", to: "signed", steps: [{ t: "sub", text: "Student 2 · Login Credentials" }] } },
-    { t: "proc", text: "Load the 2D-3D Library Game with the same session" },
-    { t: "io", text: "Walk to the librarian (NPC) or to a shelf" },
+    { t: "proc", text: "Load the student's name and books", store: ["D1 User Accounts", "read"] },
+    { t: "io", text: "Show the 2D-3D Library Game with the same session" },
     { t: "dec", text: "Request a book in the game?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "sub", text: "Student 4 · Borrow Request" }] } },
     { id: "end", t: "term", text: "End" },
   ] },
+  { file: "student/7-pickup-qr-ticket", title: "Student 7 · Pickup QR Ticket (out)", steps: [
+    { t: "term", text: "Start" },
+    { t: "proc", text: "Read the student's requested loans and pickup code", store: ["D3 Loans & Movements", "read"] },
+    { t: "dec", text: "Any request waiting for pickup?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show 'No ticket yet'" }] } },
+    { t: "dec", text: "Still within the 2-day pickup window?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "proc", text: "Cancel the request and put the copy back (D3)" }, { t: "doc", text: "Email that the request expired" }] } },
+    { t: "proc", text: "Make the QR code from the pickup code" },
+    { t: "doc", text: "Show the Pickup QR Ticket in My books and in the game; email it" },
+    { t: "io", text: "Student shows the ticket at the desk" },
+    { id: "end", t: "term", text: "End" },
+  ] },
+  { file: "student/8-due-dates-and-overdue-fines", title: "Student 8 · Due Dates & Overdue Fines (out)", steps: [
+    { t: "term", text: "Start" },
+    { t: "proc", text: "Read the student's borrowed books", store: ["D3 Loans & Movements", "read"] },
+    { t: "dec", text: "Any books borrowed?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show 'No books borrowed'" }] } },
+    { t: "proc", text: "Read the loan rules: days and fine for each material, and the holidays", store: ["D6 Settings & Audit Log", "read"] },
+    { id: "next", t: "proc", text: "Take the next loan and its due date" },
+    { t: "dec", text: "Past the due date?", down: "Yes", right: { label: "No", to: "more", steps: [{ t: "proc", text: "Count the school days left" }] } },
+    { t: "proc", text: "Count the late weekdays (not holidays) and multiply by the daily fine" },
+    { id: "more", t: "dec", text: "More loans?", down: "No", left: { label: "Yes", to: "next" } },
+    { t: "io", text: "Show the Due Dates & Overdue Fines in My books" },
+    { id: "end", t: "term", text: "End" },
+  ] },
+  { file: "student/9-notifications-and-email-reminders", title: "Student 9 · Notifications & Email Reminders (out)", steps: [
+    { t: "term", text: "Start" },
+    { t: "io", text: "An event happens: loan requested, picked up, returned, declined, due soon or overdue" },
+    { t: "proc", text: "Read the loan and the student", store: ["D3 Loans & Movements", "read"] },
+    { t: "proc", text: "Create the in-app notification", store: ["D4 Notifications & Announcements", "write"] },
+    { t: "dec", text: "Already emailed about this event?", down: "No", right: { label: "Yes", to: "show" } },
+    { t: "doc", text: "Send the email: ticket, receipt or reminder" },
+    { t: "proc", text: "Record it in the email log so it is sent only once", store: ["D4 Notifications & Announcements", "write"] },
+    { id: "show", t: "io", text: "Show it in Notifications and the bell badge" },
+    { t: "dec", text: "Student opens it?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "proc", text: "Mark the notification as read (D4)" }] } },
+    { id: "end", t: "term", text: "End" },
+  ] },
 
-  // ------------------------------------------------ Library Staff (6)
-  { file: "library-staff/1-login-credentials", title: "Library Staff 1 · Login Credentials", steps: login("Staff", "Open the staff dashboard with the allowed tabs", "Start the session; load the role and permissions") },
-  { file: "library-staff/2-manage-book", title: "Library Staff 2 · Manage Book", steps: [
+  // ------------------------------------------------ Library Staff (8): 1-4 into the system, 5-8 out to the staff
+  { file: "library-staff/1-login-credentials", title: "Library Staff 1 · Login Credentials (in)", steps: login("Staff", "Open the staff dashboard with the allowed tabs", "Start the session; load the role and permissions") },
+  { file: "library-staff/2-manage-book", title: "Library Staff 2 · Manage Book (in)", steps: [
     { t: "term", text: "Start" },
     { t: "io", text: "Choose Add, Edit or Archive a book" },
     { t: "dec", text: "Archive?", down: "No", right: { label: "Yes", to: "audit", steps: [{ t: "io", text: "Choose where it is kept and why" }, { t: "proc", text: "Move the book to the archive (D2)" }] } },
     { id: "form", t: "io", text: "Enter the book details: ISBN, title, authors, edition, subject, copies, cover" },
     { t: "dec", text: "ISBN valid and not a duplicate?", down: "Yes", left: { label: "No", to: "form" } },
     { t: "dec", text: "Copies not below those on loan?", down: "Yes", left: { label: "No", to: "form" } },
-    { t: "proc", text: "Save the book and its copy codes", store: ["D2 Books & Copies", "write"] },
+    { t: "proc", text: "Save the book and its copy codes as 'waiting for approval'", store: ["D2 Books & Copies", "write"] },
     { t: "proc", text: "Keep it out of the catalog and notify the admins" },
-    { t: "io", text: "Book Approval Results arrive later as a notification" },
     { id: "audit", t: "proc", text: "Record the change in the audit trail", store: ["D6 Settings & Audit Log", "write"] },
+    { t: "sub", text: "Library Staff 7 · Book Approval Results" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "library-staff/3-pickup-qr-scan-checkout", title: "Library Staff 3 · Pickup QR Scan (Checkout)", steps: [
+  { file: "library-staff/3-pickup-qr-scan-checkout", title: "Library Staff 3 · Pickup QR Scan (Checkout) (in)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Scan the student's QR ticket (camera or typed code)" },
+    { id: "scan", t: "io", text: "Scan the student's QR ticket (camera or typed code)" },
     { t: "proc", text: "Look up the ticket's loans", store: ["D3 Loans & Movements", "read"] },
-    { t: "dec", text: "Ticket found?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show that the ticket was not found" }] } },
+    { t: "dec", text: "Ticket found?", down: "Yes", left: { label: "No", to: "scan" } },
     { t: "dec", text: "Still requested and within 2 days?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show that the request expired or was cancelled" }] } },
     { t: "io", text: "Show the student and the books on the ticket" },
-    { t: "proc", text: "Check out: mark borrowed; due date Fiction 5 days, Circulation 3 days, skipping weekends and holidays", store: ["D3 Loans & Movements", "write"] },
+    { t: "proc", text: "Check out: mark borrowed; set the due date (Fiction 5 days, Circulation 3 days, school days only)", store: ["D3 Loans & Movements", "write"] },
     { t: "doc", text: "Email the student the due dates" },
-    { t: "io", text: "Update the Circulation & Movement Records" },
+    { t: "io", text: "Show the book as borrowed" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "library-staff/4-book-returns", title: "Library Staff 4 · Book Returns", steps: [
+  { file: "library-staff/4-book-returns", title: "Library Staff 4 · Book Returns (in)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Scan the ticket or search the loan" },
+    { id: "find", t: "io", text: "Scan the ticket or search the loan" },
     { t: "proc", text: "Read the loan", store: ["D3 Loans & Movements", "read"] },
-    { t: "dec", text: "Borrowed and not yet returned?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show that it is already returned" }] } },
+    { t: "dec", text: "Borrowed and not yet returned?", down: "Yes", left: { label: "No", to: "find" } },
     { t: "dec", text: "Returned late?", down: "No", right: { label: "Yes", to: "ret", steps: [{ t: "proc", text: "Work out the fine for each late weekday" }] } },
     { id: "ret", t: "proc", text: "Mark returned, log the movement, copy back on the shelf", store: ["D3 Loans & Movements", "write"] },
     { t: "doc", text: "Email the return receipt" },
-    { t: "io", text: "Update the Circulation & Movement Records" },
+    { t: "io", text: "Show the book as returned" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "library-staff/5-loan-reminder-emails", title: "Library Staff 5 · Loan Reminder Emails", steps: [
+  { file: "library-staff/5-pending-borrow-requests", title: "Library Staff 5 · Pending Borrow Requests (out)", steps: [
     { t: "term", text: "Start" },
-    { t: "proc", text: "Find loans that are due soon or overdue", store: ["D3 Loans & Movements", "read"] },
-    { t: "dec", text: "Any loans to remind?", down: "Yes", right: { label: "No", to: "end" } },
-    { id: "next", t: "proc", text: "Take the next loan" },
-    { t: "dec", text: "Already emailed about it?", down: "No", right: { label: "Yes", to: "more" } },
-    { t: "doc", text: "Send the Loan Reminder Email (due soon or overdue with the fine)" },
-    { t: "proc", text: "Record it in the email log", store: ["D4 Notifications & Announcements", "write"] },
-    { id: "more", t: "dec", text: "More loans?", down: "No", left: { label: "Yes", to: "next" } },
-    { t: "io", text: "Show how many reminders were sent" },
+    { t: "proc", text: "Cancel requests past the 2-day pickup window and email the students", store: ["D3 Loans & Movements", "write"] },
+    { t: "proc", text: "Read the requests waiting for pickup", store: ["D3 Loans & Movements", "read"] },
+    { t: "dec", text: "Any pending requests?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show 'Nothing waiting'" }] } },
+    { t: "io", text: "Show the Pending Borrow Requests: student, book, ticket and time left" },
+    { t: "dec", text: "Student at the desk?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "sub", text: "Library Staff 3 · Pickup QR Scan (Checkout)" }] } },
+    { t: "dec", text: "Decline the request?", down: "Yes", right: { label: "No", to: "end" } },
+    { t: "io", text: "Write the reason" },
+    { t: "proc", text: "Mark it declined; the copy goes back on the shelf", store: ["D3 Loans & Movements", "write"] },
+    { t: "doc", text: "Email the student that it was declined" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "library-staff/6-announcements-and-site-content", title: "Library Staff 6 · Announcements & Site Content", steps: [
+  { file: "library-staff/6-circulation-and-movement-records", title: "Library Staff 6 · Circulation & Movement Records (out)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Choose an announcement or a site page (Help, About, Terms)" },
-    { id: "write", t: "io", text: "Write the title and text" },
-    { t: "dec", text: "Title and text filled in?", down: "Yes", left: { label: "No", to: "write" } },
-    { t: "dec", text: "Publish now?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "proc", text: "Save it as a draft" }] } },
-    { t: "proc", text: "Save and publish", store: ["D4 Notifications & Announcements", "write"] },
-    { t: "dec", text: "An announcement?", down: "Yes", right: { label: "No", to: "audit" } },
-    { t: "proc", text: "Notify every student (Updates page and the bell)" },
-    { id: "audit", t: "proc", text: "Record it in the audit trail", store: ["D6 Settings & Audit Log", "write"] },
+    { id: "filter", t: "io", text: "Choose the view (borrowed, history or movements) and the filters: dates, type, book, student" },
+    { t: "proc", text: "Read the loans and book movements", store: ["D3 Loans & Movements", "read"] },
+    { t: "dec", text: "Any records match?", down: "Yes", left: { label: "No", to: "filter" } },
+    { t: "io", text: "Show the Circulation & Movement Records: checkouts, returns, acquisitions, withdrawals" },
+    { t: "dec", text: "Open a record?", down: "Yes", right: { label: "No", to: "end" } },
+    { t: "io", text: "Show the loan's timeline and the emails sent" },
     { id: "end", t: "term", text: "End" },
   ] },
+  { file: "library-staff/7-book-approval-results", title: "Library Staff 7 · Book Approval Results (out)", steps: [
+    { t: "term", text: "Start" },
+    { t: "proc", text: "Read the admin's decision on the staff member's book", store: ["D2 Books & Copies", "read"] },
+    { t: "dec", text: "Approved?", down: "Yes", right: { label: "No", to: "send", steps: [{ t: "proc", text: "Result: 'Needs revision' with the admin's note" }] } },
+    { t: "proc", text: "Result: 'Approved', the book is now in the catalog" },
+    { id: "send", t: "proc", text: "Notify the staff member", store: ["D4 Notifications & Announcements", "write"] },
+    { t: "io", text: "Show the Book Approval Results in Notifications and on the Books page" },
+    { t: "dec", text: "Needs revision?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "sub", text: "Library Staff 2 · Manage Book (fix and resubmit)" }] } },
+    { id: "end", t: "term", text: "End" },
+  ] },
+  { file: "library-staff/8-generated-reports", title: "Library Staff 8 · Generated Reports (out)", steps: report("Staff", true) },
 
-  // ------------------------------------------------ Administrator (5)
-  { file: "administrator/1-login-credentials", title: "Administrator 1 · Login Credentials", steps: login("The admin", "Open the admin dashboard", "Start the session; load the admin role") },
-  { file: "administrator/2-book-approval-decisions", title: "Administrator 2 · Book Approval Decisions", steps: [
+  // ------------------------------------------------ Administrator (7): 1-3 into the system, 4-7 out to the admin
+  { file: "administrator/1-login-credentials", title: "Administrator 1 · Login Credentials (in)", steps: login("The admin", "Open the admin dashboard", "Start the session; load the admin role") },
+  { file: "administrator/2-book-manage-request", title: "Administrator 2 · Book Manage Request (in)", steps: [
     { t: "term", text: "Start" },
-    { t: "proc", text: "Read the Books Awaiting Approval", store: ["D2 Books & Copies", "read"] },
-    { t: "dec", text: "Any books waiting?", down: "Yes", right: { label: "No", to: "end" } },
-    { t: "io", text: "Review a book's details" },
-    { t: "dec", text: "Approve it?", down: "Yes", right: { label: "No", to: "notify", steps: [{ t: "io", text: "Write the revision note" }, { t: "proc", text: "Mark it 'needs revision' (D2)" }] } },
-    { t: "proc", text: "Publish the book to the catalog", store: ["D2 Books & Copies", "write"] },
-    { id: "notify", t: "doc", text: "Notify the staff member: Book Approval Results" },
-    { t: "proc", text: "Record the decision in the audit trail", store: ["D6 Settings & Audit Log", "write"] },
+    { t: "io", text: "Choose: review a book waiting for approval, or add, edit or archive a book" },
+    { t: "dec", text: "Review a waiting book?", down: "No", right: { label: "Yes", to: "audit", steps: [
+      { t: "io", text: "Approve, or send back with a revision note" }, { t: "proc", text: "Save the decision on the book (D2)" }, { t: "sub", text: "Library Staff 7 · Book Approval Results" }] } },
+    { id: "form", t: "io", text: "Enter the book details, or choose where an archived book is kept" },
+    { t: "dec", text: "ISBN valid, not a duplicate and copies not below those on loan?", down: "Yes", left: { label: "No", to: "form" } },
+    { t: "proc", text: "Save the book; an admin's book goes straight to the catalog", store: ["D2 Books & Copies", "write"] },
+    { id: "audit", t: "proc", text: "Record it in the audit trail", store: ["D6 Settings & Audit Log", "write"] },
+    { t: "io", text: "Show that the book is saved" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "administrator/3-staff-accounts-and-permissions", title: "Administrator 3 · Staff Accounts & Permissions", steps: [
+  { file: "administrator/3-manage-users-and-permission", title: "Administrator 3 · Manage Users & Permission (in)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Open the Staff page" },
+    { t: "io", text: "Open the Students or Staff page" },
     { t: "dec", text: "Add a staff member?", down: "No", right: { label: "Yes", to: "perms", steps: [{ t: "io", text: "Find the account by email" }, { t: "proc", text: "Make the account staff" }] } },
-    { t: "io", text: "Choose a staff member" },
-    { t: "dec", text: "Disable, or make a student again?", down: "No", right: { label: "Yes", to: "audit", steps: [{ t: "proc", text: "Disable the account or change the role (D1)" }] } },
+    { t: "io", text: "Choose a user" },
+    { t: "dec", text: "Disable, enable or change the role?", down: "No", right: { label: "Yes", to: "audit", steps: [{ t: "proc", text: "Change the account status or role (D1)" }] } },
     { id: "perms", t: "io", text: "Tick the permissions: students, game, system, reports, audit" },
     { t: "proc", text: "Save the account and permissions", store: ["D1 User Accounts", "write"] },
     { id: "audit", t: "proc", text: "Record it in the audit trail", store: ["D6 Settings & Audit Log", "write"] },
-    { t: "io", text: "Show the updated staff list" },
+    { t: "io", text: "Show the updated list" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "administrator/4-borrowing-rules-and-settings", title: "Administrator 4 · Borrowing Rules & Settings", steps: [
+  { file: "administrator/4-book-manage-request", title: "Administrator 4 · Book Manage Request (out)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Open Settings" },
-    { id: "edit", t: "io", text: "Enter loan days, fines, borrowing limit, pickup hours, holidays, registration, site notice" },
-    { t: "dec", text: "Values valid (numbers and dates)?", down: "Yes", left: { label: "No", to: "edit" } },
-    { t: "proc", text: "Save the settings", store: ["D6 Settings & Audit Log", "write"] },
-    { t: "proc", text: "Record the change in the audit trail", store: ["D6 Settings & Audit Log", "write"] },
-    { t: "io", text: "Show that it is saved; new loans follow the new rules" },
+    { t: "proc", text: "Read the books waiting for approval", store: ["D2 Books & Copies", "read"] },
+    { t: "dec", text: "Any books waiting?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show 'Waiting for approval: 0'" }] } },
+    { t: "proc", text: "Notify the admins of each new book", store: ["D4 Notifications & Announcements", "write"] },
+    { t: "io", text: "Show the Book Manage Request: count on the Books tab, the list and who added each book" },
+    { t: "dec", text: "Open a book to review?", down: "Yes", right: { label: "No", to: "end" } },
+    { t: "sub", text: "Administrator 2 · Book Manage Request (in)" },
     { id: "end", t: "term", text: "End" },
   ] },
-  { file: "administrator/5-report-and-analytics-request", title: "Administrator 5 · Report & Analytics Request", steps: [
+  { file: "administrator/5-analytics-dashboard", title: "Administrator 5 · Analytics Dashboard (out)", steps: [
     { t: "term", text: "Start" },
-    { t: "io", text: "Choose Analytics or Reports" },
-    { t: "dec", text: "Analytics?", down: "No", right: { label: "Yes", to: "end", steps: [{ t: "io", text: "Pick the period: 30 days, 90 days, 12 months or all" }, { t: "proc", text: "Count requests, loans, overdue and popular books (D3, D5)" }, { t: "io", text: "Show the Analytics Dashboard" }] } },
-    { t: "io", text: "Choose the report: catalog, loans, overdue or movements, and the filters" },
-    { t: "proc", text: "Read the activity and loan data", store: ["D5 User Activity", "read"] },
-    { t: "io", text: "Preview the report" },
+    { t: "io", text: "Open Analytics and pick the period: 30 days, 90 days, 12 months or all" },
+    { t: "proc", text: "Read the loans and movements", store: ["D3 Loans & Movements", "read"] },
+    { t: "proc", text: "Read the activity and usage data", store: ["D5 User Activity", "read"] },
+    { t: "dec", text: "Any data in this period?", down: "Yes", right: { label: "No", to: "end", steps: [{ t: "io", text: "Show 'No activity in this period'" }] } },
+    { t: "proc", text: "Count requests, loans, returns, overdue, active students and popular books" },
+    { t: "io", text: "Show the Analytics Dashboard: number cards and charts" },
+    { id: "end", t: "term", text: "End" },
+  ] },
+  { file: "administrator/6-audit-trail-logs", title: "Administrator 6 · Audit Trail Logs (out)", steps: [
+    { t: "term", text: "Start" },
+    { id: "filter", t: "io", text: "Open the Audit trail and set the filters: search, module and dates" },
+    { t: "proc", text: "Read the audit records", store: ["D6 Settings & Audit Log", "read"] },
+    { t: "dec", text: "Any records match?", down: "Yes", left: { label: "No", to: "filter" } },
+    { t: "io", text: "Show the Audit Trail Logs: date and time, who, action, module and details" },
     { t: "dec", text: "Download it?", down: "Yes", right: { label: "No", to: "end" } },
-    { t: "doc", text: "Make the CSV file: Generated Reports" },
-    { t: "proc", text: "Record the download in the audit trail", store: ["D6 Settings & Audit Log", "write"] },
+    { t: "doc", text: "Make the Excel file of the audit trail" },
     { id: "end", t: "term", text: "End" },
   ] },
+  { file: "administrator/7-generated-reports", title: "Administrator 7 · Generated Reports (out)", steps: report("The admin", false) },
 );
 
 // ---------------------------------------------------------------- measuring

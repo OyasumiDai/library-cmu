@@ -1,0 +1,41 @@
+<!--page {"shell":"app","title":"Feedback","description":"Rate the library website and the game, and tell us how to make them better.","entry":"feedback","access":"member"} -->
+<div class="container container--narrow stack" data-page-root>
+  <div class="page-title"><div><h1>Feedback</h1><p class="page-title__sub">Rate the library website and the 2D-3D game, and tell us how to make them better.</p></div></div>
+
+  <section class="card px stack" data-reveal>
+    <form class="form" id="feedbackForm" novalidate>
+      <fieldset class="fb-topics">
+        <legend class="field__label">What is it about?</legend>
+        <label class="fb-topic"><input class="visually-hidden" type="radio" name="topic" value="system" checked><span class="fb-topic__icon"><svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons/icons.svg#book"/></svg></span><span><strong>The library website</strong><small>Catalog, borrowing, My books, notifications</small></span></label>
+        <label class="fb-topic"><input class="visually-hidden" type="radio" name="topic" value="game"><span class="fb-topic__icon"><svg class="icon icon--lg" aria-hidden="true"><use href="/assets/icons/icons.svg#game"/></svg></span><span><strong>The 2D-3D game</strong><small>Walking around, the librarian, borrowing in the game</small></span></label>
+      </fieldset>
+
+      <fieldset class="field" data-field="rating">
+        <legend class="field__label">Your rating *</legend>
+        <div class="fb-stars" id="stars">
+          <label class="fb-star"><input class="visually-hidden" type="radio" name="rating" value="1"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#star"/></svg><span class="visually-hidden">1 star, poor</span></label>
+          <label class="fb-star"><input class="visually-hidden" type="radio" name="rating" value="2"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#star"/></svg><span class="visually-hidden">2 stars, fair</span></label>
+          <label class="fb-star"><input class="visually-hidden" type="radio" name="rating" value="3"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#star"/></svg><span class="visually-hidden">3 stars, good</span></label>
+          <label class="fb-star"><input class="visually-hidden" type="radio" name="rating" value="4"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#star"/></svg><span class="visually-hidden">4 stars, very good</span></label>
+          <label class="fb-star"><input class="visually-hidden" type="radio" name="rating" value="5"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#star"/></svg><span class="visually-hidden">5 stars, excellent</span></label>
+          <span class="fb-stars__word" id="starWord" aria-hidden="true">Tap a star</span>
+        </div>
+        <span class="field__error"></span>
+      </fieldset>
+
+      <div class="field" data-field="suggestion">
+        <label class="field__label" for="f-suggestion">Your suggestion</label>
+        <textarea class="textarea" id="f-suggestion" name="suggestion" maxlength="1000" rows="5" placeholder="What did you like? What should we fix or add?"></textarea>
+        <span class="field__hint"><span id="charCount">0</span> / 1000. The library staff will see your name with your feedback.</span>
+        <span class="field__error"></span>
+      </div>
+
+      <div class="form__actions"><button class="btn px" type="submit" id="sendFeedback"><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#star"/></svg> Send feedback</button></div>
+    </form>
+  </section>
+
+  <section class="stack" data-reveal>
+    <h2>Your feedback</h2>
+    <div id="myFeedback"></div>
+  </section>
+</div>

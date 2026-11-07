@@ -9,7 +9,7 @@ import { fail } from "../core/toast";
 import { empty, loading } from "../ui/components";
 import type { Notice } from "../types";
 
-const ICON: Record<string, string> = { approved: "check", declined: "cross", returned: "download", overdue: "clock", request: "shelf", notice: "mail", permissions: "key" };
+const ICON: Record<string, string> = { approved: "check", declined: "cross", returned: "download", overdue: "clock", request: "shelf", notice: "mail", permissions: "key", feedback: "star" };
 
 let all: Notice[] = [];
 let filter: "all" | "unread" = "all";

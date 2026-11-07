@@ -99,6 +99,18 @@ export interface Notice {
   created_at: string;
 }
 
+// a student's rating (1 to 5) and suggestion about the website or the game (tools/student-feedback.sql)
+export interface Feedback {
+  id: number;
+  user_id: string;
+  topic: "system" | "game";
+  rating: number;
+  suggestion: string;
+  is_read: boolean;
+  read_at: string | null;
+  created_at: string;
+}
+
 export interface Announcement {
   id: number;
   title: string;

@@ -1,4 +1,5 @@
 // The student list and profile panel. Needs the "Student Profiles" permission (the database enforces it too).
+import { allFeedback, feedbackOf, markFeedbackRead } from "../api/feedback";
 import { loansByStatus } from "../api/loans";
 import { people, sendNotice, setActive, userActivity } from "../api/staff";
 import { actions, debounce, formData, html, icon, mount, raw } from "../core/dom";
@@ -8,10 +9,11 @@ import { openModal } from "../core/modal";
 import { current } from "../core/session";
 import { fail, ok } from "../core/toast";
 import { empty, loading } from "../ui/components";
-import type { Loan, Profile } from "../types";
+import { FEEDBACK_TOPIC, starRow } from "../ui/feedback";
+import type { Feedback, Loan, Profile } from "../types";
 import type { PanelTab } from "./tab";
 
-type Tile = "all" | "active" | "disabled" | "incomplete" | "new";
+type Tile = "all" | "active" | "disabled" | "incomplete" | "new" | "feedback";
 const NOTICE_KINDS = [["overdue", "Overdue notice"], ["due_soon", "Due date reminder"], ["general", "General reminder"]] as const;
 const complete = (p: Profile) => !!(p.course && p.year_level && p.phone);
 
@@ -39,7 +41,7 @@ export const students: PanelTab = {
       const needle = term.toLowerCase();
       const now = Date.now();
       list = base().filter((p) =>
-        (tile === "all" || (tile === "active" ? p.active : tile === "disabled" ? !p.active : tile === "incomplete" ? !complete(p) : now - new Date(p.created_at).getTime() < 7 * 86400000)) &&
+        (tile === "all" || (tile === "active" ? p.active : tile === "disabled" ? !p.active : tile === "incomplete" ? !complete(p) : tile === "feedback" ? !!fbStats.get(p.id)?.unread : now - new Date(p.created_at).getTime() < 7 * 86400000)) &&
         (!needle || `${p.username} ${p.full_name} ${p.email} ${p.student_id}`.toLowerCase().includes(needle)) &&
         (!college || p.college === college) && (!course || p.course === course) && (!year || p.year_level === year) &&
         (!registered || now - new Date(p.created_at).getTime() < Number(registered) * 86400000));
@@ -52,7 +54,17 @@ export const students: PanelTab = {
     let filtersOpen = false;
     // what each student has with the library right now, shown as badges on the row
     const loanStats = new Map<string, { out: number; late: number; ask: number }>();
+    // the feedback each student sent (tools/student-feedback.sql): how many, and how many nobody has read yet
+    const fbStats = new Map<string, { total: number; unread: number }>();
     const REGISTERED: Record<string, string> = { "7": "Last 7 days", "30": "Last 30 days", "365": "Last year" };
+
+    const fbBadge = (p: Profile) => {
+      const f = fbStats.get(p.id);
+      if (!f?.total) return "";
+      return f.unread
+        ? html`<span class="badge badge--warning">${icon("star", "icon--sm")} ${f.unread} new feedback</span>`
+        : html`<span class="badge badge--secondary">${icon("star", "icon--sm")} ${f.total} feedback</span>`;
+    };
 
     const draw = () => {
       apply();
@@ -61,10 +73,11 @@ export const students: PanelTab = {
       if (sig !== seen) { seen = sig; limit = PAGE; }
       const all = base();
       const week = (p: Profile) => Date.now() - new Date(p.created_at).getTime() < 7 * 86400000;
-      const n = { all: all.length, active: all.filter((p) => p.active).length, disabled: all.filter((p) => !p.active).length, incomplete: all.filter((p) => !complete(p)).length, new: all.filter(week).length };
+      const n = { all: all.length, active: all.filter((p) => p.active).length, disabled: all.filter((p) => !p.active).length, incomplete: all.filter((p) => !complete(p)).length, new: all.filter(week).length, feedback: all.filter((p) => fbStats.get(p.id)?.unread).length };
       const tiles: [Tile, string, string, string, string][] = [
         ["all", "All students", "users", "", "registered"], ["active", "Active", "check", "success", "can sign in"], ["disabled", "Disabled", "lock", "danger", n.disabled ? "cannot sign in" : "none"],
         ["incomplete", "Profile incomplete", "edit", "warning", "course, year or phone missing"], ["new", "New this week", "sparkle", "", "joined in the last 7 days"],
+        ["feedback", "New feedback", "star", n.feedback ? "warning" : "", n.feedback ? "students with unread feedback" : "all feedback read"],
       ];
       mount(root.querySelector<HTMLElement>("#studentTiles")!, html`${tiles.map(([id, label, iconName, tone, note]) => html`<button class="tile book-tile" type="button" data-action="tile" data-tile="${id}" data-tone="${tone}" aria-pressed="${String(id === tile)}">
         <span class="book-tile__icon">${icon(iconName)}</span><span class="tile__label">${label}</span><span class="tile__value">${n[id]}</span><span class="tile__note">${note}</span></button>`)}`);
@@ -97,7 +110,7 @@ export const students: PanelTab = {
       const avatar = (p: Profile) => html`<span class="avatar">${p.photo_url ? raw(`<img src="${p.photo_url.replace(/"/g, "")}" alt="">`) : initials(p.username)}</span>`;
       const badges = (p: Profile) => {
         const s = loanStats.get(p.id);
-        return html`${p.active ? "" : html`<span class="badge badge--danger">disabled</span>`}${complete(p) ? "" : html`<span class="badge badge--warning">incomplete</span>`}${s?.late ? html`<span class="badge badge--danger">${s.late} overdue</span>` : ""}${s?.out ? html`<span class="badge badge--info">${s.out} on loan</span>` : ""}${s?.ask ? html`<span class="badge badge--secondary">${s.ask} requested</span>` : ""}`;
+        return html`${p.active ? "" : html`<span class="badge badge--danger">disabled</span>`}${complete(p) ? "" : html`<span class="badge badge--warning">incomplete</span>`}${s?.late ? html`<span class="badge badge--danger">${s.late} overdue</span>` : ""}${s?.out ? html`<span class="badge badge--info">${s.out} on loan</span>` : ""}${s?.ask ? html`<span class="badge badge--secondary">${s.ask} requested</span>` : ""}${fbBadge(p)}`;
       };
       const shown = list.slice(0, limit);
       const more = list.length > limit ? html`<div class="st-more"><button class="btn btn--quiet" type="button" data-action="more">Show ${Math.min(PAGE, list.length - limit)} more <span class="text-soft">(${list.length - limit} left)</span></button></div>` : "";
@@ -112,14 +125,27 @@ export const students: PanelTab = {
     // ---- the profile panel: next and previous student, counts, four tabs
     const open = (start: Profile) => {
       let index = list.findIndex((p) => p.id === start.id);
-      let tab: "overview" | "loans" | "read" | "activity" = "overview";
+      let tab: "overview" | "loans" | "read" | "activity" | "feedback" = "overview";
       const modal = openModal("Student", html`<div id="profileBody"></div>`, { wide: true, footer: html`<span class="text-soft modal__hint">Use the left and right arrow keys to switch student</span><button class="btn btn--quiet" type="button" data-prev>Previous</button><button class="btn btn--quiet" type="button" data-next>Next</button><button class="btn" type="button" data-close>Close</button>` });
+      // what the student said about the website and the game, newest first, with the average of each
+      const feedbackPane = (items: Feedback[]) => {
+        if (!items.length) return empty("No feedback", "This student has not rated the website or the game yet.", "star");
+        const avg = (topic: Feedback["topic"]) => {
+          const r = items.filter((f) => f.topic === topic);
+          return r.length ? `${(r.reduce((a, f) => a + f.rating, 0) / r.length).toFixed(1)} of 5 (${r.length})` : "none yet";
+        };
+        return html`<p class="text-soft">Average rating: website ${avg("system")}, game ${avg("game")}.</p>
+          <ul class="list">${items.map((f) => html`<li class="list__item fb-item"><span class="notice-icon">${icon(f.topic === "game" ? "game" : "book")}</span><div class="list__body">
+            <p class="list__title">${FEEDBACK_TOPIC[f.topic]} ${starRow(f.rating)} ${f.is_read ? "" : html`<span class="badge badge--warning">new</span>`}</p>
+            ${f.suggestion ? html`<p class="fb-item__text">${f.suggestion}</p>` : html`<p class="text-soft">No suggestion written.</p>`}
+            <p class="list__meta">${formatDate(f.created_at)} · ${relative(f.created_at)}</p></div></li>`)}</ul>`;
+      };
       const paint = async () => {
         const p = list[index];
         const mine = loans.filter((l) => l.user_id === p.id);
         const out = mine.filter((l) => l.status === "borrowed");
         const counts = { current: mine.filter((l) => ["requested", "borrowed"].includes(l.status)).length, soon: out.filter((l) => l.due_at && daysUntil(l.due_at) >= 0 && daysUntil(l.due_at) <= 2).length, late: out.filter((l) => l.due_at && daysUntil(l.due_at) < 0).length, returned: mine.filter((l) => l.status === "returned").length };
-        const acts = await userActivity(p.id, 40);
+        const [acts, feedback] = await Promise.all([userActivity(p.id, 40), feedbackOf(p.id).catch((): Feedback[] => [])]);
         const readIds = new Set(acts.filter((a) => a.type === "read").map((a) => a.book_id));
         const body = modal.root.querySelector<HTMLElement>("#profileBody")!;
         mount(body, html`
@@ -127,12 +153,22 @@ export const students: PanelTab = {
             <div><h3>${p.username} ${p.active ? "" : html`<span class="badge badge--danger">disabled</span>`}</h3><p class="text-soft">${p.full_name} · ${index + 1} of ${list.length}</p>
               <div class="cluster"><button class="btn btn--sm btn--secondary" type="button" data-notice>${icon("mail")} Send notice</button><button class="btn btn--sm btn--quiet" type="button" data-copy>${icon("mail")} Copy email</button><button class="btn btn--sm ${p.active ? "btn--danger" : "btn--secondary"}" type="button" data-toggle>${p.active ? "Disable account" : "Enable account"}</button></div></div></div>
           <div class="tile-grid tile-grid--small"><div class="tile"><span class="tile__label">Current</span><span class="tile__value">${counts.current}</span></div><div class="tile"><span class="tile__label">Due soon</span><span class="tile__value">${counts.soon}</span></div><div class="tile"><span class="tile__label">Overdue</span><span class="tile__value">${counts.late}</span></div><div class="tile"><span class="tile__label">Returned</span><span class="tile__value">${counts.returned}</span></div><div class="tile"><span class="tile__label">Read</span><span class="tile__value">${readIds.size}</span></div></div>
-          <div class="tabs">${(["overview", "loans", "read", "activity"] as const).map((t) => html`<button class="tab" type="button" data-tabs="${t}" aria-selected="${String(t === tab)}">${{ overview: "Overview", loans: "Loans", read: "Books read", activity: "Activity" }[t]}</button>`)}</div>
+          <div class="tabs">${(["overview", "loans", "read", "activity", "feedback"] as const).map((t) => html`<button class="tab" type="button" data-tabs="${t}" aria-selected="${String(t === tab)}">${{ overview: "Overview", loans: "Loans", read: "Books read", activity: "Activity", feedback: "Feedback" }[t]}${t === "feedback" && feedback.length ? html` <span class="tab__count">${feedback.length}</span>` : ""}${t === "feedback" && feedback.some((f) => !f.is_read) ? html` <span class="badge badge--warning">new</span>` : ""}</button>`)}</div>
           ${tab === "overview" ? html`<dl class="book-detail__facts"><dt>Email</dt><dd>${p.email}</dd><dt>Student ID</dt><dd>${p.student_id ?? "-"}</dd><dt>Gender</dt><dd>${p.gender ?? "-"}</dd><dt>Phone</dt><dd>${p.phone ?? "-"}</dd><dt>College</dt><dd>${p.college ?? "-"}</dd><dt>Course</dt><dd>${p.course ?? "-"}</dd><dt>Major</dt><dd>${p.major ?? "-"}</dd><dt>Year</dt><dd>${p.year_level ?? "-"}</dd><dt>Joined</dt><dd>${formatDate(p.created_at)}</dd><dt>Terms</dt><dd>${p.terms_version ? `v${p.terms_version}, ${formatDate(p.terms_accepted_at)}` : "not accepted"}</dd></dl>`
             : tab === "loans" ? (mine.length ? html`<div class="table-wrap"><table class="table"><tbody>${mine.map((l) => html`<tr><td>${l.book?.title}</td><td>${l.status === "borrowed" ? dueLabel(l.due_at).text : l.status}</td><td>${formatDate(l.requested_at)}</td></tr>`)}</tbody></table></div>` : empty("No loans", "This student has not borrowed yet.", "shelf"))
             : tab === "read" ? (readIds.size ? html`<ul class="list">${[...readIds].map((id) => html`<li class="list__item">${mine.find((l) => l.book_id === id)?.book?.title ?? id}</li>`)}</ul>` : empty("Nothing read yet", "Marked-as-read books show here.", "book"))
+            : tab === "feedback" ? feedbackPane(feedback)
             : (acts.length ? html`<ol class="timeline">${acts.map((a) => html`<li class="timeline__item"><strong>${a.type}</strong> ${a.book?.title ?? ""}<br><small class="text-soft">${relative(a.created_at)}</small></li>`)}</ol>` : empty("No activity", "", "clock"))}`);
         body.querySelectorAll<HTMLElement>("[data-tabs]").forEach((b) => b.addEventListener("click", () => { tab = b.dataset.tabs as typeof tab; void paint(); }));
+        // opening the Feedback tab marks what the student sent as read (the student then sees "Read by the library")
+        const unread = feedback.filter((f) => !f.is_read).map((f) => f.id);
+        if (tab === "feedback" && unread.length) {
+          markFeedbackRead(unread).then(() => {
+            const st = fbStats.get(p.id);
+            if (st) st.unread = 0;
+            draw();
+          }).catch((error) => fail(friendly(error)));
+        }
         body.querySelector("[data-toggle]")?.addEventListener("click", async () => {
           try { await setActive(p.id, !p.active); p.active = !p.active; ok(p.active ? "Account enabled." : "Account disabled."); draw(); void paint(); } catch (error) { fail(friendly(error)); }
         });
@@ -221,7 +257,14 @@ export const students: PanelTab = {
       view: (el) => { cards = el.dataset.cards === "1"; root.querySelectorAll<HTMLElement>("[data-cards]").forEach((b) => b.setAttribute("aria-pressed", String(b === el))); draw(); },
       open: (el) => { const p = everyone.find((x) => x.id === el.dataset.id); if (p) open(p); },
     });
-    [everyone, loans] = await Promise.all([people(), loansByStatus(["requested", "borrowed", "returned", "rejected", "cancelled"], 3000)]);
+    let feedback: Feedback[];
+    [everyone, loans, feedback] = await Promise.all([people(), loansByStatus(["requested", "borrowed", "returned", "rejected", "cancelled"], 3000), allFeedback()]);
+    for (const f of feedback) {
+      const row = fbStats.get(f.user_id) ?? { total: 0, unread: 0 };
+      row.total++;
+      if (!f.is_read) row.unread++;
+      fbStats.set(f.user_id, row);
+    }
     void me;
     const now = Date.now();
     for (const l of loans) {

@@ -145,6 +145,13 @@
         "href": "/arcade",
         "page": "arcade",
         "icon": "game"
+      },
+      {
+        "label": "Feedback",
+        "href": "/feedback",
+        "page": "feedback",
+        "icon": "star",
+        "tabbar": false
       }
     ]
   },

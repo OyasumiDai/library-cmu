@@ -51,7 +51,7 @@ const renderNav = (current, pinned = false) => navGroups.filter((group) => !!gro
 const renderTabbar = (current) => {
   const student = navGroups.find((group) => group.visible === "student");
   const profile = navGroups.find((group) => group.pin).items.find((item) => item.page === "profile");
-  return [...student.items, profile].map((item) => {
+  return [...student.items.filter((item) => item.tabbar !== false), profile].map((item) => {
     const on = item.page === current;
     return `<a class="tabbar__link${on ? " is-active" : ""}" href="${item.href}"${on ? ' aria-current="page"' : ""}><svg class="icon" aria-hidden="true"><use href="/assets/icons/icons.svg#${item.icon}"/></svg><span>${item.label}</span></a>`;
   }).join("");

@@ -10,16 +10,16 @@ const width = 1500, height = 1060;
 
 // flows, top to bottom as they leave or reach each entity
 const student = {
-  in: ["Registration Details", "Login Credentials", "View Catalog", "Borrow Request", "Request Cancellation", "Profile & Account Updates", "Game Access"],
-  out: ["Book Request", "View Catalog", "2D-3D Library Game", "Pickup QR Ticket", "Due Dates & Overdue Fines", "Notifications & Email Reminders", "Announcements"],
+  in: ["Registration Details", "Login Credentials", "View Catalog", "Borrow Request", "Request Cancellation"],
+  out: ["2D-3D Library Game", "Pickup QR Ticket", "Due Dates & Overdue Fines", "Notifications & Email Reminders"],
 };
 const staff = {
-  in: ["Login Credentials", "Manage Book", "Pickup QR Scan (Checkout)", "Book Returns", "Loan Reminder Emails", "Announcements & Site Content"],
-  out: ["Pending Loan Requests", "Circulation & Movement Records", "Book Approval Results", "Library Reports"],
+  in: ["Login Credentials", "Manage Book", "Pickup QR Scan (Checkout)", "Book Returns"],
+  out: ["Pending Borrow Requests", "Circulation & Movement Records", "Book Approval Results", "Generated Reports"],
 };
 const admin = {
-  in: ["Login Credentials", "Book Approval Decisions", "Staff Accounts & Permissions", "Borrowing Rules & Settings", "Report & Analytics Request"],
-  out: ["Books Awaiting Approval", "Analytics Dashboard", "Audit Trail Logs", "Generated Reports"],
+  in: ["Login Credentials", "Book Manage Request", "Manage Users & Permission"],
+  out: ["Book Manage Request", "Analytics Dashboard", "Audit Trail Logs", "Generated Reports"],
 };
 
 const P = { x1: 600, y1: 430, x2: 900, y2: 650 };

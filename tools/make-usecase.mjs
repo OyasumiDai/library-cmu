@@ -6,29 +6,28 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
-const width = 1400, height = 1860;
+const width = 1400, height = 1540;
 const title = ["CMU LIBRARY EXPLORER:", "A WEB-BASED LIBRARY CATALOG, BOOK BORROWING", "AND CIRCULATION MANAGEMENT SYSTEM"];
-const B = { x1: 330, y1: 50, x2: 1070, y2: 1800 }; // system boundary
+const B = { x1: 330, y1: 50, x2: 1070, y2: 1480 }; // system boundary
 const EW = 135, EH = 34; // ellipse radii
 const LX = 525, RX = 875; // the two columns of use cases
 
+// one use case for each Level 0 data flow (docs/dfd-level0); Login is shared by all three users
 const login = { c: [700, 200], text: "Login" };
 const register = { c: [LX, 310], text: "Register student account and confirm email code" };
 const verify = { c: [RX, 310], text: "Verify credentials in User Accounts" };
 const col = (x, y0, texts) => texts.map((text, i) => ({ c: [x, y0 + 92 * i], text }));
 const student = col(LX, 410, [
-  "View catalog and book availability", "Access the 2D-3D library game", "Request to borrow a book (website or game)", "Cancel a borrow request",
-  "Show pickup QR ticket (website or game)", "View loans, due dates and fines", "Receive notifications and email reminders", "View announcements",
-  "Update profile and account"]);
+  "View catalog and book availability", "Request to borrow a book (website or game)", "Cancel a borrow request",
+  "Play the 2D-3D library game", "Get the pickup QR ticket", "View due dates and overdue fines", "Receive notifications and email reminders"]);
 const staff = col(RX, 410, [
-  "Manage books (add, edit, archive)", "Review pending loan requests", "Scan QR ticket to check out a book", "Record book returns",
-  "Send loan reminder emails", "Post announcements and site content", "View circulation and movement records", "View book approval results", "Download library reports"]);
-const admin = col(RX, 1370, [
-  "Approve or request revision of submitted books", "Manage staff accounts and permissions", "Set borrowing rules and system settings",
-  "View analytics and generate reports", "View audit trail"]);
-const audit = { c: [LX, 1554], text: "Record action in Audit Trail" };
+  "Manage books (add, edit, archive)", "Scan QR ticket to check out a book", "Record book returns",
+  "View pending borrow requests", "View circulation and movement records", "View book approval results", "Download generated reports"]);
+const admin = col(RX, 1100, [
+  "Manage book requests (approve, send back, add, edit, archive)", "Manage users and permissions", "View the analytics dashboard", "View audit trail logs"]);
+const audit = { c: [LX, 1192], text: "Record action in Audit Trail" };
 
-const actors = { S: { x: 160, y: 760, name: "Student" }, T: { x: 1240, y: 720, name: "Library Staff" }, A: { x: 1240, y: 1540, name: "Administrator" } };
+const actors = { S: { x: 160, y: 690, name: "Student" }, T: { x: 1240, y: 650, name: "Library Staff" }, A: { x: 1240, y: 1250, name: "Administrator" } };
 const hand = (a, side) => [a.x + side * 42, a.y - 22];
 
 // the point where a line toward p leaves the ellipse
@@ -59,7 +58,8 @@ lines += `<path d="M${actors.A.x} ${actors.A.y - 98}V${actors.T.y + 122}" marker
 
 rel(register, login, "extend");
 rel(login, verify, "include");
-for (const u of admin) rel(u, audit, "include", [rimAt(u, -1, 0), rimAt(audit, 1, (u.c[1] - audit.c[1]) * 0.12)]);
+// the admin's changes write an audit entry
+for (const u of [admin[0], admin[1]]) rel(u, audit, "include", [rimAt(u, -1, 0), rimAt(audit, 1, (u.c[1] - audit.c[1]) * 0.25)]);
 
 const wrap = (s, max = 30) => s.split(" ").reduce((ls, w) => {
   if (ls.length && (ls[ls.length - 1] + " " + w).length <= max) ls[ls.length - 1] += " " + w; else ls.push(w);
